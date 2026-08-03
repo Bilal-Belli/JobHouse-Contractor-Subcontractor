@@ -1,0 +1,100 @@
+<%- include('partials/header') %>
+
+<div class="max-w-5xl mx-auto space-y-6">
+  <!-- Top Navigation Bar -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+    <div>
+      <a href="/admin" class="text-xs text-amber-600 font-semibold hover:underline mb-1 inline-block">&larr; Back to Dashboard</a>
+      <h1 class="text-xl font-bold text-slate-900"><%= room.name %></h1>
+    </div>
+    
+    <form action="/admin/publish/<%= room.id %>" method="POST">
+      <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded shadow transition">
+        Publish Specs
+      </button>
+    </form>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <!-- Trade Selector Sidebar -->
+    <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-4">
+      <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Trade Tabs</h2>
+      
+      <div class="space-y-1">
+        <% room.trades.forEach(t => { %>
+          <div class="flex items-center justify-between">
+            <a href="/admin/edit/<%= room.id %>?trade=<%= t.id %>" 
+              class="flex-1 text-left px-3 py-2 text-sm rounded font-medium transition <%= selectedTrade === t.id ? 'bg-amber-50 text-amber-800 border-l-4 border-amber-600' : 'text-slate-600 hover:bg-slate-50' %>">
+              <%= t.name %>
+            </a>
+            <form action="/admin/edit/<%= room.id %>/delete-trade/<%= t.id %>" method="POST" onsubmit="return confirm('Remove this trade tab?')">
+              <button type="submit" class="text-slate-400 hover:text-red-600 p-1">
+                &times;
+              </button>
+            </form>
+          </div>
+        <% }) %>
+      </div>
+
+      <!-- Add New Trade Form -->
+      <form action="/admin/edit/<%= room.id %>/add-trade" method="POST" class="pt-4 border-t border-slate-200">
+        <label class="block text-xs text-slate-500 mb-1">Add New Trade</label>
+        <div class="flex gap-1">
+          <input type="text" name="tradeName" placeholder="e.g. Tile" required class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-amber-500">
+          <button type="submit" class="bg-slate-800 text-white text-xs px-3 py-1 rounded hover:bg-slate-700">+</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Active Trade Details Editor -->
+    <% const activeTrade = room.trades.find(t => t.id === selectedTrade); %>
+
+    <div class="md:col-span-3 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+      <% if (activeTrade) { %>
+        <h2 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">
+          Editing: <span class="text-amber-600"><%= activeTrade.name %> Specs</span>
+        </h2>
+
+        <form action="/admin/edit/<%= room.id %>/save" method="POST" enctype="multipart/form-data" class="space-y-5">
+          <input type="hidden" name="tradeId" value="<%= activeTrade.id %>">
+
+          <!-- Upload Fields -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="border border-slate-200 p-4 rounded-lg bg-slate-50">
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-2">3D Render / Photo</label>
+              <% if (activeTrade.renderUrl) { %>
+                <img src="<%= activeTrade.renderUrl %>" class="w-full h-32 object-cover rounded mb-2 border border-slate-200">
+              <% } %>
+              <input type="file" name="render" accept="image/*" class="text-xs text-slate-500">
+            </div>
+
+            <div class="border border-slate-200 p-4 rounded-lg bg-slate-50">
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Plan / Drawing</label>
+              <% if (activeTrade.planUrl) { %>
+                <a href="<%= activeTrade.planUrl %>" target="_blank" class="text-xs text-amber-600 hover:underline block mb-2 font-medium truncate">
+                  View Attached Plan
+                </a>
+              <% } %>
+              <input type="file" name="plan" accept="image/*,application/pdf" class="text-xs text-slate-500">
+            </div>
+          </div>
+
+          <!-- Placement Notes -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Placement Notes & Instructions</label>
+            <textarea name="notes" rows="5" placeholder="Specify outlet locations, elevations, notes..." 
+              class="w-full p-3 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"><%= activeTrade.notes %></textarea>
+          </div>
+
+          <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm px-5 py-2.5 rounded shadow transition">
+            Save Draft
+          </button>
+        </form>
+      <% } else { %>
+        <p class="text-slate-500 text-sm">No trades configured for this room yet.</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
