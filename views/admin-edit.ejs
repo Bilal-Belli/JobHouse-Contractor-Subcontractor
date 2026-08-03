@@ -5,13 +5,28 @@
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
     <div>
       <a href="/admin" class="text-xs text-amber-600 font-semibold hover:underline mb-1 inline-block">&larr; Back to Dashboard</a>
-      <h1 class="text-xl font-bold text-slate-900"><%= room.name %></h1>
+      <div class="flex items-center gap-3">
+        <h1 class="text-xl font-bold text-slate-900"><%= room.name %></h1>
+        <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded uppercase tracking-wide
+          <%= room.status === 'published' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' %>">
+          <%= room.status %>
+        </span>
+      </div>
     </div>
     
-    <form action="/admin/publish/<%= room.id %>" method="POST">
-      <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded shadow transition">
-        Publish Specs
-      </button>
+    <!-- Conditional Publish/Unpublish Button -->
+    <form action="/admin/toggle-publish/<%= room.id %>" method="POST">
+      <% if (room.status === 'published') { %>
+        <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded shadow transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+          Unpublish Specs
+        </button>
+      <% } else { %>
+        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded shadow transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          Publish Specs
+        </button>
+      <% } %>
     </form>
   </div>
 
