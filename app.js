@@ -33,167 +33,250 @@ const upload = multer({ storage });
 // JSON Helpers
 function getData() {
   if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ rooms: [] }, null, 2));
+    fs.writeFileSync(DATA_FILE, JSON.stringify({ houses: [] }, null, 2));
   }
   const rawData = fs.readFileSync(DATA_FILE);
-  return JSON.parse(rawData);
+  const parsed = JSON.parse(rawData);
+  if (!parsed.houses) parsed.houses = [];
+  return parsed;
 }
 
 function saveData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-// Routes
+// Helper: Search for a room AND its parent house across all folders
+function findRoomAndHouseById(data, roomId) {
+  if (!data.houses || data.houses.length === 0) {
+    return { room: null, house: null };
+  }
 
-// 1. Admin Dashboard / Room Manager
+  // 1. Direct Search: Match room ID inside houses
+  for (const house of data.houses) {
+    if (house.rooms) {
+      const room = house.rooms.find(r => r.id === roomId);
+      if (room) {
+        return { room, house };
+      }
+    }
+  }
+
+  // 2. Fallback Search: Extract house prefix from room ID (e.g. "villa-a-kitchen" -> "villa-a")
+  for (const house of data.houses) {
+    if (roomId.startsWith(house.id)) {
+      const room = house.rooms ? house.rooms.find(r => r.id === roomId) : null;
+      if (room) {
+        return { room, house };
+      }
+    }
+  }
+
+  return { room: null, house: null };
+}
+
+// Helper: Simple room search
+function findRoomById(data, roomId) {
+  const { room } = findRoomAndHouseById(data, roomId);
+  return room;
+}
+
+// ==========================================
+// ADMIN ROUTES
+// ==========================================
+
+// 1. Admin Dashboard
 app.get('/admin', (req, res) => {
   const data = getData();
-  res.render('admin', { rooms: data.rooms });
+  res.render('admin', { houses: data.houses });
 });
 
-// Create Room (Draft)
-app.post('/admin/rooms', (req, res) => {
+// 2. Create House
+app.post('/admin/houses', (req, res) => {
   const data = getData();
-  const newRoom = {
-    id: req.body.roomName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-    name: req.body.roomName,
-    status: 'draft',
-    trades: [
-      { id: 'electrical', name: 'Electrical', renderUrl: '', planUrl: '', notes: '' },
-      { id: 'plumbing', name: 'Plumbing', renderUrl: '', planUrl: '', notes: '' },
-      { id: 'hvac', name: 'HVAC', renderUrl: '', planUrl: '', notes: '' }
-    ],
-    comments: []
+  const houseName = req.body.houseName;
+  const newHouse = {
+    id: houseName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-'),
+    name: houseName,
+    rooms: []
   };
-  data.rooms.push(newRoom);
+
+  data.houses.push(newHouse);
   saveData(data);
-  res.redirect(`/admin/edit/${newRoom.id}`);
+  res.redirect('/admin');
 });
 
-// Edit Room Interface
-// Edit Room Interface
+// 3. Create Room
+app.post('/admin/houses/:houseId/rooms', (req, res) => {
+  const data = getData();
+  const house = data.houses.find(h => h.id === req.params.houseId);
+
+  if (house) {
+    const roomName = req.body.roomName;
+    const newRoom = {
+      id: `${house.id}-${roomName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-')}`,
+      name: roomName,
+      status: 'draft',
+      trades: [
+        { id: 'electrical', name: 'Electrical', renderUrl: '', planUrl: '', notes: '' },
+        { id: 'plumbing', name: 'Plumbing', renderUrl: '', planUrl: '', notes: '' },
+        { id: 'hvac', name: 'HVAC', renderUrl: '', planUrl: '', notes: '' }
+      ],
+      comments: []
+    };
+    if (!house.rooms) house.rooms = [];
+    house.rooms.push(newRoom);
+    saveData(data);
+    res.redirect(`/admin/edit/${newRoom.id}`);
+  } else {
+    res.status(404).send('House not found');
+  }
+});
+
+// 4. Edit Room Interface
 app.get('/admin/edit/:id', (req, res) => {
   const data = getData();
-  const room = data.rooms.find(r => r.id === req.params.id);
-  
-  if (!room) return res.status(404).send('Room not found');
+  const room = findRoomById(data, req.params.id);
 
-  // Capture selected trade from query string (e.g. ?trade=electrical)
+  if (!room) return res.status(404).send('Room not found');
   const selectedTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : '');
 
-  // Pass selectedTrade into the EJS template
   res.render('admin-edit', { room, selectedTrade });
 });
 
-// Add Trade Tab
-app.post('/admin/edit/:id/add-trade', (req, res) => {
-  const data = getData();
-  const room = data.rooms.find(r => r.id === req.params.id);
-  if (room) {
-    const tradeName = req.body.tradeName;
-    const tradeId = tradeName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    room.trades.push({ id: tradeId, name: tradeName, renderUrl: '', planUrl: '', notes: '' });
-    saveData(data);
-  }
-  res.redirect(`/admin/edit/${req.params.id}`);
-});
-
-// Delete Trade Tab
-app.post('/admin/edit/:id/delete-trade/:tradeId', (req, res) => {
-  const data = getData();
-  const room = data.rooms.find(r => r.id === req.params.id);
-  if (room) {
-    room.trades = room.trades.filter(t => t.id !== req.params.tradeId);
-    saveData(data);
-  }
-  res.redirect(`/admin/edit/${req.params.id}`);
-});
-
-// Save Draft Updates
-app.post('/admin/edit/:id/save', upload.fields([
+// 5. Save Room Trade Details
+app.post('/admin/edit/:roomId/save', upload.fields([
   { name: 'render', maxCount: 1 },
   { name: 'plan', maxCount: 1 }
 ]), (req, res) => {
   const data = getData();
-  const room = data.rooms.find(r => r.id === req.params.id);
-  
-  if (room) {
-    const tradeId = req.body.tradeId;
-    const trade = room.trades.find(t => t.id === tradeId);
-    
-    if (trade) {
-      trade.notes = req.body.notes || '';
-      if (req.files['render']) {
-        trade.renderUrl = `/uploads/${req.files['render'][0].filename}`;
-      }
-      if (req.files['plan']) {
-        trade.planUrl = `/uploads/${req.files['plan'][0].filename}`;
-      }
+  const { roomId } = req.params;
+  const { tradeId, notes } = req.body;
+
+  const room = findRoomById(data, roomId);
+  if (!room) return res.status(404).send('Room not found');
+
+  const trade = room.trades.find(t => t.id === tradeId);
+  if (!trade) return res.status(404).send('Trade tab not found');
+
+  trade.notes = notes || '';
+
+  if (req.files) {
+    if (req.files.render && req.files.render[0]) {
+      trade.renderUrl = `/uploads/${req.files.render[0].filename}`;
     }
-    saveData(data);
+    if (req.files.plan && req.files.plan[0]) {
+      trade.planUrl = `/uploads/${req.files.plan[0].filename}`;
+    }
   }
-  res.redirect(`/admin/edit/${req.params.id}?trade=${req.body.tradeId}`);
+
+  saveData(data);
+  res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
 });
 
+// 6. Add Trade Tab
+app.post('/admin/edit/:roomId/add-trade', (req, res) => {
+  const data = getData();
+  const { roomId } = req.params;
+  const { tradeName } = req.body;
+
+  const room = findRoomById(data, roomId);
+  if (room) {
+    const tradeId = tradeName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-');
+    const existingTrade = room.trades.find(t => t.id === tradeId);
+
+    if (!existingTrade) {
+      room.trades.push({
+        id: tradeId,
+        name: tradeName,
+        renderUrl: '',
+        planUrl: '',
+        notes: ''
+      });
+      saveData(data);
+    }
+    return res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+  }
+
+  res.status(404).send('Room not found');
+});
+
+// 7. Delete Trade Tab
+app.post('/admin/edit/:roomId/delete-trade/:tradeId', (req, res) => {
+  const data = getData();
+  const room = findRoomById(data, req.params.roomId);
+
+  if (room) {
+    room.trades = room.trades.filter(t => t.id !== req.params.tradeId);
+    saveData(data);
+    return res.redirect(`/admin/edit/${room.id}`);
+  }
+  res.status(404).send('Room not found');
+});
+
+// 8. Toggle Room Publish / Draft Status
 app.post('/admin/toggle-publish/:id', (req, res) => {
   const data = getData();
-  const room = data.rooms.find(r => r.id === req.params.id);
-  
+  const room = findRoomById(data, req.params.id);
+
   if (room) {
-    // Toggle between published and draft
     room.status = room.status === 'published' ? 'draft' : 'published';
     saveData(data);
   }
-  
-  // Redirect back to the edit view for the current room
+
   res.redirect(`/admin/edit/${req.params.id}`);
 });
 
-// Publish Room & Generate QR Code
-app.post('/admin/publish/:id', (req, res) => {
+// ==========================================
+// PUBLIC VIEW ROUTES
+// ==========================================
+
+// Public House Folder Overview
+app.get('/house/:id', (req, res) => {
   const data = getData();
-  const room = data.rooms.find(r => r.id === req.params.id);
-  if (room) {
-    room.status = 'published';
-    saveData(data);
-  }
-  res.redirect('/admin');
+  const house = data.houses.find(h => h.id === req.params.id);
+
+  if (!house) return res.status(404).send('House project not found');
+
+  // Display all rooms in the house
+  res.render('house', { house, rooms: house.rooms || [] });
 });
 
-
-
-// 2. Public Room Viewer Page (Scan Target)
+// Public Room Viewer
 app.get('/room/:id', async (req, res) => {
   const data = getData();
-  const room = data.rooms.find(r => r.id === req.params.id);
+  const { room, house } = findRoomAndHouseById(data, req.params.id);
+
   if (!room) return res.status(404).send('Room specifications not found');
 
   const roomUrl = `${req.protocol}://${req.get('host')}/room/${room.id}`;
   const qrCodeUrl = await QRCode.toDataURL(roomUrl);
-
   const activeTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : '');
 
   res.render('room', {
     room,
+    house: house || null, // Guaranteed house reference
     activeTrade,
     qrCodeUrl,
     roomUrl
   });
 });
 
-// Add Public Comment
+// Public Comments
 app.post('/room/:id/comment', (req, res) => {
   const data = getData();
-  const room = data.rooms.find(r => r.id === req.params.id);
+  const room = findRoomById(data, req.params.id);
+
   if (room) {
     const newComment = {
       author: req.body.author || 'Anonymous Trade',
       text: req.body.text,
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16)
     };
+    if (!room.comments) room.comments = [];
     room.comments.unshift(newComment);
     saveData(data);
   }
+
   res.redirect(`/room/${req.params.id}?trade=${req.body.activeTrade}`);
 });
 

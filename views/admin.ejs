@@ -1,57 +1,101 @@
 <%- include('partials/header') %>
 
-<div class="space-y-6">
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+<div class="space-y-8">
+  <!-- Page Title & Create House Action -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-300 pb-4">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900">Site Management</h1>
-      <p class="text-sm text-slate-500">Configure trade details and manage site QR codes.</p>
     </div>
     
-    <!-- Create Room Form -->
-    <form action="/admin/rooms" method="POST" class="flex gap-2">
-      <input type="text" name="roomName" placeholder="e.g., Master Bath 202" required 
-        class="px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-      <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded shadow transition">
-        + Add Room
+    <!-- Create House (Main Folder) Form -->
+    <form action="/admin/houses" method="POST" class="flex gap-2">
+      <input type="text" name="houseName" placeholder="e.g. Villa Sunset (Folder)" required 
+        class="px-3 py-2 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+      <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-none shadow transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+        + Create House
       </button>
     </form>
   </div>
 
-  <!-- Rooms List -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <% rooms.forEach(room => { %>
-      <div class="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between">
-        <div class="p-5">
-          <div class="flex justify-between items-start mb-3">
-            <h2 class="text-lg font-bold text-slate-800"><%= room.name %></h2>
-            <span class="inline-block px-2 py-1 text-xs font-semibold rounded uppercase tracking-wide
-              <%= room.status === 'published' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' %>">
-              <%= room.status %>
-            </span>
-          </div>
+  <!-- Houses (Folders) List -->
+  <% if (houses && houses.length > 0) { %>
+    <div class="space-y-6">
+      <% houses.forEach(house => { %>
+        <div class="bg-white rounded-none border border-slate-300 shadow-sm overflow-hidden">
           
-          <p class="text-xs text-slate-500 mb-4"><%= room.trades.length %> Trade Tabs configured</p>
-          
-          <div class="flex flex-wrap gap-1 mb-4">
-            <% room.trades.forEach(trade => { %>
-              <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
-                <%= trade.name %>
-              </span>
-            <% }) %>
-          </div>
-        </div>
+          <!-- House (Folder) Header -->
+          <div class="bg-slate-900 text-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              <div>
+                <h2 class="text-lg font-bold tracking-wide"><%= house.name %></h2>
+                <p class="text-xs text-slate-400"><%= house.rooms.length %> Room Subfolder(s)</p>
+              </div>
+            </div>
 
-        <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 rounded-b-lg flex gap-2">
-          <a href="/admin/edit/<%= room.id %>" class="flex-1 text-center bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold py-2 px-3 rounded transition">
-            Edit Trades
-          </a>
-          <a href="/room/<%= room.id %>" target="_blank" class="flex-1 text-center bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2 px-3 rounded transition">
-            View Live Specs
-          </a>
+            <!-- Add Room to this House Form -->
+            <form action="/admin/houses/<%= house.id %>/rooms" method="POST" class="flex gap-2">
+              <input type="text" name="roomName" placeholder="New Room (e.g. Master Bath)" required 
+                class="px-2.5 py-1 text-xs text-slate-900 rounded-none focus:outline-none">
+              <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3 py-1 rounded-none transition">
+                + Add Room
+              </button>
+            </form>
+          </div>
+
+          <!-- Rooms (Subfolders) Grid -->
+          <div class="p-5">
+            <% if (house.rooms && house.rooms.length > 0) { %>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <% house.rooms.forEach(room => { %>
+                  <div class="bg-slate-50 border border-slate-200 rounded-none p-4 flex flex-col justify-between hover:border-amber-400 transition">
+                    <div>
+                      <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                          <h3 class="font-bold text-slate-800 text-sm"><%= room.name %></h3>
+                        </div>
+                        <span class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded-none uppercase tracking-wide
+                          <%= room.status === 'published' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' %>">
+                          <%= room.status %>
+                        </span>
+                      </div>
+
+                      <div class="flex flex-wrap gap-1 mb-3">
+                        <% room.trades.forEach(trade => { %>
+                          <span class="text-[10px] bg-white text-slate-600 px-1.5 py-0.5 rounded-none border border-slate-200">
+                            <%= trade.name %>
+                          </span>
+                        <% }) %>
+                      </div>
+                    </div>
+
+                    <div class="flex gap-2 pt-2 border-t border-slate-200">
+                      <a href="/admin/edit/<%= room.id %>" class="flex-1 text-center bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold py-1.5 rounded-none transition">
+                        Edit Files/Notes
+                      </a>
+                      <a href="/room/<%= room.id %>" target="_blank" class="flex-1 text-center bg-black hover:bg-slate-900 text-white text-xs font-semibold py-1.5 rounded-none transition">
+                        View Specs
+                      </a>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <p class="text-xs text-slate-400 italic">No room subfolders created in this house yet. Add one above.</p>
+            <% } %>
+          </div>
+
         </div>
-      </div>
-    <% }) %>
-  </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="text-center py-12 bg-white rounded-none border border-slate-300">
+      <p class="text-slate-500 text-sm">No house projects created yet. Start by adding a House folder above!</p>
+    </div>
+  <% } %>
 </div>
 
 <%- include('partials/footer') %>

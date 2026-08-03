@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= house.name %> | JobSite Specs</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#D0CBC4] text-slate-900 antialiased font-sans min-h-screen flex flex-col justify-between">
+
+  <!-- Public Brand Header Bar -->
+  <header class="bg-slate-900 text-white shadow-md">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11m0 0h4m-4 0H7" />
+        </svg>
+        <span class="font-bold text-sm tracking-wider uppercase text-slate-200">JobSite Specs</span>
+      </div>
+      <span class="text-xs text-slate-400">Client Portal</span>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="max-w-4xl mx-auto w-full px-4 py-8 space-y-6 flex-grow">
+    
+    <!-- House Header Card -->
+    <div class="bg-slate-900 text-white p-6 rounded-none shadow-sm flex items-center gap-4">
+      <div class="p-3 bg-amber-500/20 text-amber-400 rounded-none">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+      </div>
+      <div>
+        <span class="text-xs uppercase font-bold tracking-wider text-amber-400">Project Folder</span>
+        <h1 class="text-2xl font-extrabold"><%= house.name %></h1>
+        <p class="text-xs text-slate-400"><%= rooms.length %> Active Room Specifications</p>
+      </div>
+    </div>
+
+    <!-- Available Rooms Grid -->
+    <div>
+      <h2 class="text-sm font-bold text-slate-600 uppercase tracking-wider mb-4">Select Room Specs</h2>
+
+      <% if (rooms && rooms.length > 0) { %>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <% rooms.forEach(room => { %>
+            <a href="/room/<%= room.id %>" class="bg-white p-5 rounded-none border border-slate-200 shadow-sm hover:border-amber-500 hover:shadow transition group flex justify-between items-center">
+              <div>
+                <h3 class="font-bold text-slate-900 group-hover:text-amber-600 transition"><%= room.name %></h3>
+                <p class="text-xs text-slate-500 mt-1"><%= room.trades.length %> Trade Specs</p>
+              </div>
+              <span class="text-xs bg-slate-100 group-hover:bg-amber-100 group-hover:text-amber-800 text-slate-600 px-3 py-1.5 rounded-none font-semibold transition">
+                View Specs &rarr;
+              </span>
+            </a>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="bg-white p-8 rounded-none border border-slate-200 text-center">
+          <p class="text-slate-500 text-sm">No published room specifications available for this project yet.</p>
+        </div>
+      <% } %>
+    </div>
+  </main>
+
+  <!-- Public Footer -->
+  <footer class="bg-white border-t border-slate-300 py-4 mt-auto">
+    <div class="max-w-4xl mx-auto px-4 text-center text-xs text-slate-500">
+      &copy; 2026 Manu Romero Construction. All Rights Reserved.
+    </div>
+  </footer>
+
+</body>
+</html>
