@@ -3,212 +3,238 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= room.name %> | JobSite Specs</title>
-  <!-- Tailwind CSS via CDN -->
+  <title>Manu Romero Construction</title>
+  <!-- Tailwind via CDN + custom smoothness -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* subtle scroll & active indicator */
+    .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: #1e293b; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 0; }
+    .active-tab-indicator {
+      border-left: 3px solid #f59e0b;
+      background: #2d3a4f;
+    }
+    .tab-hover:hover {
+      background: #2d3a4f;
+      transition: 0.15s ease;
+    }
+    /* clean card style */
+    .pro-card {
+      border: 1px solid #e9e5e0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    body {
+      background: #f4f1ec;
+    }
+  </style>
 </head>
-<body class="bg-[#D0CBC4] text-slate-900 antialiased font-sans min-h-screen flex flex-col justify-between">
+<body class="min-h-screen flex flex-col font-sans text-slate-800 bg-[#f4f1ec]">
 
-  <!-- Public Brand Header Bar -->
-  <header class="bg-slate-900 text-white shadow-md">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11m0 0h4m-4 0H7" />
-        </svg>
-        <span class="font-bold text-sm tracking-wider uppercase text-slate-200">JobSite Specs</span>
-      </div>
-      <span class="text-xs text-slate-400">Client Portal</span>
-    </div>
-  </header>
+  <!-- ========== LAYOUT: SIDEBAR + MAIN ========== -->
+  <div class="flex flex-1 overflow-hidden">
 
-  <!-- Main Content Area -->
-  <main class="max-w-4xl mx-auto w-full px-4 py-6 space-y-6 flex-grow">
-
-    <!-- Parent House Navigation Bar -->
-    <% if (typeof house !== 'undefined' && house) { %>
-    <div class="bg-slate-900 text-white px-4 py-3 rounded-none flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-md">
-      <div class="flex items-center gap-2 text-xs">
-        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-        <span class="text-slate-400">Project:</span>
-        <a href="/house/<%= house.id %>" class="font-bold text-amber-400 hover:underline">
-          <%= house.name %>
-        </a>
+    <!-- ====== LEFT SIDEBAR (pro tabs + brand) ====== -->
+    <aside class="w-[220px] bg-slate-900 text-slate-300 flex flex-col shrink-0 h-screen sticky top-0 border-r border-slate-700/60">
+      
+      <!-- project context (house) -->
+      <div class="px-4 py-3 border-b border-slate-700/50 bg-slate-800/50">
+        <div class="text-[10px] uppercase text-slate-400 tracking-wider">Project</div>
+        <% if (typeof house !== 'undefined' && house) { %>
+        <div class="flex items-center justify-between mt-0.5">
+          <span class="text-sm font-semibold text-white truncate"><%= house.name %></span>
+        </div>
+        <% } else { %>
+        <span class="text-sm text-slate-400">—</span>
+        <% } %>
       </div>
 
-      <!-- Quick Switch Room Dropdown -->
-      <div class="flex items-center gap-2 text-xs w-full sm:w-auto">
-        <span class="text-slate-400 whitespace-nowrap">Switch Room:</span>
-        <select onchange="window.location.href=this.value"
-          class="bg-slate-800 text-white text-xs border border-slate-700 rounded-none px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500 w-full sm:w-auto">
-          <% (house.rooms || []).forEach(r => { %>
-          <option value="/room/<%= r.id %>" <%= r.id === room.id ? 'selected' : '' %>>
-            <%= r.name %>
-          </option>
-          <% }) %>
-        </select>
-      </div>
-    </div>
-    <% } %>
-
-    <!-- Room Title and QR Bar -->
-    <div class="bg-white p-5 rounded-none border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div>
-        <span class="inline-block px-2 py-0.5 text-xs font-bold rounded-none uppercase bg-emerald-100 text-emerald-800 mb-1">
-          Active Site Specs
-        </span>
-        <h1 class="text-2xl font-black text-slate-900 tracking-tight"><%= room.name %></h1>
-      </div>
-
-      <!-- QR Code & Share Trigger -->
-      <div class="flex items-center gap-3 bg-slate-50 p-2 rounded-none border border-slate-200">
-        <img src="<%= qrCodeUrl %>" alt="QR Code" class="w-16 h-16 rounded-none border border-slate-200 bg-white">
-        <div class="space-y-1">
-          <a href="<%= qrCodeUrl %>" download="QR-<%= room.id %>.png"
-            class="block text-center bg-black hover:bg-slate-800 text-white text-xs px-3 py-1 rounded-none transition">
-            Download QR
-          </a>
-          <button onclick="toggleShareModal()"
-            class="w-full text-center bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-1 rounded-none transition">
-            Share Room
-          </button>
+      <!-- room switcher (compact) -->
+      <div class="px-4 py-2.5 border-b border-slate-700/50 bg-slate-800/30">
+        <div class="flex items-center gap-1 text-xs text-slate-400">
+          <span class="uppercase tracking-wider">Room</span>
+          <select onchange="window.location.href=this.value" 
+            class="bg-slate-800 text-white text-xs border border-slate-600 rounded-none px-2 py-1 focus:ring-1 focus:ring-amber-500 outline-none w-full">
+            <% (typeof house !== 'undefined' && house && house.rooms || []).forEach(r => { %>
+            <option value="/room/<%= r.id %>" <%= r.id === room.id ? 'selected' : '' %>><%= r.name %></option>
+            <% }) %>
+          </select>
         </div>
       </div>
-    </div>
 
-    <!-- Responsive Trade Tabs Navigation -->
-    <div class="border-b border-slate-200 overflow-x-auto">
-      <nav class="flex space-x-2 pb-px">
+      <!-- ===== TRADE TABS (left nav, scrollable) ===== -->
+      <nav class="flex-1 overflow-y-auto sidebar-scroll py-2 space-y-0.5 px-2">
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 px-3 pt-2 pb-1.5">Trades</div>
         <% room.trades.forEach(trade => { %>
-        <a href="/room/<%= room.id %>?trade=<%= trade.id %>"
-          class="whitespace-nowrap px-4 py-2.5 text-sm font-bold rounded-none transition border-b-2 
-            <%= activeTrade === trade.id ? 'bg-white text-amber-600 border-amber-600 shadow-sm' : 'bg-slate-100 text-slate-600 border-transparent hover:bg-slate-200' %>">
+        <a href="/room/<%= room.id %>?trade=<%= trade.id %>" 
+          class="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-sm transition-all duration-150
+          <%= activeTrade === trade.id ? 'active-tab-indicator text-white bg-slate-800/60' : 'text-slate-400 tab-hover hover:text-slate-200' %>">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400/70 flex-shrink-0"></span>
           <%= trade.name %>
         </a>
         <% }) %>
+        <!-- extra spacer for scroll -->
+        <div class="h-4"></div>
       </nav>
-    </div>
 
-    <!-- Selected Trade Content -->
-    <% const currentTrade = room.trades.find(t => t.id === activeTrade) || room.trades[0]; %>
-
-    <% if (currentTrade) { %>
-    <div class="bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden">
-      <!-- Media Displays -->
-      <div class="grid grid-cols-1 md:grid-cols-2 border-b border-slate-200">
-        <!-- Render View -->
-        <div class="p-4 bg-slate-900 flex flex-col justify-center items-center min-h-[250px]">
-          <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">3D Visual / Render</span>
-          <% if (currentTrade.renderUrl) { %>
-          <img src="<%= currentTrade.renderUrl %>" class="max-h-72 object-contain rounded-none">
-          <% } else { %>
-          <p class="text-slate-500 text-xs">No visual attached for this trade</p>
-          <% } %>
+      <!-- footer actions (qr/share) -->
+      <div class="px-4 py-3 border-t border-slate-700/50 bg-slate-800/30 text-xs">
+        <div class="flex items-center justify-between gap-2">
+          <img src="<%= qrCodeUrl %>" alt="QR" class="w-10 h-10 border border-slate-600 bg-white object-contain">
+          <div class="flex gap-1">
+            <a href="<%= qrCodeUrl %>" download="QR-<%= room.id %>.png" 
+              class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 text-[10px] uppercase tracking-wider">QR</a>
+            <button onclick="toggleShareModal()" 
+              class="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 text-[10px] uppercase tracking-wider">Share</button>
+          </div>
         </div>
+      </div>
+    </aside>
 
-        <!-- Drawing/Plan View -->
-        <div class="p-4 bg-slate-100 flex flex-col justify-center items-center min-h-[250px] border-t md:border-t-0 md:border-l border-slate-200">
-          <span class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-2">Technical Drawing</span>
-          <% if (currentTrade.planUrl) { %>
-          <% if (currentTrade.planUrl.endsWith('.pdf')) { %>
-          <a href="<%= currentTrade.planUrl %>" target="_blank"
-            class="bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-none shadow hover:bg-slate-700">
-            Open Blueprint PDF
-          </a>
-          <% } else { %>
-          <img src="<%= currentTrade.planUrl %>" class="max-h-72 object-contain rounded-none border border-slate-300">
-          <% } %>
-          <% } else { %>
-          <p class="text-slate-400 text-xs">No technical drawing attached</p>
-          <% } %>
+    <!-- ====== MAIN CONTENT (scrollable) ====== -->
+    <main class="flex-1 overflow-y-auto h-screen px-6 py-6 bg-[#f4f1ec]">
+
+      <!-- room header (clean) -->
+      <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-wider">
+            <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 font-bold">Active spec</span>
+            <span class="text-slate-400">·</span>
+            <span><%= room.name %></span>
+          </div>
+          <h1 class="text-3xl font-black text-slate-900 tracking-tight mt-0.5"><%= room.name %></h1>
+        </div>
+        <!-- quick info -->
+        <div class="flex items-center gap-3 bg-white px-3 py-1.5 border border-slate-200 shadow-sm">
+          <span class="text-xs text-slate-500">Room ID</span>
+          <span class="text-xs font-mono text-slate-700"><%= room.id.slice(0,6) %></span>
         </div>
       </div>
 
-      <!-- Placement Notes Block -->
-      <div class="p-6">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Placement Notes & Instructions</h3>
-        <div class="bg-amber-50/50 border-l-4 border-amber-500 p-4 rounded-none text-slate-800 text-sm whitespace-pre-line leading-relaxed">
+      <!-- ===== TRADE CONTENT (selected) ===== -->
+      <% const currentTrade = room.trades.find(t => t.id === activeTrade) || room.trades[0]; %>
+      <% if (currentTrade) { %>
+
+      <!-- card: visual + drawing -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <!-- render -->
+        <div class="bg-white pro-card p-4 flex flex-col">
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">3D visual</span>
+          <div class="flex-1 bg-slate-900 flex items-center justify-center min-h-[180px] p-2 border border-slate-200">
+            <% if (currentTrade.renderUrl) { %>
+            <img src="<%= currentTrade.renderUrl %>" class="max-h-52 object-contain rounded-sm">
+            <% } else { %>
+            <span class="text-slate-400 text-xs">no visual</span>
+            <% } %>
+          </div>
+        </div>
+        <!-- drawing -->
+        <div class="bg-white pro-card p-4 flex flex-col">
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Technical drawing</span>
+          <div class="flex-1 bg-slate-50 flex items-center justify-center min-h-[180px] p-2 border border-slate-200">
+            <% if (currentTrade.planUrl) { %>
+              <% if (currentTrade.planUrl.endsWith('.pdf')) { %>
+              <a href="<%= currentTrade.planUrl %>" target="_blank" 
+                class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 text-xs font-semibold">📄 Open PDF</a>
+              <% } else { %>
+              <img src="<%= currentTrade.planUrl %>" class="max-h-52 object-contain border border-slate-300">
+              <% } %>
+            <% } else { %>
+            <span class="text-slate-400 text-xs">no drawing</span>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- notes card -->
+      <div class="bg-white pro-card p-5 mb-6">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <span class="w-1 h-4 bg-amber-400 block"></span> Placement notes
+        </h3>
+        <div class="mt-2 bg-amber-50/70 border-l-4 border-amber-400 p-4 text-sm text-slate-700 whitespace-pre-line leading-relaxed">
           <%= currentTrade.notes || 'No specific placement notes provided.' %>
         </div>
       </div>
-    </div>
-    <% } %>
 
-    <!-- Job Site Comments Section -->
-    <div class="bg-white p-6 rounded-none border border-slate-200 shadow-sm space-y-4">
-      <h3 class="text-md font-bold text-slate-900 border-b border-slate-100 pb-2">Field Notes & Comments</h3>
+      <% } %>
 
-      <!-- Post Comment Form -->
-      <form action="/room/<%= room.id %>/comment" method="POST" class="space-y-3">
-        <input type="hidden" name="activeTrade" value="<%= activeTrade %>">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <input type="text" name="author" placeholder="Your Name / Trade (e.g., HVAC Lead)" required
-            class="sm:col-span-1 text-sm p-2 border border-slate-300 rounded-none focus:ring-2 focus:ring-amber-500 focus:outline-none">
-          <input type="text" name="text" placeholder="Add field observation or question..." required
-            class="sm:col-span-2 text-sm p-2 border border-slate-300 rounded-none focus:ring-2 focus:ring-amber-500 focus:outline-none">
-        </div>
-        <button type="submit"
-          class="bg-black hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2 rounded-none transition">
-          Post Comment
-        </button>
-      </form>
+      <!-- ===== COMMENTS SECTION (scroll target) ===== -->
+      <div id="comments" class="bg-white pro-card p-5 mb-6">
+        <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          Field notes & comments
+        </h3>
 
-      <!-- Comments List -->
-      <div class="space-y-3 pt-2">
-        <% if (room.comments && room.comments.length > 0) { %>
-        <% room.comments.forEach(comment => { %>
-        <div class="p-3 bg-slate-50 rounded-none border border-slate-200 text-xs">
-          <div class="flex justify-between items-center mb-1">
-            <span class="font-bold text-slate-700"><%= comment.author %></span>
-            <span class="text-slate-400"><%= comment.timestamp %></span>
+        <!-- post form -->
+        <form action="/room/<%= room.id %>/comment" method="POST" class="mt-4 space-y-3">
+          <input type="hidden" name="activeTrade" value="<%= activeTrade %>">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <input type="text" name="author" placeholder="Your name / trade" required
+              class="text-sm p-2 border border-slate-300 focus:ring-2 focus:ring-amber-400 outline-none bg-slate-50">
+            <input type="text" name="text" placeholder="Add observation or question..." required
+              class="sm:col-span-2 text-sm p-2 border border-slate-300 focus:ring-2 focus:ring-amber-400 outline-none bg-slate-50">
           </div>
-          <p class="text-slate-600"><%= comment.text %></p>
+          <button type="submit" 
+            class="bg-slate-900 hover:bg-slate-700 text-white text-xs font-semibold px-5 py-2 transition">Post comment</button>
+        </form>
+
+        <!-- comment list -->
+        <div class="mt-5 space-y-3">
+          <% if (room.comments && room.comments.length > 0) { %>
+            <% room.comments.forEach(c => { %>
+            <div class="bg-slate-50 p-3 border border-slate-200 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-slate-700"><%= c.author %></span>
+                <span class="text-slate-400"><%= c.timestamp %></span>
+              </div>
+              <p class="text-slate-600 mt-0.5"><%= c.text %></p>
+            </div>
+            <% }) %>
+          <% } else { %>
+          <p class="text-xs text-slate-400 italic">No comments yet.</p>
+          <% } %>
         </div>
-        <% }) %>
-        <% } else { %>
-        <p class="text-xs text-slate-400 italic">No notes posted for this room yet.</p>
-        <% } %>
       </div>
-    </div>
 
-  </main>
+      <!-- tiny footer inside main -->
+      <div class="text-[10px] text-slate-400 border-t border-slate-200 pt-4 mt-4 flex justify-between">
+        <span>© 2026 Manu Romero Construction</span>
+        <span>v2 · pro sidebar</span>
+      </div>
 
-  <!-- Public Footer -->
-  <footer class="bg-white border-t border-slate-300 py-4 mt-auto">
-    <div class="max-w-4xl mx-auto px-4 text-center text-xs text-slate-500">
-      &copy; 2026 Manu Romero Construction. All Rights Reserved.
-    </div>
-  </footer>
+    </main>
+  </div>
 
-  <!-- Native Sharing Modal -->
-  <div id="shareModal"
-    class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-none p-6 max-w-sm w-full space-y-4 shadow-xl border border-slate-300">
-      <div class="flex justify-between items-center">
-        <h3 class="font-bold text-slate-900">Share Room Specifications</h3>
-        <button onclick="toggleShareModal()" class="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+  <!-- ===== SHARE MODAL (overlay) ===== -->
+  <div id="shareModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white max-w-sm w-full p-6 border border-slate-200 shadow-xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-900">Share room specs</h3>
+        <button onclick="toggleShareModal()" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <a href="https://api.whatsapp.com/send?text=<%= encodeURIComponent(roomUrl) %>" target="_blank"
-          class="bg-emerald-600 text-white text-center py-2 rounded-none text-xs font-semibold hover:bg-emerald-700">WhatsApp</a>
-        <a href="mailto:?subject=Job Site Specs: <%= room.name %>&body=<%= encodeURIComponent(roomUrl) %>"
-          class="bg-slate-700 text-white text-center py-2 rounded-none text-xs font-semibold hover:bg-slate-800">Email</a>
+        <a href="https://api.whatsapp.com/send?text=<%= encodeURIComponent(roomUrl) %>" target="_blank" 
+          class="bg-emerald-600 hover:bg-emerald-700 text-white text-center py-2 text-xs font-semibold">WhatsApp</a>
+        <a href="mailto:?subject=Job Site Specs: <%= room.name %>&body=<%= encodeURIComponent(roomUrl) %>" 
+          class="bg-slate-700 hover:bg-slate-800 text-white text-center py-2 text-xs font-semibold">Email</a>
         <a href="https://twitter.com/intent/tweet?url=<%= encodeURIComponent(roomUrl) %>" target="_blank"
-          class="bg-sky-500 text-white text-center py-2 rounded-none text-xs font-semibold hover:bg-sky-600">X / Twitter</a>
+          class="bg-sky-500 hover:bg-sky-600 text-white text-center py-2 text-xs font-semibold">X / Twitter</a>
         <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= encodeURIComponent(roomUrl) %>" target="_blank"
-          class="bg-blue-700 text-white text-center py-2 rounded-none text-xs font-semibold hover:bg-blue-800">LinkedIn</a>
+          class="bg-blue-700 hover:bg-blue-800 text-white text-center py-2 text-xs font-semibold">LinkedIn</a>
       </div>
     </div>
   </div>
 
   <script>
     function toggleShareModal() {
-      const modal = document.getElementById('shareModal');
-      modal.classList.toggle('hidden');
+      document.getElementById('shareModal').classList.toggle('hidden');
     }
+    // optional: close modal on outside click
+    document.getElementById('shareModal')?.addEventListener('click', function(e) {
+      if (e.target === this) toggleShareModal();
+    });
   </script>
 
 </body>
