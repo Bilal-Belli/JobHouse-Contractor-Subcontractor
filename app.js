@@ -3,36 +3,54 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const QRCode = require('qrcode');
+const session = require('express-session');
 
 const app = express();
 const DATA_FILE = path.join(__dirname, 'data', 'jobsite_data.json');
 
-// Middleware
+require('dotenv').config();
+
+// ==========================================
+// MIDDLEWARE SETUP
+// ==========================================
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// File Upload Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, 'public', 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+// Session Configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'fallback-secret-key-change-this-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 48, // 48 hours
+    httpOnly: true,  // Prevents client-side JS from accessing the cookie
+    secure: process.env.NODE_ENV === 'production' // Only send over HTTPS in production
   }
-});
-const upload = multer({ storage });
+}));
 
-// JSON Helpers
+// ==========================================
+// AUTHENTICATION MIDDLEWARE
+// ==========================================
+
+function requireAuth(req, res, next) {
+  if (req.session && req.session.isAdmin === true) {
+    return next();
+  }
+  res.redirect('/admin/login');
+}
+
+// ==========================================
+// HELPER FUNCTIONS
+// ==========================================
+
 function getData() {
   if (!fs.existsSync(DATA_FILE)) {
+    const dir = path.dirname(DATA_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(DATA_FILE, JSON.stringify({ houses: [] }, null, 2));
   }
   const rawData = fs.readFileSync(DATA_FILE);
@@ -45,13 +63,11 @@ function saveData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-// Helper: Search for a room AND its parent house across all folders
 function findRoomAndHouseById(data, roomId) {
   if (!data.houses || data.houses.length === 0) {
     return { room: null, house: null };
   }
 
-  // 1. Direct Search: Match room ID inside houses
   for (const house of data.houses) {
     if (house.rooms) {
       const room = house.rooms.find(r => r.id === roomId);
@@ -61,7 +77,6 @@ function findRoomAndHouseById(data, roomId) {
     }
   }
 
-  // 2. Fallback Search: Extract house prefix from room ID (e.g. "villa-a-kitchen" -> "villa-a")
   for (const house of data.houses) {
     if (roomId.startsWith(house.id)) {
       const room = house.rooms ? house.rooms.find(r => r.id === roomId) : null;
@@ -74,20 +89,116 @@ function findRoomAndHouseById(data, roomId) {
   return { room: null, house: null };
 }
 
-// Helper: Simple room search
 function findRoomById(data, roomId) {
   const { room } = findRoomAndHouseById(data, roomId);
   return room;
 }
 
+// Helper: Delete physical file from disk using web URL
+function deleteFileFromDisk(webUrl) {
+  if (!webUrl || typeof webUrl !== 'string') return;
+  const relativePath = webUrl.startsWith('/') ? webUrl.substring(1) : webUrl;
+  const filePath = path.join(__dirname, 'public', relativePath);
+
+  if (fs.existsSync(filePath)) {
+    try {
+      fs.unlinkSync(filePath);
+    } catch (err) {
+      console.error(`Failed to delete file from disk: ${filePath}`, err);
+    }
+  }
+}
+
 // ==========================================
-// ADMIN ROUTES
+// FILE UPLOAD CONFIGURATION
 // ==========================================
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const data = getData();
+    const { roomId } = req.params;
+    const { room, house } = findRoomAndHouseById(data, roomId);
+
+    const houseFolder = house ? house.id : 'unassigned';
+    const roomFolder = room ? room.id : roomId;
+
+    const uploadDir = path.join(__dirname, 'public', 'uploads', houseFolder, roomFolder);
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
+
+// ==========================================
+// AUTH ROUTES (Unprotected)
+// ==========================================
+
+app.get('/admin/login', (req, res) => {
+  if (req.session && req.session.isAdmin) {
+    return res.redirect('/admin');
+  }
+  res.render('login', { error: null });
+});
+
+app.post('/admin/login', (req, res) => {
+  const { username, password } = req.body;
+
+  const ADMIN_USER = process.env.ADMIN_USER;
+  const ADMIN_PASS = process.env.ADMIN_PASS;
+
+  // Check if credentials exist in environment
+  if (!ADMIN_USER || !ADMIN_PASS) {
+    console.error('ERROR: ADMIN_USER or ADMIN_PASS not set in environment variables');
+    return res.render('login', { error: 'System configuration error. Please contact administrator.' });
+  }
+
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    req.session.isAdmin = true;
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.render('login', { error: 'Login failed. Please try again.' });
+      }
+      return res.redirect('/admin');
+    });
+  } else {
+    return res.render('login', { error: 'Invalid username or password.' });
+  }
+});
+
+app.get('/admin/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Logout error:', err);
+    }
+    res.redirect('/admin/login');
+  });
+});
+
+// ==========================================
+// PROTECTED ADMIN ROUTES
+// ==========================================
+
+// Apply authentication middleware to ALL /admin routes EXCEPT login
+app.use('/admin', (req, res, next) => {
+  // Skip auth for login routes
+  if (req.path === '/login' || req.path === '/login/' || (req.method === 'POST' && req.path === '/login')) {
+    return next();
+  }
+  requireAuth(req, res, next);
+});
 
 // 1. Admin Dashboard
 app.get('/admin', (req, res) => {
   const data = getData();
-  res.render('admin', { houses: data.houses });
+  res.render('admin', { houses: data.houses || [] });
 });
 
 // 2. Create House
@@ -152,7 +263,7 @@ app.post('/admin/edit/:roomId/save', upload.fields([
   const { roomId } = req.params;
   const { tradeId, notes } = req.body;
 
-  const room = findRoomById(data, roomId);
+  const { room, house } = findRoomAndHouseById(data, roomId);
   if (!room) return res.status(404).send('Room not found');
 
   const trade = room.trades.find(t => t.id === tradeId);
@@ -160,12 +271,17 @@ app.post('/admin/edit/:roomId/save', upload.fields([
 
   trade.notes = notes || '';
 
+  const houseFolder = house ? house.id : 'unassigned';
+
   if (req.files) {
     if (req.files.render && req.files.render[0]) {
-      trade.renderUrl = `/uploads/${req.files.render[0].filename}`;
+      if (trade.renderUrl) deleteFileFromDisk(trade.renderUrl);
+      trade.renderUrl = `/uploads/${houseFolder}/${room.id}/${req.files.render[0].filename}`;
     }
+
     if (req.files.plan && req.files.plan[0]) {
-      trade.planUrl = `/uploads/${req.files.plan[0].filename}`;
+      if (trade.planUrl) deleteFileFromDisk(trade.planUrl);
+      trade.planUrl = `/uploads/${houseFolder}/${room.id}/${req.files.plan[0].filename}`;
     }
   }
 
@@ -206,6 +322,12 @@ app.post('/admin/edit/:roomId/delete-trade/:tradeId', (req, res) => {
   const room = findRoomById(data, req.params.roomId);
 
   if (room) {
+    const tradeToDelete = room.trades.find(t => t.id === req.params.tradeId);
+    if (tradeToDelete) {
+      if (tradeToDelete.renderUrl) deleteFileFromDisk(tradeToDelete.renderUrl);
+      if (tradeToDelete.planUrl) deleteFileFromDisk(tradeToDelete.planUrl);
+    }
+
     room.trades = room.trades.filter(t => t.id !== req.params.tradeId);
     saveData(data);
     return res.redirect(`/admin/edit/${room.id}`);
@@ -227,21 +349,18 @@ app.post('/admin/toggle-publish/:id', (req, res) => {
 });
 
 // ==========================================
-// PUBLIC VIEW ROUTES
+// PUBLIC VIEW ROUTES (Unprotected)
 // ==========================================
 
-// Public House Folder Overview
 app.get('/house/:id', (req, res) => {
   const data = getData();
   const house = data.houses.find(h => h.id === req.params.id);
 
   if (!house) return res.status(404).send('House project not found');
 
-  // Display all rooms in the house
   res.render('house', { house, rooms: house.rooms || [] });
 });
 
-// Public Room Viewer
 app.get('/room/:id', async (req, res) => {
   const data = getData();
   const { room, house } = findRoomAndHouseById(data, req.params.id);
@@ -254,14 +373,13 @@ app.get('/room/:id', async (req, res) => {
 
   res.render('room', {
     room,
-    house: house || null, // Guaranteed house reference
+    house: house || null,
     activeTrade,
     qrCodeUrl,
     roomUrl
   });
 });
 
-// Public Comments
 app.post('/room/:id/comment', (req, res) => {
   const data = getData();
   const room = findRoomById(data, req.params.id);
@@ -280,5 +398,16 @@ app.post('/room/:id/comment', (req, res) => {
   res.redirect(`/room/${req.params.id}?trade=${req.body.activeTrade}`);
 });
 
+// 404 handler
+app.use((req, res) => {
+  res.status(404).render('404');
+});
+
+// ==========================================
+// START SERVER
+// ==========================================
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Job Site Server running on http://localhost:${PORT}/admin`));
+app.listen(PORT, () => {
+  console.log(`Admin panel: http://localhost:${PORT}/admin`);
+});
