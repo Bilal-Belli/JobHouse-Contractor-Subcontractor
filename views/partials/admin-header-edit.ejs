@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Admin Panel</title>
+        <!-- Tailwind CSS via CDN -->
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+
+    <body class="bg-[#D0CBC4] text-slate-900 antialiased font-serif flex flex-col min-h-screen">
+        <header class="bg-[#D0CBC4] text-white shadow-md flex-shrink-0 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+
+                <!-- LEFT: Logo & App Title -->
+                <a href="/admin"
+                    class="flex items-center space-x-3 text-white hover:text-amber-400 transition-colors shrink-0">
+                    <!-- <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center font-bold text-slate-900 shadow-inner overflow-hidden shrink-0"> -->
+                        <!-- <img src="/logo.png" alt="Logo" class="w-full h-full object-cover"> -->
+                    <!-- </div> -->
+                    <div class="leading-tight">
+                        <span class="text-[#000000] text-lg font-bold tracking-wide block font-sans">Manu Romero Construction</span>
+                    </div>
+                </a>
+
+                <!-- RIGHT: Logout Action -->
+                <div class="flex items-center space-x-3 shrink-0">
+                    <a href="/admin" title="Sign out of Admin Portal"
+                        class="inline-flex items-center space-x-2 bg-slate-800 hover:bg-green-600 text-slate-300 hover:text-white px-3 py-2 text-sm font-sans font-medium transition-all">
+                        <span class="hidden sm:inline">Back to Dashboard</span>
+                    </a>
+
+                    <a href="/admin/logout" title="Sign out of Admin Portal"
+                        class="inline-flex items-center space-x-2 bg-slate-800 hover:bg-red-600/80 text-slate-300 hover:text-white px-3 py-2 text-sm font-sans font-medium transition-all shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                        <span class="hidden sm:inline">Logout</span>
+                    </a>
+                </div>
+
+            </div>
+        </header>
+
+        <script>
+            function logoutAdmin() {
+                if (confirm('Are you sure you want to log out of the Admin portal?')) {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', '/admin', true, 'logout', 'logout');
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            window.location.href = '/';
+                        }
+                    };
+                    xhr.send();
+                }
+            }
+        </script>
