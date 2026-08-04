@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>JobSite Specs Admin</title>
+        <!-- Tailwind CSS via CDN -->
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+
+    <body class="bg-[#D0CBC4] text-slate-900 antialiased font-serif flex flex-col min-h-screen">
+        <header class="bg-slate-900 text-white shadow-md flex-shrink-0 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+
+                <!-- LEFT: Logo & App Title -->
+                <a href="/admin"
+                    class="flex items-center space-x-3 text-white hover:text-amber-400 transition-colors shrink-0">
+                    <!-- Logo Placeholder: Replace the SVG or <img> tag below with your actual logo -->
+                    <div
+                        class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center font-bold text-slate-900 shadow-inner overflow-hidden shrink-0">
+                        <!-- Sample Inline SVG Icon (Replace with <img src="/logo.png" alt="Logo" class="w-full h-full object-cover">) -->
+                        <svg class="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11m0 0T9 7m3 4l3-4">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="leading-tight">
+                        <span class="text-lg font-bold tracking-wide block font-sans">JobSite<span
+                                class="text-amber-400">Specs</span></span>
+                        <span class="text-xs text-slate-400 font-sans tracking-wider uppercase block">Admin
+                            Portal</span>
+                    </div>
+                </a>
+
+                <!-- CENTER: Live House Search Bar -->
+                <div class="flex-1 max-w-md mx-auto">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="houseSearchInput" onkeyup="filterHouses()"
+                            placeholder="Search houses or rooms..."
+                            class="w-full pl-9 pr-4 py-2 text-sm bg-slate-800 text-slate-100 placeholder-slate-400 rounded-md border border-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all font-sans">
+                    </div>
+                </div>
+
+                <!-- RIGHT: Logout Action -->
+                <!-- RIGHT: Logout Action -->
+                <div class="flex items-center space-x-3 shrink-0">
+                    <a href="/admin/logout" title="Sign out of Admin Portal"
+                        class="inline-flex items-center space-x-2 bg-slate-800 hover:bg-red-600/80 text-slate-300 hover:text-white px-3 py-2 rounded-md text-sm font-sans font-medium border border-slate-700 hover:border-red-500 transition-all shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                        <span class="hidden sm:inline">Logout</span>
+                    </a>
+                </div>
+
+            </div>
+        </header>
+
+        <!-- Client-side helper script for search filter and Basic Auth logout -->
+        <script>
+            // 1. Client-side Live Search Filter
+            function filterHouses() {
+                const query = document.getElementById('houseSearchInput').value.toLowerCase().trim();
+                const houseCards = document.querySelectorAll('[data-house-card]');
+
+                houseCards.forEach(houseCard => {
+                    const houseName = (houseCard.getAttribute('data-house-name') || '').toLowerCase();
+                    const houseMatches = houseName.includes(query);
+
+                    const roomCards = houseCard.querySelectorAll('[data-room-card]');
+                    let matchingRoomCount = 0;
+
+                    roomCards.forEach(roomCard => {
+                        const roomName = (roomCard.getAttribute('data-room-name') || '').toLowerCase();
+                        const roomMatches = roomName.includes(query);
+
+                        if (houseMatches || roomMatches) {
+                            roomCard.style.display = '';
+                            matchingRoomCount++;
+                        } else {
+                            roomCard.style.display = 'none';
+                        }
+                    });
+
+                    // If either the house name matches or at least one room inside matches, show the house block
+                    if (houseMatches || matchingRoomCount > 0 || query === '') {
+                        houseCard.style.display = '';
+                    } else {
+                        houseCard.style.display = 'none';
+                    }
+                });
+            }
+
+            // 2. HTTP Basic Auth Logout Workaround
+            // Sending invalid credentials forces the browser to drop the cached Basic Auth token
+            function logoutAdmin() {
+                if (confirm('Are you sure you want to log out of the Admin portal?')) {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', '/admin', true, 'logout', 'logout');
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            window.location.href = '/';
+                        }
+                    };
+                    xhr.send();
+                }
+            }
+        </script>
+
+        <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
