@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 const multer = require('multer');
 const QRCode = require('qrcode');
 const session = require('express-session');
@@ -20,10 +21,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use((req, res, next) => {
-    res.locals.baseUrl = `${req.protocol}://${req.get('host')}`;
-    res.locals.currentPath = req.path;
-    res.locals.isAdmin = req.session && req.session.isAdmin === true;
-    next();
+  res.locals.baseUrl = `${req.protocol}://${req.get('host')}`;
+  res.locals.currentPath = req.path;
+  res.locals.isAdmin = req.session && req.session.isAdmin === true;
+  next();
 });
 
 // Session Configuration
@@ -155,43 +156,8 @@ function deleteFileFromDisk(webUrl) {
 // FILE UPLOAD CONFIGURATION
 // ==========================================
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const data = getData(); // or load your json data
-
-    // 1. Try req.params.id first, or parse it directly from req.url
-    let roomId = req.params && (req.params.id || req.params.roomId);
-
-    if (!roomId && req.url) {
-      // Regex matches /admin/edit/:roomId/save or /admin/rooms/:roomId etc.
-      const match = req.url.match(/\/(?:edit|rooms|room)\/([^\/]+)/);
-      if (match) {
-        roomId = match[1];
-      }
-    }
-
-    // 2. Fetch house & room safely
-    const { room, house } = findRoomAndHouseById(data, roomId);
-
-    // 3. Fall back to generic paths if room or house isn't found
-    const houseFolder = house ? house.id : 'default-house';
-    const roomFolder = room ? room.id : (roomId || 'general');
-
-    const dir = path.join(__dirname, 'public', 'uploads', houseFolder, roomFolder);
-
-    // Create folder structure dynamically
-    fs.mkdirSync(dir, { recursive: true });
-
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 1024 * 1024 * 1024 // 1GB limit
   }
@@ -202,6 +168,26 @@ function getFileType(mimetype) {
   if (mimetype === 'application/pdf') return 'pdf';
   if (mimetype.startsWith('application/') || mimetype.startsWith('text/')) return 'document';
   return 'other';
+}
+
+async function saveUploadedFile(file, houseFolder, roomFolder) {
+  const dir = path.join(__dirname, 'public', 'uploads', houseFolder, roomFolder);
+  fs.mkdirSync(dir, { recursive: true });
+
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+
+  if (file.mimetype.startsWith('image/')) {
+    const filename = uniqueSuffix + '.jpg';
+    await sharp(file.buffer)
+      .resize({ width: 1920, withoutEnlargement: true })
+      .jpeg({ quality: 75 })
+      .toFile(path.join(dir, filename));
+    return { filename, mimetype: 'image/jpeg' };
+  } else {
+    const filename = uniqueSuffix + path.extname(file.originalname);
+    fs.writeFileSync(path.join(dir, filename), file.buffer);
+    return { filename, mimetype: file.mimetype };
+  }
 }
 
 // ==========================================
@@ -492,7 +478,7 @@ app.post('/admin/edit/:roomId/save', upload.fields([
   { name: 'render', maxCount: 1 },
   { name: 'plan', maxCount: 1 },
   { name: 'files', maxCount: 20 }
-]), (req, res) => {
+]), async (req, res) => {
   try {
     const data = getData();
     const { roomId } = req.params;
@@ -513,27 +499,29 @@ app.post('/admin/edit/:roomId/save', upload.fields([
     if (req.files) {
       if (req.files.render && req.files.render[0]) {
         if (trade.renderUrl) deleteFileFromDisk(trade.renderUrl);
-        trade.renderUrl = `/uploads/${houseFolder}/${room.id}/${req.files.render[0].filename}`;
+        const saved = await saveUploadedFile(req.files.render[0], houseFolder, room.id);
+        trade.renderUrl = `/uploads/${houseFolder}/${room.id}/${saved.filename}`;
       }
 
       if (req.files.plan && req.files.plan[0]) {
         if (trade.planUrl) deleteFileFromDisk(trade.planUrl);
-        trade.planUrl = `/uploads/${houseFolder}/${room.id}/${req.files.plan[0].filename}`;
+        const saved = await saveUploadedFile(req.files.plan[0], houseFolder, room.id);
+        trade.planUrl = `/uploads/${houseFolder}/${room.id}/${saved.filename}`;
       }
 
       if (req.files.files && req.files.files.length > 0) {
-        req.files.files.forEach(file => {
-          const fileUrl = `/uploads/${houseFolder}/${room.id}/${file.filename}`;
+        for (const file of req.files.files) {
+          const saved = await saveUploadedFile(file, houseFolder, room.id);
           trade.files.push({
-            url: fileUrl,
+            url: `/uploads/${houseFolder}/${room.id}/${saved.filename}`,
             originalName: file.originalname,
-            filename: file.filename,
-            type: getFileType(file.mimetype),
-            mimetype: file.mimetype,
-            size: file.size,
+            filename: saved.filename,
+            type: getFileType(saved.mimetype),
+            mimetype: saved.mimetype,
+            size: fs.statSync(path.join(__dirname, 'public', 'uploads', houseFolder, room.id, saved.filename)).size,
             uploadedAt: new Date().toISOString()
           });
-        });
+        }
       }
     }
 
@@ -776,7 +764,7 @@ app.get('/room/:id', async (req, res) => {
   }
 });
 
-app.post('/room/:id/comment', upload.array('attachments', 10), (req, res) => {
+app.post('/room/:id/comment', upload.array('attachments', 10), async (req, res) => {
   try {
     const data = getData();
     const { room, house } = findRoomAndHouseById(data, req.params.id);
@@ -788,20 +776,22 @@ app.post('/room/:id/comment', upload.array('attachments', 10), (req, res) => {
 
     // Process uploaded attachments (if any)
     if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        const fileUrl = `/uploads/${houseFolder}/${room.id}/${file.filename}`;
+      for (const file of req.files) {
+        const saved = await saveUploadedFile(file, houseFolder, room.id);
+        const filePath = path.join(__dirname, 'public', 'uploads', houseFolder, room.id, saved.filename);
+
         attachments.push({
-          url: fileUrl,
+          url: `/uploads/${houseFolder}/${room.id}/${saved.filename}`,
           originalName: file.originalname,
-          filename: file.filename,
-          type: file.mimetype, // Saved as raw mimetype (e.g. image/jpeg, application/pdf)
-          size: file.size
+          filename: saved.filename,
+          type: saved.mimetype, // image/jpeg for compressed images, original mimetype otherwise
+          size: fs.statSync(filePath).size
         });
-      });
+      }
     }
 
     const newComment = {
-      id: Date.now().toString(), // Adding an ID makes deleting/managing comments easier later
+      id: Date.now().toString(),
       author: req.body.author || 'Anonymous Trade',
       text: req.body.text,
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
@@ -813,7 +803,6 @@ app.post('/room/:id/comment', upload.array('attachments', 10), (req, res) => {
 
     saveData(data);
 
-    // Maintain trade tab selection upon redirect
     const activeTrade = req.body.activeTrade || '';
     res.redirect(`/room/${req.params.id}${activeTrade ? `?trade=${activeTrade}` : ''}`);
   } catch (err) {

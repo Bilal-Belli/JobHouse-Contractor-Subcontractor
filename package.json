@@ -121,6 +121,7 @@
     "serve-static": "^1.16.3",
     "set-blocking": "^2.0.0",
     "setprototypeof": "^1.2.0",
+    "sharp": "^0.35.3",
     "side-channel": "^1.1.1",
     "side-channel-list": "^1.0.1",
     "side-channel-map": "^1.0.1",
