@@ -96,8 +96,7 @@
 
       <!-- Main Form -->
       <form action="/admin/edit/<%= room.id %>/save" method="POST" enctype="multipart/form-data"
-        class="space-y-4 sm:space-y-5"
-        onsubmit="const btn = this.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Saving...'; return true;">
+        class="space-y-4 sm:space-y-5" onsubmit="showLoading(); return true;">
         <input type="hidden" name="tradeId" value="<%= activeTrade.id %>">
 
         <!-- Legacy Single Upload Fields -->
@@ -486,34 +485,9 @@
 </script>
 
 <script>
-  // ===== LOADING OVERLAY =====
-  function showLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-      overlay.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    }
-  }
-
-  function hideLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-      overlay.classList.add('hidden');
-      document.body.style.overflow = '';
-    }
-  }
-
-  // Show loading when Save Draft button is clicked
-  document.addEventListener('DOMContentLoaded', function () {
-    const saveBtn = document.querySelector('button[type="submit"]');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', function (e) {
-        // Check if this button contains "Save" text
-        if (this.textContent.trim().includes('Save')) {
-          showLoading();
-        }
-      });
-    }
+  // Show loading when form submits
+  document.querySelector('form[action*="/save"]')?.addEventListener('submit', function (e) {
+    showLoading();
   });
 
   // Hide loading when page loads

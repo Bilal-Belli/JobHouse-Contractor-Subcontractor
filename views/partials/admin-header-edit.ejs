@@ -78,3 +78,40 @@
                 }
             }
         </script>
+
+        <script>
+            // ===== LOADING OVERLAY =====
+            function showLoading() {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    overlay.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+
+            function hideLoading() {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    overlay.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            }
+
+            // Show loading when Save Draft button is clicked
+            document.addEventListener('DOMContentLoaded', function () {
+                const saveBtn = document.querySelector('button[type="submit"]');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', function (e) {
+                        // Check if this button contains "Save" text
+                        if (this.textContent.trim().includes('Save')) {
+                            showLoading();
+                        }
+                    });
+                }
+            });
+
+            // Hide loading when page loads
+            window.addEventListener('load', function () {
+                hideLoading();
+            });
+        </script>
