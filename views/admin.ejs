@@ -2,7 +2,7 @@
 
 <div class="space-y-8">
   <!-- Page Title & Create House Action -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-300 pb-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
     <div>
       <h1 class="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
       <p class="text-xs text-slate-600">Manage houses, rooms, and trade specifications</p>
@@ -10,7 +10,7 @@
 
     <!-- Create House (Main Folder) Form -->
     <form action="/admin/houses" method="POST" class="flex gap-2">
-      <input type="text" name="houseName" placeholder="e.g. Villa Sunset (Folder)" required
+      <input type="text" name="houseName" placeholder="e.g. Villa Sunset" required
         class="px-3 py-2 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
       <button type="submit"
         class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-none shadow transition flex items-center gap-1.5">
@@ -55,7 +55,7 @@
         <div class="flex gap-2">
           <!-- Add Room to this House Form -->
           <form action="/admin/houses/<%= house.id %>/rooms" method="POST" class="flex gap-2">
-            <input type="text" name="roomName" placeholder="New Room (e.g. Master Bath)" required
+            <input type="text" name="roomName" placeholder="New Room" required
               class="px-2.5 py-1 text-xs text-slate-900 rounded-none focus:outline-none">
             <button type="submit"
               class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3 py-1 rounded-none transition">
@@ -64,9 +64,9 @@
           </form>
           <!-- Delete House Form -->
           <form id="delete-house-form-<%= house.id %>" action="/admin/houses/<%= house.id %>/delete" method="POST">
-            <button type="button" 
-              onclick="openHouseDeleteModal('<%= house.id %>', '<%= house.name %>')"
-              class="text-slate-400 hover:text-red-500 text-xl leading-none px-1 transition" title="Delete House">×</button>
+            <button type="button" onclick="openHouseDeleteModal('<%= house.id %>', '<%= house.name %>')"
+              class="text-slate-400 hover:text-red-500 text-xl leading-none px-1 transition"
+              title="Delete House">×</button>
           </form>
         </div>
       </div>
@@ -116,22 +116,21 @@
 
             <!-- ROOM ACTION BUTTONS (3-BUTTON ROW) -->
             <div class="flex gap-1.5 pt-2 border-t border-slate-200">
-              <!-- DELETE ROOM BUTTON -->
-              <form id="delete-room-form-<%= room.id %>" action="/admin/rooms/<%= room.id %>/delete" method="POST" class="flex-1 flex">
-                <button type="button"
-                  onclick="openRoomDeleteModal('<%= room.id %>', '<%= room.name %>')"
+              <a href="/room/<%= room.id %>" target="_blank"
+                class="flex-1 text-center bg-black hover:bg-slate-900 text-white text-xs font-semibold py-1.5 rounded-none transition">
+                Deal
+              </a>
+              <a href="/admin/edit/<%= room.id %>"
+                class="flex-1 text-center bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold py-1.5 rounded-none transition">
+                Edit
+              </a>
+              <form id="delete-room-form-<%= room.id %>" action="/admin/rooms/<%= room.id %>/delete" method="POST"
+                class="flex-1 flex">
+                <button type="button" onclick="openRoomDeleteModal('<%= room.id %>', '<%= room.name %>')"
                   class="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-semibold py-1.5 rounded-none transition">
                   Delete
                 </button>
               </form>
-              <a href="/admin/edit/<%= room.id %>"
-                class="flex-1 text-center bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold py-1.5 rounded-none transition">
-                Edit Files
-              </a>
-              <a href="/room/<%= room.id %>" target="_blank"
-                class="flex-1 text-center bg-black hover:bg-slate-900 text-white text-xs font-semibold py-1.5 rounded-none transition">
-                View Specs
-              </a>
             </div>
           </div>
           <% }) %>
@@ -154,13 +153,14 @@
 <!-- ========================================== -->
 <!-- UNIFIED TAILWIND DELETE CONFIRMATION MODAL -->
 <!-- ========================================== -->
-<div id="deleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+<div id="deleteModal"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
   <div class="bg-white border border-slate-300 shadow-2xl max-w-md w-full p-6 space-y-4 rounded-none mx-4">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       </div>
       <div>
@@ -234,7 +234,7 @@
       if (!newValue || newValue === originalValue) return;
 
       const form = input.closest('form');
-      
+
       try {
         const response = await fetch(form.action, {
           method: 'POST',
