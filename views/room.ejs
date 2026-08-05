@@ -1,627 +1,700 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manu Romero Construction</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* scrollbar styles */
-        .sidebar-scroll::-webkit-scrollbar {
-            width: 4px;
-        }
-        .sidebar-scroll::-webkit-scrollbar-track {
-            background: #1e293b;
-        }
-        .sidebar-scroll::-webkit-scrollbar-thumb {
-            background: #D0CBC4;
-            border-radius: 0;
-        }
-        .active-tab-indicator {
-            border-left: 3px solid #D0CBC4;
-            background: #2d3a4f;
-        }
-        .tab-hover:hover {
-            background: #2d3a4f;
-            transition: 0.15s ease;
-        }
-        .pro-card {
-            border: 1px solid #e9e5e0;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-        }
-        body {
-            background: #f4f1ec;
-        }
-        .file-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 0.75rem;
-        }
-        .file-item {
-            background: white;
-            border: 1px solid #e9e5e0;
-            padding: 0.5rem;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        .file-item:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transform: translateY(-2px);
-            border-color: #D0CBC4;
-        }
-        .file-item img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            background: #f8f6f4;
-            pointer-events: none;
-        }
-        .file-item .file-icon {
-            width: 100%;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f8f6f4;
-            font-size: 2.5rem;
-            pointer-events: none;
-        }
-        .file-item .file-name {
-            font-size: 0.65rem;
-            color: #475569;
-            margin-top: 0.25rem;
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            text-align: center;
-        }
-        .file-item .file-size {
-            font-size: 0.6rem;
-            color: #94a3b8;
-            text-align: center;
-            display: block;
-        }
-        #filePreviewModal {
-            backdrop-filter: blur(6px);
-        }
-        #filePreviewModal .preview-content {
-            max-height: 90vh;
-            max-width: 95vw;
-            min-width: 320px;
-            min-height: 200px;
-        }
-        #filePreviewModal img.preview-image {
-            max-height: 85vh;
-            max-width: 100%;
-            object-fit: contain;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-        }
-        #filePreviewModal iframe.preview-pdf {
-            width: 90vw;
-            height: 85vh;
-            border: none;
-            background: #fff;
-        }
-        .preview-trigger {
-            cursor: pointer;
-            transition: opacity 0.15s;
-        }
-        .preview-trigger:hover {
-            opacity: 0.92;
-        }
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Manu Romero Construction</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            /* scrollbar styles */
+            .sidebar-scroll::-webkit-scrollbar {
+                width: 4px;
+            }
 
-        /* ===== RESPONSIVE FIXES ===== */
-        
-        /* Hide sidebar on mobile by default */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -100%;
-            width: 280px;
-            height: 100vh;
-            z-index: 1000;
-            transition: left 0.3s ease;
-            overflow-y: auto;
-        }
-        
-        .sidebar.open {
-            left: 0;
-        }
-        
-        /* Overlay for mobile */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-        
-        .sidebar-overlay.active {
-            display: block;
-        }
-        
-        /* Hamburger button */
-        .hamburger-btn {
-            display: none;
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            z-index: 1001;
-            background: #000;
-            color: white;
-            border: none;
-            padding: 10px 14px;
-            cursor: pointer;
-            font-size: 20px;
-            border-radius: 4px;
-        }
-        
-        /* Show hamburger and hide sidebar on mobile */
-        @media (max-width: 768px) {
-            .hamburger-btn {
+            .sidebar-scroll::-webkit-scrollbar-track {
+                background: #1e293b;
+            }
+
+            .sidebar-scroll::-webkit-scrollbar-thumb {
+                background: #D0CBC4;
+                border-radius: 0;
+            }
+
+            .active-tab-indicator {
+                border-left: 3px solid #D0CBC4;
+                background: #c5beb6;
+            }
+
+            .tab-hover:hover {
+                background: #c5beb6;
+                transition: 0.15s ease;
+            }
+
+            .pro-card {
+                border: 1px solid #e9e5e0;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            }
+
+            body {
+                background: #f4f1ec;
+            }
+
+            .file-gallery {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 0.75rem;
+            }
+
+            .file-item {
+                background: white;
+                border: 1px solid #e9e5e0;
+                padding: 0.5rem;
+                transition: all 0.2s;
+                cursor: pointer;
+            }
+
+            .file-item:hover {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                transform: translateY(-2px);
+                border-color: #D0CBC4;
+            }
+
+            .file-item img {
+                width: 100%;
+                height: 100px;
+                object-fit: cover;
+                background: #f8f6f4;
+                pointer-events: none;
+            }
+
+            .file-item .file-icon {
+                width: 100%;
+                height: 100px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #f8f6f4;
+                font-size: 2.5rem;
+                pointer-events: none;
+            }
+
+            .file-item .file-name {
+                font-size: 0.65rem;
+                color: #475569;
+                margin-top: 0.25rem;
+                display: block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                text-align: center;
+            }
+
+            .file-item .file-size {
+                font-size: 0.6rem;
+                color: #94a3b8;
+                text-align: center;
                 display: block;
             }
-            
-            .sidebar {
-                display: block !important;
+
+            #filePreviewModal {
+                backdrop-filter: blur(6px);
+                z-index: 9999;
             }
-            
-            /* Main content gets full width */
-            .main-content {
-                padding-left: 12px !important;
-                padding-right: 12px !important;
-                padding-top: 70px !important;
-                width: 100% !important;
-                max-width: 100% !important;
+
+            #filePreviewModal .preview-content {
+                max-height: 90vh;
+                max-width: 95vw;
+                min-width: 320px;
+                min-height: 200px;
             }
-            
-            /* Stack grids on mobile */
-            .grid-cols-1.md\:grid-cols-2 {
-                grid-template-columns: 1fr !important;
+
+            #filePreviewModal img.preview-image {
+                max-height: 85vh;
+                max-width: 100%;
+                object-fit: contain;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
             }
-            
-            /* Smaller file gallery items */
-            .file-gallery {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
-                gap: 8px !important;
-            }
-            
-            /* Fix comment form */
-            .sm\:grid-cols-3 {
-                grid-template-columns: 1fr !important;
-            }
-            
-            .sm\:col-span-2 {
-                grid-column: span 1 !important;
-            }
-            
-            /* Adjust modal for mobile */
-            .preview-content {
-                min-width: 90vw !important;
-                max-width: 95vw !important;
-            }
-            
+
             #filePreviewModal iframe.preview-pdf {
-                width: 85vw !important;
-                height: 60vh !important;
+                width: 90vw;
+                height: 85vh;
+                border: none;
+                background: #fff;
             }
-            
-            /* Better spacing */
-            .pro-card {
-                padding: 12px !important;
+
+            .preview-trigger {
+                cursor: pointer;
+                transition: opacity 0.15s;
             }
-            
-            /* Room header */
-            .flex-wrap {
-                flex-direction: column !important;
-                align-items: stretch !important;
+
+            .preview-trigger:hover {
+                opacity: 0.92;
             }
-        }
-        
-        /* Desktop: show sidebar normally */
-        @media (min-width: 769px) {
+
+            /* ===== RESPONSIVE FIXES ===== */
+
+            /* Hide sidebar on mobile by default */
             .sidebar {
-                position: sticky;
+                position: fixed;
                 top: 0;
-                left: 0 !important;
-                width: 220px;
+                left: -100%;
+                width: 280px;
                 height: 100vh;
-                display: flex !important;
-                flex-shrink: 0;
+                z-index: 50;
+                transition: left 0.3s ease;
+                overflow-y: auto;
             }
-            
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            /* Overlay for mobile */
             .sidebar-overlay {
-                display: none !important;
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
             }
-            
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            /* Hamburger button */
             .hamburger-btn {
-                display: none !important;
+                display: none;
+                position: fixed;
+                top: 12px;
+                left: 12px;
+                z-index: 1001;
+                background: #000;
+                color: white;
+                border: none;
+                padding: 10px 14px;
+                cursor: pointer;
+                font-size: 20px;
+                border-radius: 4px;
             }
-        }
-    </style>
-</head>
 
-<body class="min-h-screen font-sans text-slate-800 bg-[#f4f1ec]">
+            /* Show hamburger and hide sidebar on mobile */
+            @media (max-width: 768px) {
+                .hamburger-btn {
+                    display: block;
+                }
 
-    <!-- Mobile Hamburger -->
-    <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
-        ☰
-    </button>
+                .sidebar {
+                    display: block !important;
+                }
 
-    <!-- Overlay -->
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+                /* Main content gets full width */
+                .main-content {
+                    padding-left: 12px !important;
+                    padding-right: 12px !important;
+                    padding-top: 70px !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                }
 
-    <!-- ===== LAYOUT ===== -->
-    <div class="flex min-h-screen">
+                /* Stack grids on mobile */
+                .grid-cols-1.md\:grid-cols-2 {
+                    grid-template-columns: 1fr !important;
+                }
 
-        <!-- ===== SIDEBAR ===== -->
-        <aside class="sidebar bg-[#000000] text-[#FFFFFF] flex flex-col border-r border-[#000000]">
-            
-            <!-- Close button for mobile -->
-            <button onclick="toggleSidebar()" class="md:hidden absolute top-3 right-3 text-white text-2xl p-2">
-                ✕
-            </button>
+                /* Smaller file gallery items */
+                .file-gallery {
+                    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+                    gap: 8px !important;
+                }
 
-            <!-- project context -->
-            <div class="px-4 py-3 border-b border-[#D0CBC4] bg-[#000000]/90 mt-8 md:mt-0">
-                <div class="text-[10px] uppercase text-[#FFFFFF] tracking-wider">Project</div>
-                <% if (typeof house !== 'undefined' && house) { %>
-                <div class="flex items-center justify-between mt-0.5">
-                    <span class="text-sm font-semibold text-white truncate"><%= house.name %></span>
-                </div>
-                <% } else { %>
-                <span class="text-sm text-[#FFFFFF]">—</span>
-                <% } %>
-            </div>
+                /* Fix comment form */
+                .sm\:grid-cols-3 {
+                    grid-template-columns: 1fr !important;
+                }
 
-            <!-- room switcher -->
-            <div class="px-4 py-2.5 border-b border-[#D0CBC4] bg-[#000000]/20">
-                <div class="flex items-center gap-1 text-xs text-white">
-                    <span class="uppercase tracking-wider">Room</span>
-                    <select onchange="window.location.href=this.value"
-                        class="bg-[#000000] text-white text-xs border border-slate-600 rounded-none px-2 py-1 focus:ring-1 focus:ring-[#000000] outline-none w-full">
-                        <% (typeof house !== 'undefined' && house && house.rooms || []).forEach(r => { %>
-                        <option value="/room/<%= r.id %>" <%= r.id === room.id ? 'selected' : '' %>><%= r.name %></option>
-                        <% }) %>
-                    </select>
-                </div>
-            </div>
+                .sm\:col-span-2 {
+                    grid-column: span 1 !important;
+                }
 
-            <!-- TRADE TABS -->
-            <nav class="flex-1 overflow-y-auto sidebar-scroll py-2 space-y-0.5 px-2">
-                <div class="text-[10px] uppercase tracking-wider text-white px-3 pt-2 pb-1.5">Trades</div>
-                <% room.trades.forEach(trade => { %>
-                <a href="/room/<%= room.id %>?trade=<%= trade.id %>"
-                    class="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-sm transition-all duration-150
-                    <%= activeTrade === trade.id ? 'active-tab-indicator text-white bg-slate-800/60' : 'text-slate-400 tab-hover hover:text-slate-200' %>">
-                    <span class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></span>
-                    <%= trade.name %>
-                </a>
-                <% }) %>
-                <div class="h-4"></div>
-            </nav>
+                /* Adjust modal for mobile */
+                .preview-content {
+                    min-width: 90vw !important;
+                    max-width: 95vw !important;
+                }
 
-            <!-- footer actions -->
-            <div class="px-4 py-3 border-t border-[#000000] bg-[#000000] text-xs">
-                <div class="flex items-center justify-between gap-2">
-                    <img src="<%= qrCodeUrl %>" alt="QR" class="w-10 h-10 border border-slate-600 bg-white object-contain">
-                    <div class="flex gap-1">
-                        <a href="<%= qrCodeUrl %>" download="QR-<%= room.id %>.png"
-                            class="bg-[#FFFFFF] hover:bg-[#D0CBC4] text-[#000000] px-2 py-1 text-[10px] uppercase tracking-wider">QR</a>
-                        <button onclick="toggleShareModal()"
-                            class="bg-[#FFFFFF] hover:bg-[#D0CBC4] text-[#000000] px-2 py-1 text-[10px] uppercase tracking-wider">Share</button>
-                    </div>
-                </div>
-            </div>
-        </aside>
+                #filePreviewModal iframe.preview-pdf {
+                    width: 85vw !important;
+                    height: 60vh !important;
+                }
 
-        <!-- ===== MAIN CONTENT ===== -->
-        <main class="main-content flex-1 px-4 md:px-6 py-4 md:py-6 bg-[#f4f1ec] min-h-screen">
+                /* Better spacing */
+                .pro-card {
+                    padding: 12px !important;
+                }
 
-            <!-- room header -->
-            <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <div class="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-wider flex-wrap">
-                        <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 font-bold">Active spec</span>
-                        <span class="text-slate-400">·</span>
-                        <span><%= room.name %></span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3 bg-white px-3 py-1.5 border border-slate-200 shadow-sm">
-                    <span class="text-xs text-slate-500">Room ID</span>
-                    <span class="text-xs font-mono text-slate-700"><%= room.id.slice(0,6) %></span>
-                </div>
-            </div>
-
-            <!-- ===== TRADE CONTENT ===== -->
-            <% const currentTrade = room.trades.find(t => t.id === activeTrade) || room.trades[0]; %>
-            <% if (currentTrade) { %>
-
-            <!-- visual + drawing -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <!-- render -->
-                <div class="flex items-center justify-center min-h-[180px] border border-slate-200 overflow-hidden bg-white">
-                    <% if (currentTrade.renderUrl) { %>
-                    <img src="<%= currentTrade.renderUrl %>" class="w-full h-full object-cover preview-trigger"
-                        data-type="image" data-src="<%= currentTrade.renderUrl %>"
-                        data-title="3D Visual – <%= currentTrade.name %>" alt="3D Visual">
-                    <% } else { %>
-                    <span class="text-slate-400 text-xs">no visual</span>
-                    <% } %>
-                </div>
-                <!-- drawing -->
-                <div class="bg-white pro-card p-4 flex flex-col">
-                    <span class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Technical drawing</span>
-                    <div class="flex-1 bg-slate-50 flex items-center justify-center min-h-[180px] p-2 border border-slate-200">
-                        <% if (currentTrade.planUrl) { %>
-                        <% if (currentTrade.planUrl.endsWith('.pdf')) { %>
-                        <button type="button"
-                            class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 text-xs font-semibold preview-trigger"
-                            data-type="pdf" data-src="<%= currentTrade.planUrl %>"
-                            data-title="Technical Drawing – <%= currentTrade.name %>">
-                            Open PDF
-                        </button>
-                        <% } else { %>
-                        <img src="<%= currentTrade.planUrl %>"
-                            class="max-h-52 object-contain border border-slate-300 preview-trigger" data-type="image"
-                            data-src="<%= currentTrade.planUrl %>" data-title="Technical Drawing – <%= currentTrade.name %>"
-                            alt="Technical Drawing">
-                        <% } %>
-                        <% } else { %>
-                        <span class="text-slate-400 text-xs">no drawing</span>
-                        <% } %>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FILES GALLERY -->
-            <% if (currentTrade.files && currentTrade.files.length > 0) { %>
-            <div class="bg-white pro-card p-4 md:p-5 mb-6">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 mb-3">
-                    <span class="w-1 h-4 bg-[#000000] block"></span>
-                    Additional Files & Documents (<%= currentTrade.files.length %>)
-                </h3>
-                <div class="file-gallery">
-                    <% currentTrade.files.forEach(file => { %>
-                    <div class="file-item preview-trigger" data-type="<%= file.type %>" data-src="<%= file.url %>"
-                        data-title="<%= file.originalName %>" data-download="<%= file.url %>">
-                        <% if (file.type === 'image') { %>
-                        <img src="<%= file.url %>" alt="<%= file.originalName %>" loading="lazy">
-                        <% } else if (file.type === 'pdf') { %>
-                        <div class="file-icon">📄</div>
-                        <% } else { %>
-                        <div class="file-icon">📎</div>
-                        <% } %>
-                        <span class="file-name"><%= file.originalName %></span>
-                        <% if (file.size) { %>
-                        <span class="file-size"><%= (file.size / 1024).toFixed(0) %> KB</span>
-                        <% } %>
-                    </div>
-                    <% }) %>
-                </div>
-            </div>
-            <% } %>
-
-            <!-- notes -->
-            <div class="bg-white pro-card p-4 md:p-5 mb-6">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                    <span class="w-1 h-4 bg-[#000000] block"></span> Placement notes
-                </h3>
-                <div class="mt-2 bg-[#000000]/10 border-l-4 border-[#000000] p-4 text-sm text-slate-700 whitespace-pre-line leading-relaxed">
-                    <%= currentTrade.notes || 'No specific placement notes provided.' %>
-                </div>
-            </div>
-
-            <% } %>
-
-            <!-- COMMENTS -->
-            <div id="comments" class="bg-white pro-card p-4 md:p-5 mb-6">
-                <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    Field notes & comments
-                </h3>
-
-                <form action="/room/<%= room.id %>/comment" method="POST" class="mt-4 space-y-3">
-                    <input type="hidden" name="activeTrade" value="<%= activeTrade %>">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <input type="text" name="author" placeholder="Your name / trade" required
-                            class="text-sm p-2 border border-slate-300 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
-                        <input type="text" name="text" placeholder="Add observation or question..." required
-                            class="sm:col-span-2 text-sm p-2 border border-slate-300 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
-                    </div>
-                    <button type="submit"
-                        class="bg-slate-900 hover:bg-slate-700 text-white text-xs font-semibold px-5 py-2 transition w-full sm:w-auto">Post comment</button>
-                </form>
-
-                <div class="mt-5 space-y-3">
-                    <% if (room.comments && room.comments.length > 0) { %>
-                    <% room.comments.forEach(c => { %>
-                    <div class="bg-slate-50 p-3 border border-slate-200 text-xs">
-                        <div class="flex justify-between items-center flex-wrap gap-1">
-                            <span class="font-bold text-slate-700"><%= c.author %></span>
-                            <span class="text-slate-400"><%= c.timestamp %></span>
-                        </div>
-                        <p class="text-slate-600 mt-0.5"><%= c.text %></p>
-                    </div>
-                    <% }) %>
-                    <% } else { %>
-                    <p class="text-xs text-slate-400 italic">No comments yet.</p>
-                    <% } %>
-                </div>
-            </div>
-
-            <div class="text-[10px] text-slate-400 border-t border-slate-200 pt-4 mt-4 flex justify-between flex-wrap gap-2">
-                <span>© 2026 Manu Romero Construction</span>
-            </div>
-
-        </main>
-    </div>
-
-    <!-- SHARE MODAL -->
-    <div id="shareModal"
-        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white max-w-sm w-full p-6 border border-slate-200 shadow-xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-slate-900">Share room specs</h3>
-                <button onclick="toggleShareModal()"
-                    class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-                <a href="https://api.whatsapp.com/send?text=<%= encodeURIComponent(roomUrl) %>" target="_blank"
-                    class="bg-emerald-600 hover:bg-emerald-700 text-white text-center py-2 text-xs font-semibold">WhatsApp</a>
-                <a href="mailto:?subject=Job Site Specs: <%= room.name %>&body=<%= encodeURIComponent(roomUrl) %>"
-                    class="bg-slate-700 hover:bg-slate-800 text-white text-center py-2 text-xs font-semibold">Email</a>
-                <a href="https://twitter.com/intent/tweet?url=<%= encodeURIComponent(roomUrl) %>" target="_blank"
-                    class="bg-sky-500 hover:bg-sky-600 text-white text-center py-2 text-xs font-semibold">X / Twitter</a>
-                <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= encodeURIComponent(roomUrl) %>"
-                    target="_blank"
-                    class="bg-blue-700 hover:bg-blue-800 text-white text-center py-2 text-xs font-semibold">LinkedIn</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- FILE PREVIEW MODAL -->
-    <div id="filePreviewModal"
-        class="hidden fixed inset-0 z-[100] bg-slate-900/80 flex items-center justify-center p-4">
-
-        <div class="relative preview-content bg-white shadow-2xl border border-slate-200 overflow-hidden">
-
-            <div class="flex items-center justify-center px-4 py-3 bg-slate-50 border-b border-slate-200 relative">
-                <a id="previewDownload" href="#" download
-                    class="hidden text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 font-medium">
-                    Download
-                </a>
-                <button onclick="closeFilePreview()"
-                    class="absolute right-4 text-slate-400 hover:text-slate-800 text-2xl leading-none w-8 h-8 flex items-center justify-center">
-                    &times;
-                </button>
-            </div>
-
-            <div id="previewBody" class="bg-slate-100 flex items-center justify-center p-2 min-h-[200px]">
-                <!-- content injected by JS -->
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // ===== Sidebar Toggle =====
-        function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.querySelector('.sidebar-overlay');
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
-            document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
-        }
-
-        // Close on escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                const sidebar = document.querySelector('.sidebar');
-                if (sidebar.classList.contains('open')) {
-                    toggleSidebar();
+                /* Room header */
+                .flex-wrap {
+                    flex-direction: column !important;
+                    align-items: stretch !important;
                 }
             }
-        });
 
-        // ===== Share Modal =====
-        function toggleShareModal() {
-            document.getElementById('shareModal').classList.toggle('hidden');
-        }
+            /* Desktop: show sidebar normally */
+            @media (min-width: 769px) {
+                .sidebar {
+                    position: sticky;
+                    top: 0;
+                    left: 0;
+                    width: 220px;
+                    height: 100vh;
+                    display: flex !important;
+                    flex-shrink: 0;
+                }
 
-        document.getElementById('shareModal')?.addEventListener('click', function(e) {
-            if (e.target === this) toggleShareModal();
-        });
+                .sidebar-overlay {
+                    display: none !important;
+                }
 
-        // ===== File Preview =====
-        const previewModal = document.getElementById('filePreviewModal');
-        const previewBody = document.getElementById('previewBody');
-        const previewDownload = document.getElementById('previewDownload');
+                .hamburger-btn {
+                    display: none !important;
+                }
+            }
+        </style>
+    </head>
 
-        function openFilePreview(type, src, title = 'Preview', downloadUrl = null) {
-            previewBody.innerHTML = '';
+    <body class="min-h-screen font-sans text-black bg-[#f4f1ec]">
 
-            if (downloadUrl) {
-                previewDownload.href = downloadUrl;
-                previewDownload.classList.remove('hidden');
-            } else {
-                previewDownload.classList.add('hidden');
+        <!-- Mobile Hamburger -->
+        <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+            ☰
+        </button>
+
+        <!-- Overlay -->
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- ===== LAYOUT ===== -->
+        <div class="flex min-h-screen">
+
+            <!-- ===== SIDEBAR ===== -->
+            <aside class="sidebar bg-[#b9b2a8] text-[#FFFFFF] flex flex-col border-r border-[#cbc4d0]">
+
+                <!-- Close button for mobile -->
+                <button onclick="toggleSidebar()" class="md:hidden absolute top-3 right-3 text-white text-2xl p-2">
+                    ✕
+                </button>
+
+                <!-- project context -->
+                <div class="px-4 py-3 border-b border-[#FFFFFF] bg-[#aea599] mt-8 md:mt-0">
+                    <div class="text-[10px] uppercase text-[#FFFFFF] tracking-wider">Project</div>
+                    <% if (typeof house !== 'undefined' && house) { %>
+                    <div class="flex items-center justify-between mt-0.5">
+                        <span class="text-sm font-semibold text-white truncate"><%= house.name %></span>
+                    </div>
+                    <% } else { %>
+                    <span class="text-sm text-[#FFFFFF]">—</span>
+                    <% } %>
+                </div>
+
+                <!-- room switcher -->
+                <div class="px-4 py-2.5 border-b border-[#FFFFFF] bg-[#b9b2a8]">
+                    <div class="flex items-center gap-1 text-xs text-white">
+                        <span class="uppercase tracking-wider">Room</span>
+                        <select onchange="window.location.href=this.value"
+                            class="bg-[#aea599] text-white text-xs border border-[#cbc4d0] rounded-none px-2 py-1 outline-none w-full">
+                            <% (typeof house !== 'undefined' && house && house.rooms || []).forEach(r => { %>
+                            <option value="/room/<%= r.id %>" <%= r.id === room.id ? 'selected' : '' %>><%= r.name %>
+                            </option>
+                            <% }) %>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- TRADE TABS -->
+                <nav class="flex-1 overflow-y-auto sidebar-scroll py-2 space-y-0.5 px-2">
+                    <div class="text-[10px] uppercase tracking-wider text-white px-3 pt-2 pb-1.5">Trades</div>
+                    <% room.trades.forEach(trade => { %>
+                    <a href="/room/<%= room.id %>?trade=<%= trade.id %>"
+                        class="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-sm transition-all duration-150
+                    <%= activeTrade === trade.id ? 'active-tab-indicator text-white bg-[#c5beb6]' : 'text-white tab-hover hover:text-white' %>">
+                        <span class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></span>
+                        <%= trade.name %>
+                    </a>
+                    <% }) %>
+                    <div class="h-4"></div>
+                </nav>
+
+                <!-- footer actions -->
+                <div class="px-4 py-3 border-t border-[#FFFFFF] bg-[#b9b2a8] text-xs">
+                    <div class="flex items-center justify-between gap-2">
+                        <img src="<%= qrCodeUrl %>" alt="QR"
+                            class="w-10 h-10 border border-[#FFFFFF] bg-white object-contain">
+                        <div class="flex gap-1">
+                            <a href="<%= qrCodeUrl %>" download="QR-<%= room.id %>.png"
+                                class="bg-[#FFFFFF] hover:bg-[#D0CBC4] text-[#000000] px-2 py-1 text-[10px] uppercase tracking-wider">QR Code</a>
+                            <button onclick="toggleShareModal()"
+                                class="bg-[#FFFFFF] hover:bg-[#D0CBC4] text-[#000000] px-2 py-1 text-[10px] uppercase tracking-wider">Share</button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ===== MAIN CONTENT ===== -->
+            <main class="main-content flex-1 px-4 md:px-6 py-4 md:py-6 bg-[#f4f1ec] min-h-screen">
+
+                <!-- room header -->
+                <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2 text-xs text-black uppercase tracking-wider flex-wrap">
+                            <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 font-bold">Active spec</span>
+                            <span class="text-black">· <%= room.name %></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 bg-white px-3 py-1.5 border border-slate-200 shadow-sm">
+                        <span class="text-xs text-black">Room ID</span>
+                        <span class="text-xs font-mono text-black"><%= room.id.slice(0,6) %></span>
+                    </div>
+                </div>
+
+                <!-- ===== TRADE CONTENT ===== -->
+                <% const currentTrade = room.trades.find(t => t.id === activeTrade) || room.trades[0]; %>
+                <% if (currentTrade) { %>
+
+                <!-- visual + drawing -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <!-- render -->
+                    <div
+                        class="flex items-center justify-center min-h-[180px] border border-slate-200 overflow-hidden bg-white">
+                        <% if (currentTrade.renderUrl) { %>
+                        <img src="<%= currentTrade.renderUrl %>" class="w-full h-full object-cover preview-trigger"
+                            data-type="image" data-src="<%= currentTrade.renderUrl %>"
+                            data-title="3D Visual – <%= currentTrade.name %>" alt="3D Visual">
+                        <% } else { %>
+                        <span class="text-black text-xs">no visual</span>
+                        <% } %>
+                    </div>
+                    <!-- drawing -->
+                    <div class="bg-white pro-card p-4 flex flex-col">
+                        <span class="text-[10px] uppercase tracking-wider text-black mb-1">Technical drawing</span>
+                        <div
+                            class="flex-1 bg-[#D0CBC4]-50 flex items-center justify-center min-h-[180px] p-2 border border-slate-200">
+                            <% if (currentTrade.planUrl) { %>
+                            <% if (currentTrade.planUrl.endsWith('.pdf')) { %>
+                            <button type="button"
+                                class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 text-xs font-semibold preview-trigger"
+                                data-type="pdf" data-src="<%= currentTrade.planUrl %>"
+                                data-title="Technical Drawing – <%= currentTrade.name %>">
+                                Open PDF
+                            </button>
+                            <% } else { %>
+                            <img src="<%= currentTrade.planUrl %>"
+                                class="max-h-52 object-contain border border-slate-300 preview-trigger"
+                                data-type="image" data-src="<%= currentTrade.planUrl %>"
+                                data-title="Technical Drawing – <%= currentTrade.name %>" alt="Technical Drawing">
+                            <% } %>
+                            <% } else { %>
+                            <span class="text-black text-xs">no drawing</span>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FILES GALLERY -->
+                <% if (currentTrade.files && currentTrade.files.length > 0) { %>
+                <div class="bg-white pro-card p-4 md:p-5 mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2 mb-3">
+                        <span class="w-1 h-4 bg-[#D0CBC4] block"></span>
+                        Additional Files & Documents
+                    </h3>
+                    <div class="file-gallery">
+                        <% currentTrade.files.forEach(file => { %>
+                        <div class="file-item preview-trigger" data-type="<%= file.type %>" data-src="<%= file.url %>"
+                            data-title="<%= file.originalName %>" data-download="<%= file.url %>">
+                            <% if (file.type === 'image') { %>
+                            <img src="<%= file.url %>" alt="<%= file.originalName %>" loading="lazy">
+                            <% } else if (file.type === 'pdf') { %>
+                            <div class="file-icon">📄</div>
+                            <% } else { %>
+                            <div class="file-icon">📎</div>
+                            <% } %>
+                        </div>
+                        <% }) %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- notes -->
+                <div class="bg-white pro-card p-4 md:p-5 mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+                        <span class="w-1 h-4 bg-[#D0CBC4] block"></span> Placement notes
+                    </h3>
+                    <div
+                        class="mt-2 bg-[#D0CBC4]/20 border-l-4 border-[#D0CBC4] p-4 text-sm text-black whitespace-pre-line leading-relaxed">
+                        <%= currentTrade.notes || 'No specific placement notes provided.' %>
+                    </div>
+                </div>
+
+                <% } %>
+
+                <!-- COMMENTS -->
+                <div id="comments" class="bg-white pro-card p-4 md:p-5 mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+                        <span class="w-1 h-4 bg-[#D0CBC4] block"></span> Notes & comments
+                    </h3>
+
+                    <!-- 1. Added enctype="multipart/form-data" for file uploading -->
+                    <form action="/room/<%= room.id %>/comment" method="POST" enctype="multipart/form-data"
+                        class="mt-4 space-y-3">
+                        <input type="hidden" name="activeTrade" value="<%= activeTrade %>">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input type="text" name="author" placeholder="Your name / trade" required
+                                class="text-sm p-2 border border-slate-300 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
+                            <input type="text" name="text" placeholder="Add observation or question..." required
+                                class="sm:col-span-2 text-sm p-2 border border-slate-300 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
+                        </div>
+
+                        <!-- File/Image Input Container -->
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
+                            <div class="w-full sm:w-auto">
+                                <label class="block text-xs font-medium text-black mb-1">Attach files or
+                                    photos:</label>
+                                <input type="file" name="attachments" multiple accept="image/*,.pdf,.doc,.docx,.txt"
+                                    class="block w-full text-xs text-black
+            file:mr-3 file:py-1.5 file:px-3
+            file:border file:border-slate-300 file:bg-slate-100
+            file:text-xs file:font-medium file:text-black
+            hover:file:bg-slate-200 file:cursor-pointer cursor-pointer">
+                            </div>
+
+                            <button type="submit"
+                                class="bg-slate-900 hover:bg-slate-700 text-white text-xs font-semibold px-5 py-2 transition w-full sm:w-auto self-end">
+                                Post comment
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Comments Display -->
+                    <div class="mt-5 space-y-3">
+                        <% if (room.comments && room.comments.length > 0) { %>
+                        <% room.comments.forEach(c => { %>
+                        <div class="bg-[#D0CBC4]-50 p-3 border border-slate-200 text-xs space-y-2">
+                            <div class="flex justify-between items-center flex-wrap gap-1">
+                                <span class="font-bold text-black"><%= c.author %></span>
+                                <span class="text-black"><%= c.timestamp %></span>
+                            </div>
+                            <p class="text-black"><%= c.text %></p>
+
+                            <!-- Display Attached Files/Images if present -->
+                            <% if (c.attachments && c.attachments.length > 0) { %>
+                            <div class="pt-2 border-t border-slate-200/60">
+                                <p class="text-[11px] font-semibold text-black mb-1.5">Attachments:</p>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <% c.attachments.forEach(file => { %>
+                                    <div class="border border-slate-200 bg-white p-1 rounded-none text-center">
+                                        <% 
+  const isImg = file.type && file.type.startsWith('image/');
+  const fileType = isImg ? 'image' : (file.type === 'application/pdf' ? 'pdf' : 'other');
+%>
+
+                                        <!-- Image or Document Icon Trigger -->
+                                        <div class="preview-trigger cursor-pointer" data-type="<%= fileType %>"
+                                            data-src="<%= file.url %>" data-title="<%= file.originalName %>"
+                                            data-download="<%= file.url %>">
+
+                                            <% if (isImg) { %>
+                                            <img src="<%= file.url %>" alt="<%= file.originalName %>"
+                                                class="w-full h-20 object-cover mb-1 hover:opacity-90">
+                                            <% } else { %>
+                                            <div
+                                                class="h-20 bg-slate-100 flex flex-col items-center justify-center p-1 hover:bg-slate-200 transition">
+                                                <span class="text-xl"><%= fileType === 'pdf' ? '📄' : '📎' %></span>
+                                            </div>
+                                            <% } %>
+
+                                        </div>
+                                    </div>
+                                    <% }) %>
+                                </div>
+                            </div>
+                            <% } %>
+                        </div>
+                        <% }) %>
+                        <% } else { %>
+                        <p class="text-xs text-black italic">No comments yet.</p>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div
+                    class="text-[10px] text-black border-t border-slate-200 pt-4 mt-4 flex justify-center flex-wrap gap-2">
+                    <span>© 2026 Manu Romero Construction</span>
+                </div>
+
+            </main>
+        </div>
+
+        <!-- SHARE MODAL -->
+        <div id="shareModal"
+            class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div class="bg-white max-w-sm w-full p-6 border border-slate-200 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-black">Share room specs</h3>
+                    <button onclick="toggleShareModal()"
+                        class="text-black hover:text-black text-xl leading-none">&times;</button>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="https://api.whatsapp.com/send?text=<%= encodeURIComponent(roomUrl) %>" target="_blank"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white text-center py-2 text-xs font-semibold">WhatsApp</a>
+                    <a href="mailto:?subject=Job Site Specs: <%= room.name %>&body=<%= encodeURIComponent(roomUrl) %>"
+                        class="bg-slate-700 hover:bg-slate-800 text-white text-center py-2 text-xs font-semibold">Email</a>
+                    <a href="https://twitter.com/intent/tweet?url=<%= encodeURIComponent(roomUrl) %>" target="_blank"
+                        class="bg-sky-500 hover:bg-sky-600 text-white text-center py-2 text-xs font-semibold">X /
+                        Twitter</a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= encodeURIComponent(roomUrl) %>"
+                        target="_blank"
+                        class="bg-blue-700 hover:bg-blue-800 text-white text-center py-2 text-xs font-semibold">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILE PREVIEW MODAL -->
+        <div id="filePreviewModal"
+            class="hidden fixed inset-0 z-[100] bg-slate-900/80 flex items-center justify-center p-4">
+
+            <div class="relative preview-content bg-white shadow-2xl border border-slate-200 overflow-hidden">
+
+                <div class="flex items-center justify-center px-4 py-3 bg-slate-50 border-b border-slate-200 relative">
+                    <a id="previewDownload" href="#" download
+                        class="hidden text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 font-medium">
+                        Download
+                    </a>
+                    <button onclick="closeFilePreview()"
+                        class="absolute right-4 text-black hover:text-black text-2xl leading-none w-8 h-8 flex items-center justify-center">
+                        &times;
+                    </button>
+                </div>
+
+                <div id="previewBody" class="bg-slate-100 flex items-center justify-center p-2 min-h-[200px]">
+                    <!-- content injected by JS -->
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // ===== Sidebar Toggle =====
+            function toggleSidebar() {
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.querySelector('.sidebar-overlay');
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
             }
 
-            if (type === 'image') {
-                const img = document.createElement('img');
-                img.src = src;
-                img.className = 'preview-image';
-                img.alt = title;
-                img.onerror = function() {
-                    previewBody.innerHTML = `
+            // Close on escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar.classList.contains('open')) {
+                        toggleSidebar();
+                    }
+                }
+            });
+
+            // ===== Share Modal =====
+            function toggleShareModal() {
+                document.getElementById('shareModal').classList.toggle('hidden');
+            }
+
+            document.getElementById('shareModal')?.addEventListener('click', function (e) {
+                if (e.target === this) toggleShareModal();
+            });
+
+            // ===== File Preview =====
+            const previewModal = document.getElementById('filePreviewModal');
+            const previewBody = document.getElementById('previewBody');
+            const previewDownload = document.getElementById('previewDownload');
+
+            function openFilePreview(type, src, title = 'Preview', downloadUrl = null) {
+                previewBody.innerHTML = '';
+
+                if (downloadUrl) {
+                    previewDownload.href = downloadUrl;
+                    previewDownload.classList.remove('hidden');
+                } else {
+                    previewDownload.classList.add('hidden');
+                }
+
+                if (type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = src;
+                    img.className = 'preview-image';
+                    img.alt = title;
+                    img.onerror = function () {
+                        previewBody.innerHTML = `
                         <div class="text-center p-10">
                             <div class="text-5xl mb-4">🖼️</div>
-                            <p class="text-slate-600 mb-4 text-sm">Failed to load image</p>
+                            <p class="text-black mb-4 text-sm">Failed to load image</p>
                         </div>
                     `;
-                };
-                previewBody.appendChild(img);
-            } else if (type === 'pdf') {
-                const iframe = document.createElement('iframe');
-                iframe.src = src;
-                iframe.className = 'preview-pdf';
-                iframe.title = title;
-                previewBody.appendChild(iframe);
-            } else {
-                previewBody.innerHTML = `
+                    };
+                    previewBody.appendChild(img);
+                } else if (type === 'pdf') {
+                    const iframe = document.createElement('iframe');
+                    iframe.src = src;
+                    iframe.className = 'preview-pdf';
+                    iframe.title = title;
+                    previewBody.appendChild(iframe);
+                } else {
+                    previewBody.innerHTML = `
                     <div class="text-center p-10">
                         <div class="text-5xl mb-4">📎</div>
-                        <p class="text-slate-600 mb-4 text-sm">${title}</p>
+                        <p class="text-black mb-4 text-sm">${title}</p>
                         <a href="${src}" download class="inline-block bg-[#000000] hover:bg-[#333333] text-white px-5 py-2 text-sm font-semibold">
                             Download File
                         </a>
                     </div>
                 `;
+                }
+
+                previewModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
             }
 
-            previewModal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeFilePreview() {
-            previewModal.classList.add('hidden');
-            previewBody.innerHTML = '';
-            document.body.style.overflow = '';
-        }
-
-        document.addEventListener('click', function(e) {
-            const trigger = e.target.closest('.preview-trigger');
-            if (!trigger) return;
-
-            e.preventDefault();
-
-            const type = trigger.dataset.type || 'image';
-            const src = trigger.dataset.src || trigger.href || '';
-            const title = trigger.dataset.title || 'Preview';
-            const download = trigger.dataset.download || src;
-
-            if (src) {
-                openFilePreview(type, src, title, download);
+            function closeFilePreview() {
+                previewModal.classList.add('hidden');
+                previewBody.innerHTML = '';
+                document.body.style.overflow = '';
             }
-        });
 
-        previewModal.addEventListener('click', function(e) {
-            if (e.target === previewModal) closeFilePreview();
-        });
+            document.addEventListener('click', function (e) {
+                const trigger = e.target.closest('.preview-trigger');
+                if (!trigger) return;
 
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && !previewModal.classList.contains('hidden')) {
-                closeFilePreview();
-            }
-        });
-    </script>
+                e.preventDefault();
 
-</body>
+                const type = trigger.dataset.type || 'image';
+                const src = trigger.dataset.src || trigger.href || '';
+                const title = trigger.dataset.title || 'Preview';
+                const download = trigger.dataset.download || src;
+
+                if (src) {
+                    openFilePreview(type, src, title, download);
+                }
+            });
+
+            previewModal.addEventListener('click', function (e) {
+                if (e.target === previewModal) closeFilePreview();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !previewModal.classList.contains('hidden')) {
+                    closeFilePreview();
+                }
+            });
+        </script>
+
+    </body>
 
 </html>

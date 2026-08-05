@@ -130,7 +130,6 @@
           </label>
 
           <!-- Existing Files Display -->
-          <!-- Existing Files Display -->
           <% if (activeTrade.files && activeTrade.files.length > 0) { %>
           <div class="mb-4 space-y-2">
             <p class="text-sm font-medium text-slate-600">Current Files:</p>
@@ -146,7 +145,6 @@
                 <% } %>
                 <p class="text-xs text-slate-600 truncate"><%= file.originalName %></p>
 
-                <!-- Button triggers modal with route action directly (No nested form needed) -->
                 <button type="button"
                   class="absolute top-1 right-1 text-red-500 hover:text-red-700 text-sm bg-white rounded-full w-5 h-5 flex items-center justify-center shadow"
                   onclick="openFileDeleteModal('<%= room.id %>', '<%= activeTrade.id %>', '<%= index %>', '<%= file.originalName %>')">
@@ -174,10 +172,62 @@
             class="w-full p-3 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"><%= activeTrade.notes %></textarea>
         </div>
 
-        <button type="submit"
-          class="w-full sm:w-auto bg-black hover:bg-slate-800 text-white font-semibold text-sm px-5 py-2.5 rounded-none shadow transition">
-          Save Draft
-        </button>
+        <!-- ========================================== -->
+        <!-- COMMENTS SECTION (FIXED ATTACHMENTS)       -->
+        <!-- ========================================== -->
+        
+        <div class="border-t border-slate-200 pt-5 mt-6">
+          <h3 class="text-xs font-bold text-slate-700 uppercase mb-3">
+            Client Comments (<%= (room.comments && room.comments.length) || 0 %>)
+          </h3>
+
+          <% if (room.comments && room.comments.length > 0) { %>
+          <div class="space-y-3">
+            <% room.comments.forEach((c) => { %>
+            <div class="bg-slate-50 border border-slate-200 p-3 flex justify-between items-start gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-slate-900"><%= c.author || 'User' %></span>
+                  <span class="text-[10px] text-slate-400">
+                    <%= c.timestamp || '' %>
+                  </span>
+                </div>
+                <p class="text-sm text-slate-700 whitespace-pre-line"><%= c.text %></p>
+
+                <!-- Render Attachments -->
+                <% if (c.attachments && c.attachments.length > 0) { %>
+                <div class="flex flex-wrap gap-2 mt-3 pt-2 border-t border-slate-200/60">
+                  <% c.attachments.forEach(att => { %>
+                  <a href="<%= typeof att === 'string' ? att : att.url %>" target="_blank"
+                    class="inline-flex items-center gap-1.5 text-xs text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2 py-1 transition font-medium">
+                    <span>📎</span>
+                    <span
+                      class="truncate max-w-[180px]"><%= typeof att === 'string' ? 'Attachment' : (att.originalName || att.filename) %></span>
+                  </a>
+                  <% }) %>
+                </div>
+                <% } %>
+              </div>
+
+              <!-- Delete Comment Button -->
+              <button type="button" onclick="openCommentDeleteModal('<%= room.id %>', '<%= c.id %>')"
+                class="text-xs text-red-500 hover:text-red-700 font-medium whitespace-nowrap px-2 py-1 bg-white border border-red-200 hover:border-red-300">
+                Delete
+              </button>
+            </div>
+            <% }) %>
+          </div>
+          <% } else { %>
+          <p class="text-xs text-slate-400 italic">No comments have been posted for this room yet.</p>
+          <% } %>
+        </div>
+
+        <div class="pt-4">
+          <button type="submit"
+            class="w-full sm:w-auto bg-black hover:bg-slate-800 text-white font-semibold text-sm px-5 py-2.5 rounded-none shadow transition">
+            Save Draft
+          </button>
+        </div>
       </form>
       <% } else { %>
       <p class="text-slate-500 text-sm">No trades configured for this room yet. Use the sidebar to add your first trade
@@ -236,7 +286,7 @@
 
   function openTradeDeleteModal(tradeId, tradeName) {
     targetFormId = `delete-trade-form-${tradeId}`;
-    deleteActionUrl = null; // Reset URL action mode
+    deleteActionUrl = null;
 
     document.getElementById('deleteModalTitle').textContent = 'Delete Trade Tab';
     document.getElementById('deleteModalBody').innerHTML = `Are you sure you want to remove the <strong class="text-slate-900">${tradeName}</strong> tab and its specs?`;
@@ -244,11 +294,21 @@
   }
 
   function openFileDeleteModal(roomId, tradeId, fileIndex, fileName) {
-    targetFormId = null; // Reset form mode
+    targetFormId = null;
     deleteActionUrl = `/admin/edit/${encodeURIComponent(roomId)}/delete-file/${encodeURIComponent(tradeId)}/${fileIndex}`;
 
     document.getElementById('deleteModalTitle').textContent = 'Delete File';
     document.getElementById('deleteModalBody').innerHTML = `Are you sure you want to delete <strong class="text-slate-900">${fileName}</strong>?`;
+    document.getElementById('deleteModal').classList.remove('hidden');
+  }
+
+  // Handle Comment Deletion Modal trigger
+  function openCommentDeleteModal(roomId, commentId) {
+    targetFormId = null;
+    deleteActionUrl = `/admin/edit/${encodeURIComponent(roomId)}/delete-comment/${encodeURIComponent(commentId)}`;
+
+    document.getElementById('deleteModalTitle').textContent = 'Delete Comment';
+    document.getElementById('deleteModalBody').innerHTML = `Are you sure you want to delete this comment?`;
     document.getElementById('deleteModal').classList.remove('hidden');
   }
 
@@ -260,14 +320,12 @@
 
   // Handle Confirmation
   document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-    // If trade tab form exists outside main form, submit it
     if (targetFormId) {
       const form = document.getElementById(targetFormId);
       if (form) form.submit();
       return;
     }
 
-    // If deleting a file, post via JS programmatically
     if (deleteActionUrl) {
       const form = document.createElement('form');
       form.method = 'POST';

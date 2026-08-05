@@ -37,7 +37,7 @@ app.use(session({
 // Global Session Interceptor: Ensures session is saved before any redirect occurs
 app.use((req, res, next) => {
   const originalRedirect = res.redirect;
-  res.redirect = function(url) {
+  res.redirect = function (url) {
     if (req.session) {
       req.session.save((err) => {
         if (err) console.error('Session save error during redirect:', err);
@@ -97,7 +97,7 @@ function saveData(data) {
       throw new Error('Invalid data object');
     }
     if (!data.houses) data.houses = [];
-    
+
     // Atomic file write using temporary file
     const tempFile = DATA_FILE + '.tmp';
     fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf8');
@@ -110,25 +110,16 @@ function saveData(data) {
 }
 
 function findRoomAndHouseById(data, roomId) {
-  if (!data || !data.houses || data.houses.length === 0) {
+  // Safety check: handle null, undefined, or non-string inputs
+  if (!roomId || typeof roomId !== 'string') {
     return { room: null, house: null };
   }
 
-  for (const house of data.houses) {
-    if (house.rooms) {
+  // Your existing search logic...
+  for (const house of data.houses || []) {
+    if (roomId.startsWith(house.id)) { // Now safe from crashing!
       const room = house.rooms.find(r => r.id === roomId);
-      if (room) {
-        return { room, house };
-      }
-    }
-  }
-
-  for (const house of data.houses) {
-    if (roomId.startsWith(house.id)) {
-      const room = house.rooms ? house.rooms.find(r => r.id === roomId) : null;
-      if (room) {
-        return { room, house };
-      }
+      if (room) return { room, house };
     }
   }
 
@@ -160,35 +151,43 @@ function deleteFileFromDisk(webUrl) {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    try {
-      const data = getData();
-      const { roomId } = req.params;
-      const { room, house } = findRoomAndHouseById(data, roomId);
+    const data = getData(); // or load your json data
 
-      const houseFolder = house ? house.id : 'unassigned';
-      const roomFolder = room ? room.id : roomId;
+    // 1. Try req.params.id first, or parse it directly from req.url
+    let roomId = req.params && (req.params.id || req.params.roomId);
 
-      const uploadDir = path.join(__dirname, 'public', 'uploads', houseFolder, roomFolder);
-
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+    if (!roomId && req.url) {
+      // Regex matches /admin/edit/:roomId/save or /admin/rooms/:roomId etc.
+      const match = req.url.match(/\/(?:edit|rooms|room)\/([^\/]+)/);
+      if (match) {
+        roomId = match[1];
       }
-      cb(null, uploadDir);
-    } catch (err) {
-      cb(err, null);
     }
+
+    // 2. Fetch house & room safely
+    const { room, house } = findRoomAndHouseById(data, roomId);
+
+    // 3. Fall back to generic paths if room or house isn't found
+    const houseFolder = house ? house.id : 'default-house';
+    const roomFolder = room ? room.id : (roomId || 'general');
+
+    const dir = path.join(__dirname, 'public', 'uploads', houseFolder, roomFolder);
+
+    // Create folder structure dynamically
+    fs.mkdirSync(dir, { recursive: true });
+
+    cb(null, dir);
   },
   filename: (req, file, cb) => {
-    const originalName = path.parse(file.originalname).name.replace(/[^a-zA-Z0-9]/g, '_');
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, originalName + '-' + uniqueSuffix + path.extname(file.originalname));
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
 
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024
+    fileSize: 1024 * 1024 * 1024 // 1GB limit
   }
 });
 
@@ -771,29 +770,175 @@ app.get('/room/:id', async (req, res) => {
   }
 });
 
-app.post('/room/:id/comment', (req, res) => {
+app.post('/room/:id/comment', upload.array('attachments', 10), (req, res) => {
   try {
     const data = getData();
-    const room = findRoomById(data, req.params.id);
+    const { room, house } = findRoomAndHouseById(data, req.params.id);
 
-    if (room) {
-      const newComment = {
-        author: req.body.author || 'Anonymous Trade',
-        text: req.body.text,
-        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16)
-      };
-      if (!room.comments) room.comments = [];
-      room.comments.unshift(newComment);
-      saveData(data);
+    if (!room) return res.status(404).send('Room not found');
+
+    const houseFolder = house ? house.id : 'unassigned';
+    const attachments = [];
+
+    // Process uploaded attachments (if any)
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        const fileUrl = `/uploads/${houseFolder}/${room.id}/${file.filename}`;
+        attachments.push({
+          url: fileUrl,
+          originalName: file.originalname,
+          filename: file.filename,
+          type: file.mimetype, // Saved as raw mimetype (e.g. image/jpeg, application/pdf)
+          size: file.size
+        });
+      });
     }
 
-    res.redirect(`/room/${req.params.id}?trade=${req.body.activeTrade}`);
+    const newComment = {
+      id: Date.now().toString(), // Adding an ID makes deleting/managing comments easier later
+      author: req.body.author || 'Anonymous Trade',
+      text: req.body.text,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      attachments: attachments
+    };
+
+    if (!room.comments) room.comments = [];
+    room.comments.unshift(newComment);
+
+    saveData(data);
+
+    // Maintain trade tab selection upon redirect
+    const activeTrade = req.body.activeTrade || '';
+    res.redirect(`/room/${req.params.id}${activeTrade ? `?trade=${activeTrade}` : ''}`);
   } catch (err) {
-    console.error('Comment error:', err);
+    console.error('Comment submission error:', err);
     res.status(500).send('Error adding comment');
   }
 });
 
+// Admin endpoint to delete a comment and clean up its files from disk
+app.post('/admin/rooms/:roomId/comments/:commentIndex/delete', (req, res) => {
+  try {
+    const data = getData();
+    const { roomId, commentIndex } = req.params;
+    const room = findRoomById(data, roomId);
+
+    if (!room || !room.comments) return res.status(404).send('Comment or room not found');
+
+    const index = parseInt(commentIndex, 10);
+    if (isNaN(index) || index < 0 || index >= room.comments.length) {
+      return res.status(404).send('Invalid comment index');
+    }
+
+    // 1. Remove associated files from disk
+    const commentToDelete = room.comments[index];
+    if (commentToDelete.attachments && commentToDelete.attachments.length > 0) {
+      commentToDelete.attachments.forEach(file => {
+        deleteFileFromDisk(file.url);
+      });
+    }
+
+    // 2. Remove comment from JSON data
+    room.comments.splice(index, 1);
+    saveData(data);
+
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect(`/admin/edit/${roomId}`);
+    });
+  } catch (err) {
+    console.error('Error deleting comment:', err);
+    res.status(500).send('Error deleting comment');
+  }
+});
+// DELETE COMMENT ROUTE
+app.post('/admin/edit/:roomId/delete-comment/:tradeId/:commentId', (req, res) => {
+  const { roomId, tradeId, commentId } = req.params;
+  const data = getData(); // Your function/variable that reads the JSON store
+
+  const { room } = findRoomAndHouseById(data, roomId);
+
+  if (room && room.trades) {
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (trade && trade.comments) {
+      // Filter out the comment by ID
+      trade.comments = trade.comments.filter(c => String(c.id) !== String(commentId));
+      saveData(data); // Your function to persist data back to JSON file
+    }
+  }
+
+  // Redirect back to the admin edit page with the active trade tab
+  res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+});
+
+app.post('/admin/edit/:roomId/delete-comment/:commentId', (req, res) => {
+  const { roomId, commentId } = req.params;
+  const data = getData();
+
+  const { room } = findRoomAndHouseById(data, roomId);
+
+  if (room && room.comments) {
+    // Filter out the comment by ID
+    room.comments = room.comments.filter(c => String(c.id) !== String(commentId));
+    saveData(data);
+  }
+
+  // Preserve the selected trade tab if present in query/referrer
+  const selectedTrade = req.query.trade || '';
+  res.redirect(`/admin/edit/${roomId}${selectedTrade ? '?trade=' + selectedTrade : ''}`);
+});
+
+// POST COMMENT ROUTE (Client side)
+app.post('/room/:roomId/comment', (req, res) => {
+  const { roomId } = req.params;
+  const { tradeId, text, author } = req.body;
+  const data = getData();
+
+  const { room } = findRoomAndHouseById(data, roomId);
+
+  if (room) {
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (trade) {
+      // Initialize comments array if missing
+      if (!trade.comments) {
+        trade.comments = [];
+      }
+
+      // Add formatted comment object
+      trade.comments.push({
+        id: Date.now().toString(), // Unique ID for deletion
+        author: author || 'Client',
+        text: text,
+        createdAt: new Date().toISOString()
+      });
+
+      saveData(data);
+    }
+  }
+
+  res.redirect(`/room/${roomId}?trade=${tradeId}`);
+});
+
+app.get('/admin/edit/:roomId', (req, res) => {
+  const { roomId } = req.params;
+  const data = getData();
+  const { room } = findRoomAndHouseById(data, roomId);
+
+  if (!room) return res.status(404).send('Room not found');
+
+  // Ensure default structure for older data
+  room.trades.forEach(t => {
+    if (!t.comments) t.comments = [];
+    if (!t.files) t.files = [];
+  });
+
+  const selectedTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : null);
+
+  res.render('admin-edit-room', {
+    room,
+    selectedTrade
+  });
+});
 // 404 Handler
 app.use((req, res) => {
   res.status(404).render('404');
