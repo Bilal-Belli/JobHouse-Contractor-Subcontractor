@@ -386,6 +386,7 @@ app.post('/admin/houses/:houseId/delete', (req, res) => {
   }
 });
 
+// 3. Create Room - Update the trades to include comments array
 // 3. Create Room
 app.post('/admin/houses/:houseId/rooms', (req, res) => {
   try {
@@ -399,11 +400,10 @@ app.post('/admin/houses/:houseId/rooms', (req, res) => {
         name: roomName,
         status: 'draft',
         trades: [
-          { id: 'electrical-' + Date.now(), name: 'Electrical', renderUrl: '', planUrl: '', notes: '', files: [] },
-          { id: 'plumbing-' + Date.now(), name: 'Plumbing', renderUrl: '', planUrl: '', notes: '', files: [] },
-          { id: 'hvac-' + Date.now(), name: 'HVAC', renderUrl: '', planUrl: '', notes: '', files: [] }
-        ],
-        comments: []
+          { id: 'electrical-' + Date.now(), name: 'Electrical', renderUrl: '', planUrl: '', notes: '', files: [], comments: [] },
+          { id: 'plumbing-' + Date.now(), name: 'Plumbing', renderUrl: '', planUrl: '', notes: '', files: [], comments: [] },
+          { id: 'hvac-' + Date.now(), name: 'HVAC', renderUrl: '', planUrl: '', notes: '', files: [], comments: [] }
+        ]
       };
       if (!house.rooms) house.rooms = [];
       house.rooms.push(newRoom);
@@ -555,9 +555,15 @@ app.post('/admin/edit/:roomId/add-trade', (req, res) => {
           renderUrl: '',
           planUrl: '',
           notes: '',
-          files: []
+          files: [],
+          comments: [] // Add comments array
         });
         saveData(data);
+      }
+
+      // Handle both AJAX and form submissions
+      if (req.is('json') || req.xhr) {
+        return res.json({ success: true, tradeId: tradeId, tradeName: tradeName });
       }
 
       req.session.save((err) => {
@@ -570,6 +576,63 @@ app.post('/admin/edit/:roomId/add-trade', (req, res) => {
   } catch (err) {
     console.error('Error adding trade:', err);
     res.status(500).send('Error adding trade');
+  }
+});
+
+// Public - Add comment to a specific trade
+app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, res) => {
+  try {
+    const data = getData();
+    const { room, house } = findRoomAndHouseById(data, req.params.roomId);
+
+    if (!room) return res.status(404).send('Room not found');
+
+    const tradeId = req.body.tradeId;
+    if (!tradeId) return res.status(400).send('Trade ID is required');
+
+    // Find the specific trade
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (!trade) return res.status(404).send('Trade not found');
+
+    const houseFolder = house ? house.id : 'unassigned';
+    const attachments = [];
+
+    // Process uploaded attachments (if any)
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const saved = await saveUploadedFile(file, houseFolder, room.id);
+        const filePath = path.join(__dirname, 'public', 'uploads', houseFolder, room.id, saved.filename);
+
+        attachments.push({
+          url: `/uploads/${houseFolder}/${room.id}/${saved.filename}`,
+          originalName: file.originalname,
+          filename: saved.filename,
+          type: saved.mimetype,
+          size: fs.statSync(filePath).size
+        });
+      }
+    }
+
+    const newComment = {
+      id: Date.now().toString(),
+      author: req.body.author || 'Anonymous Trade',
+      text: req.body.text,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      attachments: attachments
+    };
+
+    // Initialize comments array for the trade if it doesn't exist
+    if (!trade.comments) trade.comments = [];
+    trade.comments.unshift(newComment);
+
+    saveData(data);
+
+    // Redirect back with the same trade selected
+    const activeTrade = req.body.activeTrade || tradeId;
+    res.redirect(`/room/${req.params.roomId}?trade=${activeTrade}`);
+  } catch (err) {
+    console.error('Comment submission error:', err);
+    res.status(500).send('Error adding comment');
   }
 });
 
@@ -771,6 +834,13 @@ app.post('/room/:id/comment', upload.array('attachments', 10), async (req, res) 
 
     if (!room) return res.status(404).send('Room not found');
 
+    const tradeId = req.body.tradeId;
+    if (!tradeId) return res.status(400).send('Trade ID is required');
+
+    // Find the specific trade
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (!trade) return res.status(404).send('Trade not found');
+
     const houseFolder = house ? house.id : 'unassigned';
     const attachments = [];
 
@@ -784,7 +854,7 @@ app.post('/room/:id/comment', upload.array('attachments', 10), async (req, res) 
           url: `/uploads/${houseFolder}/${room.id}/${saved.filename}`,
           originalName: file.originalname,
           filename: saved.filename,
-          type: saved.mimetype, // image/jpeg for compressed images, original mimetype otherwise
+          type: saved.mimetype,
           size: fs.statSync(filePath).size
         });
       }
@@ -798,13 +868,15 @@ app.post('/room/:id/comment', upload.array('attachments', 10), async (req, res) 
       attachments: attachments
     };
 
-    if (!room.comments) room.comments = [];
-    room.comments.unshift(newComment);
+    // Initialize comments array for the trade if it doesn't exist
+    if (!trade.comments) trade.comments = [];
+    trade.comments.unshift(newComment);
 
     saveData(data);
 
-    const activeTrade = req.body.activeTrade || '';
-    res.redirect(`/room/${req.params.id}${activeTrade ? `?trade=${activeTrade}` : ''}`);
+    // Redirect back with the same trade selected
+    const activeTrade = req.body.activeTrade || tradeId;
+    res.redirect(`/room/${req.params.id}?trade=${activeTrade}`);
   } catch (err) {
     console.error('Comment submission error:', err);
     res.status(500).send('Error adding comment');
@@ -868,107 +940,71 @@ app.post('/admin/rooms/:roomId/rename-trade/:tradeId', (req, res) => {
   }
 });
 
-// Admin endpoint to delete a comment and clean up its files from disk
-app.post('/admin/rooms/:roomId/comments/:commentIndex/delete', (req, res) => {
+// Legacy route - redirect to new format
+app.post('/admin/edit/:roomId/delete-comment/:tradeId/:commentId', (req, res) => {
+  const { roomId, tradeId, commentId } = req.params;
+  const data = getData();
+  const { room } = findRoomAndHouseById(data, roomId);
+
+  if (room && room.trades) {
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (trade && trade.comments) {
+      const commentIndex = trade.comments.findIndex(c => String(c.id) === String(commentId));
+      if (commentIndex !== -1) {
+        const commentToDelete = trade.comments[commentIndex];
+        if (commentToDelete.attachments && commentToDelete.attachments.length > 0) {
+          commentToDelete.attachments.forEach(file => {
+            deleteFileFromDisk(file.url);
+          });
+        }
+        trade.comments.splice(commentIndex, 1);
+        saveData(data);
+      }
+    }
+  }
+
+  res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+});
+
+// Admin - Delete comment from a specific trade
+app.post('/admin/rooms/:roomId/trades/:tradeId/comments/:commentIndex/delete', (req, res) => {
   try {
     const data = getData();
-    const { roomId, commentIndex } = req.params;
-    const room = findRoomById(data, roomId);
+    const { roomId, tradeId, commentIndex } = req.params;
+    const { room } = findRoomAndHouseById(data, roomId);
 
-    if (!room || !room.comments) return res.status(404).send('Comment or room not found');
+    if (!room) return res.status(404).send('Room not found');
+
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (!trade) return res.status(404).send('Trade not found');
+
+    if (!trade.comments) trade.comments = [];
 
     const index = parseInt(commentIndex, 10);
-    if (isNaN(index) || index < 0 || index >= room.comments.length) {
+    if (isNaN(index) || index < 0 || index >= trade.comments.length) {
       return res.status(404).send('Invalid comment index');
     }
 
-    // 1. Remove associated files from disk
-    const commentToDelete = room.comments[index];
+    // Remove associated files from disk
+    const commentToDelete = trade.comments[index];
     if (commentToDelete.attachments && commentToDelete.attachments.length > 0) {
       commentToDelete.attachments.forEach(file => {
         deleteFileFromDisk(file.url);
       });
     }
 
-    // 2. Remove comment from JSON data
-    room.comments.splice(index, 1);
+    // Remove comment from trade comments
+    trade.comments.splice(index, 1);
     saveData(data);
 
     req.session.save((err) => {
       if (err) console.error('Session save error:', err);
-      res.redirect(`/admin/edit/${roomId}`);
+      res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
     });
   } catch (err) {
     console.error('Error deleting comment:', err);
     res.status(500).send('Error deleting comment');
   }
-});
-// DELETE COMMENT ROUTE
-app.post('/admin/edit/:roomId/delete-comment/:tradeId/:commentId', (req, res) => {
-  const { roomId, tradeId, commentId } = req.params;
-  const data = getData(); // Your function/variable that reads the JSON store
-
-  const { room } = findRoomAndHouseById(data, roomId);
-
-  if (room && room.trades) {
-    const trade = room.trades.find(t => t.id === tradeId);
-    if (trade && trade.comments) {
-      // Filter out the comment by ID
-      trade.comments = trade.comments.filter(c => String(c.id) !== String(commentId));
-      saveData(data); // Your function to persist data back to JSON file
-    }
-  }
-
-  // Redirect back to the admin edit page with the active trade tab
-  res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
-});
-
-app.post('/admin/edit/:roomId/delete-comment/:commentId', (req, res) => {
-  const { roomId, commentId } = req.params;
-  const data = getData();
-
-  const { room } = findRoomAndHouseById(data, roomId);
-
-  if (room && room.comments) {
-    // Filter out the comment by ID
-    room.comments = room.comments.filter(c => String(c.id) !== String(commentId));
-    saveData(data);
-  }
-
-  // Preserve the selected trade tab if present in query/referrer
-  const selectedTrade = req.query.trade || '';
-  res.redirect(`/admin/edit/${roomId}${selectedTrade ? '?trade=' + selectedTrade : ''}`);
-});
-
-// POST COMMENT ROUTE (Client side)
-app.post('/room/:roomId/comment', (req, res) => {
-  const { roomId } = req.params;
-  const { tradeId, text, author } = req.body;
-  const data = getData();
-
-  const { room } = findRoomAndHouseById(data, roomId);
-
-  if (room) {
-    const trade = room.trades.find(t => t.id === tradeId);
-    if (trade) {
-      // Initialize comments array if missing
-      if (!trade.comments) {
-        trade.comments = [];
-      }
-
-      // Add formatted comment object
-      trade.comments.push({
-        id: Date.now().toString(), // Unique ID for deletion
-        author: author || 'Client',
-        text: text,
-        createdAt: new Date().toISOString()
-      });
-
-      saveData(data);
-    }
-  }
-
-  res.redirect(`/room/${roomId}?trade=${tradeId}`);
 });
 
 app.get('/admin/edit/:roomId', (req, res) => {

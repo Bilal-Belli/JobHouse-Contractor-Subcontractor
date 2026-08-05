@@ -171,17 +171,17 @@
         </div>
 
         <!-- ========================================== -->
-        <!-- COMMENTS SECTION (FIXED ATTACHMENTS)       -->
+        <!-- COMMENTS SECTION (Trade-Specific)          -->
         <!-- ========================================== -->
 
         <div class="border-t border-slate-200 pt-5 mt-6">
           <h3 class="text-xs font-bold text-slate-700 uppercase mb-3">
-            Client Comments (<%= (room.comments && room.comments.length) || 0 %>)
+            Comments for <%= activeTrade.name %> (<%= (activeTrade.comments && activeTrade.comments.length) || 0 %>)
           </h3>
 
-          <% if (room.comments && room.comments.length > 0) { %>
+          <% if (activeTrade.comments && activeTrade.comments.length > 0) { %>
           <div class="space-y-3">
-            <% room.comments.forEach((c) => { %>
+            <% activeTrade.comments.forEach((c, index) => { %>
             <div class="bg-slate-50 border border-slate-200 p-3 flex justify-between items-start gap-4">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
@@ -208,7 +208,8 @@
               </div>
 
               <!-- Delete Comment Button -->
-              <button type="button" onclick="openCommentDeleteModal('<%= room.id %>', '<%= c.id %>')"
+              <button type="button"
+                onclick="openCommentDeleteModal('<%= room.id %>', '<%= activeTrade.id %>', '<%= index %>')"
                 class="text-xs text-red-500 hover:text-red-700 font-medium whitespace-nowrap px-2 py-1 bg-white border border-red-200 hover:border-red-300">
                 Delete
               </button>
@@ -216,7 +217,7 @@
             <% }) %>
           </div>
           <% } else { %>
-          <p class="text-xs text-slate-400 italic">No comments have been posted for this room yet.</p>
+          <p class="text-xs text-slate-400 italic">No comments for this trade yet.</p>
           <% } %>
         </div>
 
@@ -305,9 +306,9 @@
   }
 
   // Handle Comment Deletion Modal trigger
-  function openCommentDeleteModal(roomId, commentId) {
+  function openCommentDeleteModal(roomId, tradeId, commentIndex) {
     targetFormId = null;
-    deleteActionUrl = `/admin/edit/${encodeURIComponent(roomId)}/delete-comment/${encodeURIComponent(commentId)}`;
+    deleteActionUrl = `/admin/rooms/${encodeURIComponent(roomId)}/trades/${encodeURIComponent(tradeId)}/comments/${commentIndex}/delete`;
 
     document.getElementById('deleteModalTitle').textContent = 'Delete Comment';
     document.getElementById('deleteModalBody').innerHTML = `Are you sure you want to delete this comment?`;

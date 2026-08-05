@@ -124,7 +124,8 @@
                 left: -100%;
                 width: 280px;
                 height: 100vh;
-                z-index: 1000;  /* FIXED: Increased from 50 to 1000 */
+                z-index: 1000;
+                /* FIXED: Increased from 50 to 1000 */
                 transition: left 0.3s ease;
                 overflow-y: auto;
             }
@@ -234,7 +235,8 @@
                     height: 100vh;
                     display: flex !important;
                     flex-shrink: 0;
-                    z-index: auto;  /* FIXED: Reset z-index on desktop */
+                    z-index: auto;
+                    /* FIXED: Reset z-index on desktop */
                 }
 
                 .sidebar-overlay {
@@ -263,7 +265,8 @@
             <aside class="sidebar bg-slate-900 text-[#FFFFFF] flex flex-col border-r border-slate-200">
 
                 <!-- Close button for mobile -->
-                <button onclick="toggleSidebar()" class="md:hidden absolute top-3 right-3 text-white text-2xl p-2"> ✕</button>
+                <button onclick="toggleSidebar()" class="md:hidden absolute top-3 right-3 text-white text-2xl p-2">
+                    ✕</button>
 
                 <!-- project context -->
                 <div class="px-4 py-3 border-b border-slate-600 bg-slate-900 mt-8 md:mt-0">
@@ -281,7 +284,8 @@
                 <div class="px-4 py-3 border-b border-slate-600 bg-slate-900 mt-8 md:mt-0">
                     <div class="text-[10px] uppercase text-[#FFFFFF] tracking-wider">Room</div>
                     <div class="flex items-center justify-between mt-1">
-                        <select onchange="window.location.href=this.value" class="bg-slate-700 text-white text-xs rounded-none px-2 py-1 outline-none w-full">
+                        <select onchange="window.location.href=this.value"
+                            class="bg-slate-700 text-white text-xs rounded-none px-2 py-1 outline-none w-full">
                             <% (typeof house !== 'undefined' && house && house.rooms || []).forEach(r => { %>
                             <option value="/room/<%= r.id %>" <%= r.id === room.id ? 'selected' : '' %>><%= r.name %>
                             </option>
@@ -294,7 +298,8 @@
                 <nav class="flex-1 overflow-y-auto sidebar-scroll py-2 space-y-0.5 px-2">
                     <div class="text-[10px] uppercase tracking-wider text-white px-3 pt-2 pb-1.5">Trades</div>
                     <% room.trades.forEach(trade => { %>
-                    <a href="/room/<%= room.id %>?trade=<%= trade.id %>" class="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-sm transition-all duration-150
+                    <a href="/room/<%= room.id %>?trade=<%= trade.id %>"
+                        class="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-sm transition-all duration-150
                     <%= activeTrade === trade.id ? 'active-tab-indicator text-white bg-slate-700' : 'text-slate-300 tab-hover hover:text-white' %>">
                         <span class="w-1.5 h-1.5 rounded-full bg-amber-600 flex-shrink-0"></span>
                         <%= trade.name %>
@@ -306,10 +311,14 @@
                 <!-- footer actions -->
                 <div class="px-4 py-3 border-t border-slate-600 bg-slate-900 text-xs">
                     <div class="flex items-center justify-between gap-2">
-                        <img src="<%= qrCodeUrl %>" alt="QR" class="w-10 h-10 border border-slate-600 bg-white object-contain">
+                        <img src="<%= qrCodeUrl %>" alt="QR"
+                            class="w-10 h-10 border border-slate-600 bg-white object-contain">
                         <div class="flex gap-1">
-                            <a href="<%= qrCodeUrl %>" download="QR-<%= room.id %>.png" class="bg-slate-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">QR Code</a>
-                            <button onclick="toggleShareModal()" class="bg-amber-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">Share</button>
+                            <a href="<%= qrCodeUrl %>" download="QR-<%= room.id %>.png"
+                                class="bg-slate-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">QR
+                                Code</a>
+                            <button onclick="toggleShareModal()"
+                                class="bg-amber-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">Share</button>
                         </div>
                     </div>
                 </div>
@@ -339,9 +348,12 @@
                 <!-- visual + drawing -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <!-- render -->
-                    <div class="flex items-center justify-center min-h-[180px] border border-amber-300 overflow-hidden bg-white">
+                    <div
+                        class="flex items-center justify-center min-h-[180px] border border-amber-300 overflow-hidden bg-white">
                         <% if (currentTrade.renderUrl) { %>
-                        <img src="<%= currentTrade.renderUrl %>" class="w-full h-full object-cover preview-trigger" data-type="image" data-src="<%= currentTrade.renderUrl %>" data-title="3D Visual – <%= currentTrade.name %>" alt="3D Visual">
+                        <img src="<%= currentTrade.renderUrl %>" class="w-full h-full object-cover preview-trigger"
+                            data-type="image" data-src="<%= currentTrade.renderUrl %>"
+                            data-title="3D Visual – <%= currentTrade.name %>" alt="3D Visual">
                         <% } else { %>
                         <span class="text-black text-xs">no visual</span>
                         <% } %>
@@ -349,12 +361,19 @@
                     <!-- drawing -->
                     <div class="bg-white pro-card p-4 flex flex-col">
                         <span class="text-[10px] uppercase tracking-wider text-black mb-1">Technical drawing</span>
-                        <div class="flex-1 bg-amber-400/20 flex items-center justify-center min-h-[180px] p-2 border border-amber-300">
+                        <div
+                            class="flex-1 bg-amber-400/20 flex items-center justify-center min-h-[180px] p-2 border border-amber-300">
                             <% if (currentTrade.planUrl) { %>
                             <% if (currentTrade.planUrl.endsWith('.pdf')) { %>
-                            <button type="button" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 text-xs font-semibold preview-trigger" data-type="pdf" data-src="<%= currentTrade.planUrl %>" data-title="Technical Drawing – <%= currentTrade.name %>"> Open PDF </button>
+                            <button type="button"
+                                class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 text-xs font-semibold preview-trigger"
+                                data-type="pdf" data-src="<%= currentTrade.planUrl %>"
+                                data-title="Technical Drawing – <%= currentTrade.name %>"> Open PDF </button>
                             <% } else { %>
-                            <img src="<%= currentTrade.planUrl %>" class="max-h-52 object-contain border border-amber-300 preview-trigger" data-type="image" data-src="<%= currentTrade.planUrl %>" data-title="Technical Drawing – <%= currentTrade.name %>" alt="Technical Drawing">
+                            <img src="<%= currentTrade.planUrl %>"
+                                class="max-h-52 object-contain border border-amber-300 preview-trigger"
+                                data-type="image" data-src="<%= currentTrade.planUrl %>"
+                                data-title="Technical Drawing – <%= currentTrade.name %>" alt="Technical Drawing">
                             <% } %>
                             <% } else { %>
                             <span class="text-black text-xs">no drawing</span>
@@ -372,7 +391,8 @@
                     </h3>
                     <div class="file-gallery">
                         <% currentTrade.files.forEach(file => { %>
-                        <div class="file-item preview-trigger" data-type="<%= file.type %>" data-src="<%= file.url %>" data-title="<%= file.originalName %>" data-download="<%= file.url %>">
+                        <div class="file-item preview-trigger" data-type="<%= file.type %>" data-src="<%= file.url %>"
+                            data-title="<%= file.originalName %>" data-download="<%= file.url %>">
                             <% if (file.type === 'image') { %>
                             <img src="<%= file.url %>" alt="<%= file.originalName %>" loading="lazy">
                             <% } else if (file.type === 'pdf') { %>
@@ -391,7 +411,8 @@
                     <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
                         <span class="w-1 h-4 bg-amber-400 block"></span> Placement notes
                     </h3>
-                    <div class="mt-2 bg-amber-400/20 border-l-4 border-amber-400 p-4 text-sm text-black whitespace-pre-line leading-relaxed">
+                    <div
+                        class="mt-2 bg-amber-400/20 border-l-4 border-amber-400 p-4 text-sm text-black whitespace-pre-line leading-relaxed">
                         <%= currentTrade.notes || 'No specific placement notes provided.' %>
                     </div>
                 </div>
@@ -399,35 +420,43 @@
                 <% } %>
 
                 <!-- COMMENTS -->
+                <!-- COMMENTS -->
                 <div id="comments" class="bg-white pro-card p-4 md:p-5 mb-6">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                        <span class="w-1 h-4 bg-amber-400 block"></span> Notes & comments
+                        <span class="w-1 h-4 bg-amber-400 block"></span> Notes & comments for
+                        <%= currentTrade ? currentTrade.name : '' %>
                     </h3>
 
-                    <!-- 1. Added enctype="multipart/form-data" for file uploading -->
+                    <!-- Comment Form -->
                     <form action="/room/<%= room.id %>/comment" method="POST" enctype="multipart/form-data"
                         class="mt-4 space-y-3">
                         <input type="hidden" name="activeTrade" value="<%= activeTrade %>">
+                        <input type="hidden" name="tradeId" value="<%= currentTrade ? currentTrade.id : '' %>">
 
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <input type="text" name="author" placeholder="Your name / trade" required class="text-sm p-2 border border-amber-400 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
-                            <input type="text" name="text" placeholder="Add observation or question..." required class="sm:col-span-2 text-sm p-2 border border-amber-400 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
+                            <input type="text" name="author" placeholder="Your name / trade" required
+                                class="text-sm p-2 border border-amber-400 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
+                            <input type="text" name="text" placeholder="Add observation or question..." required
+                                class="sm:col-span-2 text-sm p-2 border border-amber-400 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
                         </div>
 
                         <!-- File/Image Input Container -->
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
                             <div class="w-full sm:w-auto">
                                 <label class="block text-xs font-medium text-black mb-1">Attach files or photos:</label>
-                                <input type="file" name="attachments" multiple accept="image/*,.pdf,.doc,.docx,.txt" class="block w-full text-xs text-black file:mr-3 file:py-1.5 file:px-3 file:border file:border-amber-300 file:bg-amber-100 file:text-xs file:font-medium file:text-black hover:file:bg-slate-200 file:cursor-pointer cursor-pointer">
+                                <input type="file" name="attachments" multiple accept="image/*,.pdf,.doc,.docx,.txt"
+                                    class="block w-full text-xs text-black file:mr-3 file:py-1.5 file:px-3 file:border file:border-amber-300 file:bg-amber-100 file:text-xs file:font-medium file:text-black hover:file:bg-slate-200 file:cursor-pointer cursor-pointer">
                             </div>
-                            <button type="submit" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-5 py-2 transition w-full sm:w-auto self-end">Post comment</button>
+                            <button type="submit"
+                                class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-5 py-2 transition w-full sm:w-auto self-end">Post
+                                comment</button>
                         </div>
                     </form>
 
-                    <!-- Comments Display -->
+                    <!-- Comments Display for Current Trade -->
                     <div class="mt-5 space-y-3">
-                        <% if (room.comments && room.comments.length > 0) { %>
-                        <% room.comments.forEach(c => { %>
+                        <% if (currentTrade && currentTrade.comments && currentTrade.comments.length > 0) { %>
+                        <% currentTrade.comments.forEach(c => { %>
                         <div class="bg-amber-400/20 p-3 border border-slate-200 text-xs space-y-2">
                             <div class="flex justify-between items-center flex-wrap gap-1">
                                 <span class="font-bold text-black"><%= c.author %></span>
@@ -443,14 +472,18 @@
                                     <% c.attachments.forEach(file => { %>
                                     <div class="border border-slate-200 bg-white p-1 rounded-none text-center">
                                         <%  const isImg = file.type && file.type.startsWith('image/');
-                                            const fileType = isImg ? 'image' : (file.type === 'application/pdf' ? 'pdf' : 'other'); %>
+                                const fileType = isImg ? 'image' : (file.type === 'application/pdf' ? 'pdf' : 'other'); %>
 
                                         <!-- Image or Document Icon Trigger -->
-                                        <div class="preview-trigger cursor-pointer" data-type="<%= fileType %>" data-src="<%= file.url %>" data-title="<%= file.originalName %>" data-download="<%= file.url %>">
+                                        <div class="preview-trigger cursor-pointer" data-type="<%= fileType %>"
+                                            data-src="<%= file.url %>" data-title="<%= file.originalName %>"
+                                            data-download="<%= file.url %>">
                                             <% if (isImg) { %>
-                                            <img src="<%= file.url %>" alt="<%= file.originalName %>" class="w-full h-20 object-cover mb-1 hover:opacity-90">
+                                            <img src="<%= file.url %>" alt="<%= file.originalName %>"
+                                                class="w-full h-20 object-cover mb-1 hover:opacity-90">
                                             <% } else { %>
-                                            <div class="h-20 bg-slate-100 flex flex-col items-center justify-center p-1 hover:bg-slate-200 transition">
+                                            <div
+                                                class="h-20 bg-slate-100 flex flex-col items-center justify-center p-1 hover:bg-slate-200 transition">
                                                 <span class="text-xl"><%= fileType === 'pdf' ? '📄' : '📎' %></span>
                                             </div>
                                             <% } %>
@@ -463,12 +496,13 @@
                         </div>
                         <% }) %>
                         <% } else { %>
-                        <p class="text-xs text-black italic">No comments yet.</p>
+                        <p class="text-xs text-black italic">No comments for this trade yet.</p>
                         <% } %>
                     </div>
                 </div>
 
-                <div class="text-[10px] text-black border-t border-slate-200 pt-4 mt-4 flex justify-center flex-wrap gap-2">
+                <div
+                    class="text-[10px] text-black border-t border-slate-200 pt-4 mt-4 flex justify-center flex-wrap gap-2">
                     <span>© 2026 Manu Romero Construction</span>
                 </div>
 
@@ -476,27 +510,37 @@
         </div>
 
         <!-- SHARE MODAL -->
-        <div id="shareModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div id="shareModal"
+            class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div class="bg-white max-w-sm w-full p-6 border border-slate-200 shadow-xl">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-black">Share room specs</h3>
-                    <button onclick="toggleShareModal()" class="text-black hover:text-black text-xl leading-none">&times;</button>
+                    <button onclick="toggleShareModal()"
+                        class="text-black hover:text-black text-xl leading-none">&times;</button>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
-                    <a href="https://api.whatsapp.com/send?text=<%= encodeURIComponent(roomUrl) %>" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white text-center py-2 text-xs font-semibold">WhatsApp</a>
-                    <a href="mailto:?subject=Job Site Specs: <%= room.name %>&body=<%= encodeURIComponent(roomUrl) %>" class="bg-slate-700 hover:bg-slate-800 text-white text-center py-2 text-xs font-semibold">Email</a>
-                    <a href="sms:?body=<%= encodeURIComponent(roomUrl) %>" class="bg-sky-500 hover:bg-sky-600 text-white text-center py-2 text-xs font-semibold">SMS</a>
-                    <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= encodeURIComponent(roomUrl) %>" target="_blank" class="bg-blue-700 hover:bg-blue-800 text-white text-center py-2 text-xs font-semibold">LinkedIn</a>
+                    <a href="https://api.whatsapp.com/send?text=<%= encodeURIComponent(roomUrl) %>" target="_blank"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white text-center py-2 text-xs font-semibold">WhatsApp</a>
+                    <a href="mailto:?subject=Job Site Specs: <%= room.name %>&body=<%= encodeURIComponent(roomUrl) %>"
+                        class="bg-slate-700 hover:bg-slate-800 text-white text-center py-2 text-xs font-semibold">Email</a>
+                    <a href="sms:?body=<%= encodeURIComponent(roomUrl) %>"
+                        class="bg-sky-500 hover:bg-sky-600 text-white text-center py-2 text-xs font-semibold">SMS</a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= encodeURIComponent(roomUrl) %>"
+                        target="_blank"
+                        class="bg-blue-700 hover:bg-blue-800 text-white text-center py-2 text-xs font-semibold">LinkedIn</a>
                 </div>
             </div>
         </div>
 
         <!-- FILE PREVIEW MODAL -->
-        <div id="filePreviewModal" class="hidden fixed inset-0 z-[100] bg-slate-900/80 flex items-center justify-center p-4">
+        <div id="filePreviewModal"
+            class="hidden fixed inset-0 z-[100] bg-slate-900/80 flex items-center justify-center p-4">
             <div class="relative preview-content bg-white shadow-2xl border border-slate-200 overflow-hidden">
                 <div class="flex items-center justify-center px-4 py-3 bg-slate-50 border-b border-slate-200 relative">
-                    <a id="previewDownload" href="#" download class="hidden text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 font-medium">Download</a>
-                    <button onclick="closeFilePreview()" class="absolute right-4 text-black hover:text-black text-2xl leading-none w-8 h-8 flex items-center justify-center">&times;</button>
+                    <a id="previewDownload" href="#" download
+                        class="hidden text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 font-medium">Download</a>
+                    <button onclick="closeFilePreview()"
+                        class="absolute right-4 text-black hover:text-black text-2xl leading-none w-8 h-8 flex items-center justify-center">&times;</button>
                 </div>
 
                 <div id="previewBody" class="bg-slate-100 flex items-center justify-center p-2 min-h-[200px]">
