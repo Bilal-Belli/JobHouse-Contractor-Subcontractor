@@ -77,31 +77,4 @@
                     xhr.send();
                 }
             }
-
-            // ===== LOADING OVERLAY =====
-            function showLoading() {
-                const overlay = document.getElementById('loadingOverlay');
-                overlay.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            }
-
-            function hideLoading() {
-                const overlay = document.getElementById('loadingOverlay');
-                overlay.classList.add('hidden');
-                document.body.style.overflow = '';
-            }
-
-            // Show loading when Save Draft button is clicked
-            document.querySelector('button[type="submit"]')?.addEventListener('click', function (e) {
-                // Check if this is the save button (not the publish/unpublish button)
-                if (this.textContent.trim() === 'Save Draft' || this.textContent.includes('Save')) {
-                    showLoading();
-                }
-            });
-
-            // Hide loading when page loads (in case of redirect)
-            window.addEventListener('load', function () {
-                hideLoading();
-            });
-
         </script>
