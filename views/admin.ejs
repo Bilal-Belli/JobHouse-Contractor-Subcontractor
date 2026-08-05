@@ -115,7 +115,7 @@
               </div>
 
               <!-- Trades list - draggable with inline rename -->
-              <div class="trades-container flex flex-wrap gap-1 mb-3" data-room-id="<%= room.id %>">
+              <div class="trades-container flex flex-wrap gap-1 mb-2" data-room-id="<%= room.id %>">
                 <% room.trades.forEach((trade, index) => { %>
                 <span
                   class="trade-item group relative text-[10px] bg-white text-slate-600 px-1.5 py-0.5 rounded-none border border-slate-200 cursor-move inline-flex items-center gap-1"
@@ -129,6 +129,15 @@
                     onclick="enableTradeRename(this)">✎</button>
                 </span>
                 <% }) %>
+
+                <!-- Add trade input (shows as empty tab) -->
+                <span class="add-trade-container inline-flex items-center">
+                  <input type="text"
+                    class="add-trade-input text-[10px] bg-transparent border border-dashed border-amber-400 hover:border-amber-500 focus:border-amber-500 focus:outline-none px-1.5 py-0.5 rounded-none w-[60px] transition placeholder:text-slate-400"
+                    placeholder="+ Add" data-room-id="<%= room.id %>" onfocus="this.placeholder='Enter trade name...'"
+                    onblur="addTradeFromInput(this)"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();} if(event.key==='Escape'){this.value='';this.blur();}">
+                </span>
               </div>
             </div>
 
@@ -498,6 +507,46 @@
       }
     });
   });
+</script>
+
+<script>
+  // ===== ADD TRADE FROM INPUT =====
+  async function addTradeFromInput(input) {
+    const tradeName = input.value.trim();
+    const roomId = input.dataset.roomId;
+
+    // Reset placeholder
+    input.placeholder = '+ Add';
+
+    // If empty, just reset
+    if (!tradeName) {
+      input.value = '';
+      return;
+    }
+
+    try {
+      const response = await fetch('/admin/edit/' + roomId + '/add-trade', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ tradeName: tradeName })
+      });
+
+      if (response.ok) {
+        // Reload the page to show the new trade
+        window.location.reload();
+      } else {
+        alert('Failed to add trade. Please try again.');
+        input.value = '';
+      }
+    } catch (err) {
+      console.error('Error adding trade:', err);
+      alert('Failed to add trade. Please try again.');
+      input.value = '';
+    }
+  }
 </script>
 
 <%- include('partials/footer') %>
