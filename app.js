@@ -399,9 +399,9 @@ app.post('/admin/houses/:houseId/rooms', (req, res) => {
         name: roomName,
         status: 'draft',
         trades: [
-          { id: 'electrical', name: 'Electrical', renderUrl: '', planUrl: '', notes: '', files: [] },
-          { id: 'plumbing', name: 'Plumbing', renderUrl: '', planUrl: '', notes: '', files: [] },
-          { id: 'hvac', name: 'HVAC', renderUrl: '', planUrl: '', notes: '', files: [] }
+          { id: 'electrical-' + Date.now(), name: 'Electrical', renderUrl: '', planUrl: '', notes: '', files: [] },
+          { id: 'plumbing-' + Date.now(), name: 'Plumbing', renderUrl: '', planUrl: '', notes: '', files: [] },
+          { id: 'hvac-' + Date.now(), name: 'HVAC', renderUrl: '', planUrl: '', notes: '', files: [] }
         ],
         comments: []
       };
@@ -545,7 +545,7 @@ app.post('/admin/edit/:roomId/add-trade', (req, res) => {
 
     const room = findRoomById(data, roomId);
     if (room) {
-      const tradeId = tradeName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-');
+      const tradeId = tradeName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-') + '-' + Date.now();
       const existingTrade = room.trades.find(t => t.id === tradeId);
 
       if (!existingTrade) {
@@ -816,7 +816,7 @@ app.post('/admin/houses/:houseId/reorder-rooms', (req, res) => {
     const data = getData();
     const house = data.houses.find(h => h.id === req.params.houseId);
     if (!house) return res.status(404).json({ error: 'House not found' });
-    
+
     const { roomOrder } = req.body;
     // Sort rooms based on the new order
     house.rooms.sort((a, b) => roomOrder.indexOf(a.id) - roomOrder.indexOf(b.id));
@@ -834,15 +834,37 @@ app.post('/admin/rooms/:roomId/reorder-trades', (req, res) => {
     const data = getData();
     const { room } = findRoomAndHouseById(data, req.params.roomId);
     if (!room) return res.status(404).json({ error: 'Room not found' });
-    
+
     const { tradeOrder } = req.body;
-    // Sort trades based on the new order
-    room.trades.sort((a, b) => tradeOrder.indexOf(a.name) - tradeOrder.indexOf(b.name));
+    // Sort trades based on the new order by ID
+    room.trades.sort((a, b) => tradeOrder.indexOf(a.id) - tradeOrder.indexOf(b.id));
     saveData(data);
     res.json({ success: true });
   } catch (err) {
     console.error('Error reordering trades:', err);
     res.status(500).json({ error: 'Failed to reorder trades' });
+  }
+});
+
+// Rename trade (by index)
+app.post('/admin/rooms/:roomId/rename-trade/:tradeId', (req, res) => {
+  try {
+    const data = getData();
+    const { room } = findRoomAndHouseById(data, req.params.roomId);
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+
+    const trade = room.trades.find(t => t.id === req.params.tradeId);
+    if (!trade) return res.status(404).json({ error: 'Trade not found' });
+
+    const newName = req.body.newName.trim();
+    if (!newName) return res.status(400).json({ error: 'Name is required' });
+
+    trade.name = newName;
+    saveData(data);
+    res.json({ success: true, newName: newName });
+  } catch (err) {
+    console.error('Error renaming trade:', err);
+    res.status(500).json({ error: 'Failed to rename trade' });
   }
 });
 

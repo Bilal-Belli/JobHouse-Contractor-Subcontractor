@@ -31,14 +31,16 @@
       class="bg-white rounded-none border border-slate-300 shadow-sm overflow-hidden">
 
       <!-- House (Folder) Header - Click to expand/collapse -->
-      <div class="house-header bg-slate-900 text-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer"
+      <div
+        class="house-header bg-slate-900 text-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer"
         onclick="toggleHouse(this.closest('[data-house-card]'))">
         <div class="flex items-center gap-3 flex-1">
           <!-- Expand/collapse icon -->
-          <svg class="w-5 h-5 text-amber-500 flex-shrink-0 transition-transform duration-200 house-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-amber-500 flex-shrink-0 transition-transform duration-200 house-toggle-icon"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
-          
+
           <svg class="w-6 h-6 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 001 1m-6 0h6" />
@@ -79,7 +81,8 @@
         <% if (house.rooms && house.rooms.length > 0) { %>
         <div class="rooms-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-house-id="<%= house.id %>">
           <% house.rooms.forEach(room => { %>
-          <div data-room-card data-room-name="<%= room.name %>" data-room-id="<%= room.id %>" data-house-id="<%= house.id %>"
+          <div data-room-card data-room-name="<%= room.name %>" data-room-id="<%= room.id %>"
+            data-house-id="<%= house.id %>"
             class="room-card bg-slate-50 border border-slate-200 rounded-none p-4 flex flex-col justify-between hover:border-amber-400 transition group">
             <div>
               <div class="flex justify-between items-start mb-2">
@@ -111,11 +114,19 @@
                 </span>
               </div>
 
-              <!-- Trades list - draggable -->
+              <!-- Trades list - draggable with inline rename -->
               <div class="trades-container flex flex-wrap gap-1 mb-3" data-room-id="<%= room.id %>">
-                <% room.trades.forEach(trade => { %>
-                <span class="trade-item text-[10px] bg-white text-slate-600 px-1.5 py-0.5 rounded-none border border-slate-200 cursor-move">
-                  <%= trade.name %>
+                <% room.trades.forEach((trade, index) => { %>
+                <span
+                  class="trade-item group relative text-[10px] bg-white text-slate-600 px-1.5 py-0.5 rounded-none border border-slate-200 cursor-move inline-flex items-center gap-1"
+                  data-trade-id="<%= trade.id %>" data-trade-name="<%= trade.name %>" data-trade-index="<%= index %>">
+                  <span class="trade-name"><%= trade.name %></span>
+                  <input type="text" value="<%= trade.name %>"
+                    class="trade-rename-input hidden text-[10px] bg-transparent border-b border-amber-500 focus:outline-none w-auto min-w-[40px] px-0 py-0"
+                    data-room-id="<%= room.id %>" data-trade-id="<%= trade.id %>">
+                  <button type="button"
+                    class="trade-rename-btn opacity-0 group-hover:opacity-100 text-slate-400 hover:text-slate-700 text-[8px] leading-none"
+                    onclick="enableTradeRename(this)">✎</button>
                 </span>
                 <% }) %>
               </div>
@@ -197,42 +208,54 @@
   .group:hover .opacity-0 {
     opacity: 1 !important;
   }
-  
+
   .house-rooms-container {
     transition: all 0.3s ease;
   }
-  
+
   .house-rooms-container.collapsed {
     display: none;
   }
-  
+
   .house-toggle-icon {
     transition: transform 0.2s ease;
   }
-  
+
   .house-toggle-icon.collapsed {
     transform: rotate(-90deg);
   }
-  
+
   /* Drag and drop styles */
   .room-card.dragging {
     opacity: 0.5;
   }
-  
+
   .room-card.drag-over {
     border-color: #FFB300;
     border-width: 2px;
     background: #fef9e7;
   }
-  
+
   .trade-item.dragging {
     opacity: 0.5;
   }
-  
+
   .trade-item.drag-over {
     border-color: #FFB300;
     border-width: 2px;
     background: #fef9e7;
+  }
+
+  .trade-item:hover .trade-rename-btn {
+    opacity: 1 !important;
+  }
+
+  .trade-rename-input.active {
+    display: inline-block !important;
+  }
+
+  .trade-name.hidden {
+    display: none !important;
   }
 </style>
 
@@ -246,10 +269,10 @@
   function toggleHouse(houseCard) {
     const container = houseCard.querySelector('.house-rooms-container');
     const icon = houseCard.querySelector('.house-toggle-icon');
-    
+
     container.classList.toggle('collapsed');
     icon.classList.toggle('collapsed');
-    
+
     // Save state to localStorage
     const houseId = houseCard.dataset.houseId;
     const isCollapsed = container.classList.contains('collapsed');
@@ -295,6 +318,71 @@
     }
   }
 
+  // ===== RENAME TRADE (Inline) =====
+  function enableTradeRename(btn) {
+    const tradeItem = btn.closest('.trade-item');
+    const nameSpan = tradeItem.querySelector('.trade-name');
+    const input = tradeItem.querySelector('.trade-rename-input');
+    const roomId = input.dataset.roomId;
+    const tradeId = input.dataset.tradeId;
+    const originalName = nameSpan.textContent.trim();
+
+    // Show input, hide name
+    nameSpan.classList.add('hidden');
+    input.classList.remove('hidden');
+    input.classList.add('active');
+    input.value = originalName;
+    input.focus();
+    input.select();
+
+    // Save on blur
+    input.onblur = async function () {
+      const newName = this.value.trim();
+      if (!newName || newName === originalName) {
+        nameSpan.classList.remove('hidden');
+        input.classList.add('hidden');
+        input.classList.remove('active');
+        return;
+      }
+
+      try {
+        const response = await fetch('/admin/rooms/' + roomId + '/rename-trade/' + tradeId, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ newName: newName })
+        });
+
+        if (response.ok) {
+          nameSpan.textContent = newName;
+          tradeItem.dataset.tradeName = newName;
+        } else {
+          input.value = originalName;
+        }
+      } catch (err) {
+        console.error('Failed to rename trade:', err);
+        input.value = originalName;
+      }
+
+      nameSpan.classList.remove('hidden');
+      input.classList.add('hidden');
+      input.classList.remove('active');
+    };
+
+    // Save on Enter key
+    input.onkeydown = function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.blur();
+      } else if (e.key === 'Escape') {
+        this.value = originalName;
+        this.blur();
+      }
+    };
+  }
+
   // ===== RENAME ROOM (AJAX) =====
   async function renameRoom(input) {
     const newName = input.value.trim();
@@ -329,10 +417,10 @@
       animation: 150,
       ghostClass: 'drag-over',
       dragClass: 'dragging',
-      onEnd: function(evt) {
+      onEnd: function (evt) {
         const houseId = grid.dataset.houseId;
         const roomIds = Array.from(grid.querySelectorAll('.room-card')).map(el => el.dataset.roomId);
-        
+
         // Save new order via AJAX
         fetch('/admin/houses/' + houseId + '/reorder-rooms', {
           method: 'POST',
@@ -347,15 +435,17 @@
   });
 
   // ===== DRAG AND DROP - TRADES =====
+  // ===== DRAG AND DROP - TRADES =====
   document.querySelectorAll('.trades-container').forEach(container => {
     new Sortable(container, {
       animation: 150,
       ghostClass: 'drag-over',
       dragClass: 'dragging',
-      onEnd: function(evt) {
+      onEnd: function (evt) {
         const roomId = container.dataset.roomId;
-        const tradeNames = Array.from(container.querySelectorAll('.trade-item')).map(el => el.textContent.trim());
-        
+        // Get trade IDs in new order
+        const tradeIds = Array.from(container.querySelectorAll('.trade-item')).map(el => el.dataset.tradeId);
+
         // Save new order via AJAX
         fetch('/admin/rooms/' + roomId + '/reorder-trades', {
           method: 'POST',
@@ -363,7 +453,7 @@
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
           },
-          body: JSON.stringify({ tradeOrder: tradeNames })
+          body: JSON.stringify({ tradeOrder: tradeIds })
         }).catch(err => console.error('Failed to reorder trades:', err));
       }
     });
