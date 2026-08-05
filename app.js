@@ -425,7 +425,7 @@ app.post('/admin/houses/:houseId/rooms', (req, res) => {
 
       req.session.save((err) => {
         if (err) console.error('Session save error:', err);
-        res.redirect(`/admin/edit/${newRoom.id}`);
+        res.redirect('/admin');
       });
     } else {
       res.status(404).send('House not found');
