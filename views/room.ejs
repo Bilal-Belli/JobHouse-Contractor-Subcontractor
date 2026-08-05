@@ -14,21 +14,21 @@
             }
 
             .sidebar-scroll::-webkit-scrollbar-track {
-                background: #1e293b;
+                background: #FFB300;
             }
 
             .sidebar-scroll::-webkit-scrollbar-thumb {
-                background: #D0CBC4;
+                background: #FFB300;
                 border-radius: 0;
             }
 
             .active-tab-indicator {
-                border-left: 3px solid #D0CBC4;
-                background: #c5beb6;
+                border-left: 3px solid #FFB300;
+                background: #182234;
             }
 
             .tab-hover:hover {
-                background: #c5beb6;
+                background: #334155;
                 transition: 0.15s ease;
             }
 
@@ -58,7 +58,7 @@
             .file-item:hover {
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
                 transform: translateY(-2px);
-                border-color: #D0CBC4;
+                border-color: #FFB300;
             }
 
             .file-item img {
@@ -78,24 +78,6 @@
                 background: #f8f6f4;
                 font-size: 2.5rem;
                 pointer-events: none;
-            }
-
-            .file-item .file-name {
-                font-size: 0.65rem;
-                color: #475569;
-                margin-top: 0.25rem;
-                display: block;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                text-align: center;
-            }
-
-            .file-item .file-size {
-                font-size: 0.6rem;
-                color: #94a3b8;
-                text-align: center;
-                display: block;
             }
 
             #filePreviewModal {
@@ -171,7 +153,7 @@
                 top: 12px;
                 left: 12px;
                 z-index: 1001;
-                background: #000;
+                background: #334155;
                 color: white;
                 border: none;
                 padding: 10px 14px;
@@ -268,9 +250,7 @@
     <body class="min-h-screen font-sans text-black bg-[#f4f1ec]">
 
         <!-- Mobile Hamburger -->
-        <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
-            ☰
-        </button>
+        <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Toggle menu"> ☰ </button>
 
         <!-- Overlay -->
         <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -279,15 +259,14 @@
         <div class="flex min-h-screen">
 
             <!-- ===== SIDEBAR ===== -->
-            <aside class="sidebar bg-[#b9b2a8] text-[#FFFFFF] flex flex-col border-r border-[#cbc4d0]">
+            <aside class="sidebar bg-slate-900 text-[#FFFFFF] flex flex-col border-r border-slate-200">
 
                 <!-- Close button for mobile -->
-                <button onclick="toggleSidebar()" class="md:hidden absolute top-3 right-3 text-white text-2xl p-2">
-                    ✕
+                <button onclick="toggleSidebar()" class="md:hidden absolute top-3 right-3 text-white text-2xl p-2"> ✕
                 </button>
 
                 <!-- project context -->
-                <div class="px-4 py-3 border-b border-[#FFFFFF] bg-[#aea599] mt-8 md:mt-0">
+                <div class="px-4 py-3 border-b border-slate-600 bg-slate-900 mt-8 md:mt-0">
                     <div class="text-[10px] uppercase text-[#FFFFFF] tracking-wider">Project</div>
                     <% if (typeof house !== 'undefined' && house) { %>
                     <div class="flex items-center justify-between mt-0.5">
@@ -299,11 +278,11 @@
                 </div>
 
                 <!-- room switcher -->
-                <div class="px-4 py-2.5 border-b border-[#FFFFFF] bg-[#b9b2a8]">
-                    <div class="flex items-center gap-1 text-xs text-white">
-                        <span class="uppercase tracking-wider">Room</span>
+                <div class="px-4 py-3 border-b border-slate-600 bg-slate-900 mt-8 md:mt-0">
+                    <div class="text-[10px] uppercase text-[#FFFFFF] tracking-wider">Room</div>
+                    <div class="flex items-center justify-between mt-1">
                         <select onchange="window.location.href=this.value"
-                            class="bg-[#aea599] text-white text-xs border border-[#cbc4d0] rounded-none px-2 py-1 outline-none w-full">
+                            class="bg-slate-700 text-white text-xs rounded-none px-2 py-1 outline-none w-full">
                             <% (typeof house !== 'undefined' && house && house.rooms || []).forEach(r => { %>
                             <option value="/room/<%= r.id %>" <%= r.id === room.id ? 'selected' : '' %>><%= r.name %>
                             </option>
@@ -318,8 +297,8 @@
                     <% room.trades.forEach(trade => { %>
                     <a href="/room/<%= room.id %>?trade=<%= trade.id %>"
                         class="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-sm transition-all duration-150
-                    <%= activeTrade === trade.id ? 'active-tab-indicator text-white bg-[#c5beb6]' : 'text-white tab-hover hover:text-white' %>">
-                        <span class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></span>
+                    <%= activeTrade === trade.id ? 'active-tab-indicator text-white bg-slate-700' : 'text-slate-300 tab-hover hover:text-white' %>">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-600 flex-shrink-0"></span>
                         <%= trade.name %>
                     </a>
                     <% }) %>
@@ -327,15 +306,16 @@
                 </nav>
 
                 <!-- footer actions -->
-                <div class="px-4 py-3 border-t border-[#FFFFFF] bg-[#b9b2a8] text-xs">
+                <div class="px-4 py-3 border-t border-slate-600 bg-slate-900 text-xs">
                     <div class="flex items-center justify-between gap-2">
                         <img src="<%= qrCodeUrl %>" alt="QR"
-                            class="w-10 h-10 border border-[#FFFFFF] bg-white object-contain">
+                            class="w-10 h-10 border border-slate-600 bg-white object-contain">
                         <div class="flex gap-1">
                             <a href="<%= qrCodeUrl %>" download="QR-<%= room.id %>.png"
-                                class="bg-[#FFFFFF] hover:bg-[#D0CBC4] text-[#000000] px-2 py-1 text-[10px] uppercase tracking-wider">QR Code</a>
+                                class="bg-slate-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">QR
+                                Code</a>
                             <button onclick="toggleShareModal()"
-                                class="bg-[#FFFFFF] hover:bg-[#D0CBC4] text-[#000000] px-2 py-1 text-[10px] uppercase tracking-wider">Share</button>
+                                class="bg-amber-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">Share</button>
                         </div>
                     </div>
                 </div>
@@ -352,7 +332,7 @@
                             <span class="text-black">· <%= room.name %></span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 bg-white px-3 py-1.5 border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-3 bg-white px-3 py-1.5 border border-amber-300 shadow-sm">
                         <span class="text-xs text-black">Room ID</span>
                         <span class="text-xs font-mono text-black"><%= room.id.slice(0,6) %></span>
                     </div>
@@ -366,7 +346,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <!-- render -->
                     <div
-                        class="flex items-center justify-center min-h-[180px] border border-slate-200 overflow-hidden bg-white">
+                        class="flex items-center justify-center min-h-[180px] border border-amber-300 overflow-hidden bg-white">
                         <% if (currentTrade.renderUrl) { %>
                         <img src="<%= currentTrade.renderUrl %>" class="w-full h-full object-cover preview-trigger"
                             data-type="image" data-src="<%= currentTrade.renderUrl %>"
@@ -379,7 +359,7 @@
                     <div class="bg-white pro-card p-4 flex flex-col">
                         <span class="text-[10px] uppercase tracking-wider text-black mb-1">Technical drawing</span>
                         <div
-                            class="flex-1 bg-[#D0CBC4]-50 flex items-center justify-center min-h-[180px] p-2 border border-slate-200">
+                            class="flex-1 bg-amber-400/20 flex items-center justify-center min-h-[180px] p-2 border border-amber-300">
                             <% if (currentTrade.planUrl) { %>
                             <% if (currentTrade.planUrl.endsWith('.pdf')) { %>
                             <button type="button"
@@ -390,7 +370,7 @@
                             </button>
                             <% } else { %>
                             <img src="<%= currentTrade.planUrl %>"
-                                class="max-h-52 object-contain border border-slate-300 preview-trigger"
+                                class="max-h-52 object-contain border border-amber-300 preview-trigger"
                                 data-type="image" data-src="<%= currentTrade.planUrl %>"
                                 data-title="Technical Drawing – <%= currentTrade.name %>" alt="Technical Drawing">
                             <% } %>
@@ -405,7 +385,7 @@
                 <% if (currentTrade.files && currentTrade.files.length > 0) { %>
                 <div class="bg-white pro-card p-4 md:p-5 mb-6">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2 mb-3">
-                        <span class="w-1 h-4 bg-[#D0CBC4] block"></span>
+                        <span class="w-1 h-4 bg-amber-400 block"></span>
                         Additional Files & Documents
                     </h3>
                     <div class="file-gallery">
@@ -428,10 +408,10 @@
                 <!-- notes -->
                 <div class="bg-white pro-card p-4 md:p-5 mb-6">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                        <span class="w-1 h-4 bg-[#D0CBC4] block"></span> Placement notes
+                        <span class="w-1 h-4 bg-amber-400 block"></span> Placement notes
                     </h3>
                     <div
-                        class="mt-2 bg-[#D0CBC4]/20 border-l-4 border-[#D0CBC4] p-4 text-sm text-black whitespace-pre-line leading-relaxed">
+                        class="mt-2 bg-amber-400/20 border-l-4 border-amber-400 p-4 text-sm text-black whitespace-pre-line leading-relaxed">
                         <%= currentTrade.notes || 'No specific placement notes provided.' %>
                     </div>
                 </div>
@@ -441,7 +421,7 @@
                 <!-- COMMENTS -->
                 <div id="comments" class="bg-white pro-card p-4 md:p-5 mb-6">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                        <span class="w-1 h-4 bg-[#D0CBC4] block"></span> Notes & comments
+                        <span class="w-1 h-4 bg-amber-400 block"></span> Notes & comments
                     </h3>
 
                     <!-- 1. Added enctype="multipart/form-data" for file uploading -->
@@ -451,9 +431,9 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <input type="text" name="author" placeholder="Your name / trade" required
-                                class="text-sm p-2 border border-slate-300 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
+                                class="text-sm p-2 border border-amber-400 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
                             <input type="text" name="text" placeholder="Add observation or question..." required
-                                class="sm:col-span-2 text-sm p-2 border border-slate-300 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
+                                class="sm:col-span-2 text-sm p-2 border border-amber-400 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
                         </div>
 
                         <!-- File/Image Input Container -->
@@ -464,13 +444,13 @@
                                 <input type="file" name="attachments" multiple accept="image/*,.pdf,.doc,.docx,.txt"
                                     class="block w-full text-xs text-black
             file:mr-3 file:py-1.5 file:px-3
-            file:border file:border-slate-300 file:bg-slate-100
+            file:border file:border-amber-300 file:bg-amber-100
             file:text-xs file:font-medium file:text-black
             hover:file:bg-slate-200 file:cursor-pointer cursor-pointer">
                             </div>
 
                             <button type="submit"
-                                class="bg-slate-900 hover:bg-slate-700 text-white text-xs font-semibold px-5 py-2 transition w-full sm:w-auto self-end">
+                                class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-5 py-2 transition w-full sm:w-auto self-end">
                                 Post comment
                             </button>
                         </div>
@@ -480,7 +460,7 @@
                     <div class="mt-5 space-y-3">
                         <% if (room.comments && room.comments.length > 0) { %>
                         <% room.comments.forEach(c => { %>
-                        <div class="bg-[#D0CBC4]-50 p-3 border border-slate-200 text-xs space-y-2">
+                        <div class="bg-amber-400/20 p-3 border border-slate-200 text-xs space-y-2">
                             <div class="flex justify-between items-center flex-wrap gap-1">
                                 <span class="font-bold text-black"><%= c.author %></span>
                                 <span class="text-black"><%= c.timestamp %></span>
@@ -550,9 +530,8 @@
                         class="bg-emerald-600 hover:bg-emerald-700 text-white text-center py-2 text-xs font-semibold">WhatsApp</a>
                     <a href="mailto:?subject=Job Site Specs: <%= room.name %>&body=<%= encodeURIComponent(roomUrl) %>"
                         class="bg-slate-700 hover:bg-slate-800 text-white text-center py-2 text-xs font-semibold">Email</a>
-                    <a href="https://twitter.com/intent/tweet?url=<%= encodeURIComponent(roomUrl) %>" target="_blank"
-                        class="bg-sky-500 hover:bg-sky-600 text-white text-center py-2 text-xs font-semibold">X /
-                        Twitter</a>
+                    <a href="sms:?body=<%= encodeURIComponent(roomUrl) %>"
+                        class="bg-sky-500 hover:bg-sky-600 text-white text-center py-2 text-xs font-semibold">SMS</a>
                     <a href="https://www.linkedin.com/sharing/share-offsite/?url=<%= encodeURIComponent(roomUrl) %>"
                         target="_blank"
                         class="bg-blue-700 hover:bg-blue-800 text-white text-center py-2 text-xs font-semibold">LinkedIn</a>
