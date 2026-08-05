@@ -25,14 +25,20 @@
 
   <!-- Houses (Folders) List -->
   <% if (houses && houses.length > 0) { %>
-  <div class="space-y-6">
+  <div class="space-y-6" id="housesContainer">
     <% houses.forEach(house => { %>
     <div data-house-card data-house-name="<%= house.name %>" data-house-id="<%= house.id %>"
       class="bg-white rounded-none border border-slate-300 shadow-sm overflow-hidden">
 
-      <!-- House (Folder) Header -->
-      <div class="bg-slate-900 text-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <!-- House (Folder) Header - Click to expand/collapse -->
+      <div class="house-header bg-slate-900 text-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer"
+        onclick="toggleHouse(this.closest('[data-house-card]'))">
         <div class="flex items-center gap-3 flex-1">
+          <!-- Expand/collapse icon -->
+          <svg class="w-5 h-5 text-amber-500 flex-shrink-0 transition-transform duration-200 house-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+          
           <svg class="w-6 h-6 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 001 1m-6 0h6" />
@@ -41,18 +47,15 @@
             <!-- House Name with inline rename -->
             <form action="/admin/houses/<%= house.id %>/rename" method="POST" class="flex items-center gap-2 flex-1">
               <input type="text" name="newName" value="<%= house.name %>"
-                class="bg-transparent text-lg font-bold tracking-wide border-b-2 border-transparent hover:border-amber-500/50 focus:border-amber-500 focus:outline-none px-1 text-white w-auto min-w-[100px]"
-                onblur="this.form.submit()" onkeydown="if(event.key==='Enter'){this.form.submit()}"
-                placeholder="Rename house...">
-              <button type="submit"
-                class="text-xs text-amber-400 hover:text-amber-300 opacity-0 group-hover:opacity-100 transition"
-                title="Rename">✎</button>
+                class="house-name-input bg-transparent text-lg font-bold tracking-wide border-b-2 border-transparent hover:border-amber-500/50 focus:border-amber-500 focus:outline-none px-1 text-white w-auto min-w-[100px]"
+                onblur="renameHouse(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                placeholder="Rename house..." data-house-id="<%= house.id %>">
+              <span class="text-xs text-slate-400"><%= house.rooms.length %> Room Subfolder(s)</span>
             </form>
-            <p class="text-xs text-slate-400"><%= house.rooms.length %> Room Subfolder(s)</p>
           </div>
         </div>
 
-        <div class="flex gap-2">
+        <div class="flex gap-2" onclick="event.stopPropagation()">
           <!-- Add Room to this House Form -->
           <form action="/admin/houses/<%= house.id %>/rooms" method="POST" class="flex gap-2">
             <input type="text" name="roomName" placeholder="New Room" required
@@ -71,16 +74,22 @@
         </div>
       </div>
 
-      <!-- Rooms (Subfolders) Grid -->
-      <div class="p-5">
+      <!-- Rooms (Subfolders) Grid - Collapsible -->
+      <div class="house-rooms-container p-5">
         <% if (house.rooms && house.rooms.length > 0) { %>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="rooms-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-house-id="<%= house.id %>">
           <% house.rooms.forEach(room => { %>
-          <div data-room-card data-room-name="<%= room.name %>" data-room-id="<%= room.id %>"
-            class="bg-slate-50 border border-slate-200 rounded-none p-4 flex flex-col justify-between hover:border-amber-400 transition group">
+          <div data-room-card data-room-name="<%= room.name %>" data-room-id="<%= room.id %>" data-house-id="<%= house.id %>"
+            class="room-card bg-slate-50 border border-slate-200 rounded-none p-4 flex flex-col justify-between hover:border-amber-400 transition group">
             <div>
               <div class="flex justify-between items-start mb-2">
                 <div class="flex items-center gap-2 flex-1">
+                  <!-- Drag handle -->
+                  <div class="drag-handle cursor-move text-slate-400 hover:text-slate-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                    </svg>
+                  </div>
                   <svg class="w-4 h-4 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -90,12 +99,9 @@
                   <form action="/admin/rooms/<%= room.id %>/rename" method="POST"
                     class="flex items-center gap-1 flex-1">
                     <input type="text" name="newName" value="<%= room.name %>"
-                      class="font-bold text-slate-800 text-sm bg-transparent border-b-2 border-transparent hover:border-amber-300 focus:border-amber-500 focus:outline-none px-1 w-auto min-w-[60px]"
-                      onblur="this.form.submit()" onkeydown="if(event.key==='Enter'){this.form.submit()}"
-                      placeholder="Rename room...">
-                    <button type="submit"
-                      class="text-xs text-amber-600 hover:text-amber-700 opacity-0 group-hover:opacity-100 transition"
-                      title="Rename">✎</button>
+                      class="room-name-input font-bold text-slate-800 text-sm bg-transparent border-b-2 border-transparent hover:border-amber-300 focus:border-amber-500 focus:outline-none px-1 w-auto min-w-[60px]"
+                      onblur="renameRoom(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                      placeholder="Rename room..." data-room-id="<%= room.id %>">
                   </form>
                 </div>
                 <span
@@ -105,9 +111,10 @@
                 </span>
               </div>
 
-              <div class="flex flex-wrap gap-1 mb-3">
+              <!-- Trades list - draggable -->
+              <div class="trades-container flex flex-wrap gap-1 mb-3" data-room-id="<%= room.id %>">
                 <% room.trades.forEach(trade => { %>
-                <span class="text-[10px] bg-white text-slate-600 px-1.5 py-0.5 rounded-none border border-slate-200">
+                <span class="trade-item text-[10px] bg-white text-slate-600 px-1.5 py-0.5 rounded-none border border-slate-200 cursor-move">
                   <%= trade.name %>
                 </span>
                 <% }) %>
@@ -190,22 +197,190 @@
   .group:hover .opacity-0 {
     opacity: 1 !important;
   }
+  
+  .house-rooms-container {
+    transition: all 0.3s ease;
+  }
+  
+  .house-rooms-container.collapsed {
+    display: none;
+  }
+  
+  .house-toggle-icon {
+    transition: transform 0.2s ease;
+  }
+  
+  .house-toggle-icon.collapsed {
+    transform: rotate(-90deg);
+  }
+  
+  /* Drag and drop styles */
+  .room-card.dragging {
+    opacity: 0.5;
+  }
+  
+  .room-card.drag-over {
+    border-color: #FFB300;
+    border-width: 2px;
+    background: #fef9e7;
+  }
+  
+  .trade-item.dragging {
+    opacity: 0.5;
+  }
+  
+  .trade-item.drag-over {
+    border-color: #FFB300;
+    border-width: 2px;
+    background: #fef9e7;
+  }
 </style>
+
+<!-- SortableJS for drag and drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
   let targetFormId = null;
 
+  // ===== EXPAND/COLLAPSE HOUSES =====
+  function toggleHouse(houseCard) {
+    const container = houseCard.querySelector('.house-rooms-container');
+    const icon = houseCard.querySelector('.house-toggle-icon');
+    
+    container.classList.toggle('collapsed');
+    icon.classList.toggle('collapsed');
+    
+    // Save state to localStorage
+    const houseId = houseCard.dataset.houseId;
+    const isCollapsed = container.classList.contains('collapsed');
+    localStorage.setItem('house_' + houseId + '_collapsed', isCollapsed);
+  }
+
+  // Restore collapse states from localStorage
+  document.querySelectorAll('[data-house-card]').forEach(card => {
+    const houseId = card.dataset.houseId;
+    const isCollapsed = localStorage.getItem('house_' + houseId + '_collapsed') === 'true';
+    if (isCollapsed) {
+      const container = card.querySelector('.house-rooms-container');
+      const icon = card.querySelector('.house-toggle-icon');
+      container.classList.add('collapsed');
+      icon.classList.add('collapsed');
+    }
+  });
+
+  // ===== RENAME HOUSE (AJAX) =====
+  async function renameHouse(input) {
+    const newName = input.value.trim();
+    if (!newName) return;
+
+    const houseId = input.dataset.houseId;
+    const form = input.closest('form');
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ newName: newName })
+      });
+
+      if (!response.ok) {
+        input.value = input.defaultValue;
+      }
+    } catch (err) {
+      console.error('Failed to rename house:', err);
+      input.value = input.defaultValue;
+    }
+  }
+
+  // ===== RENAME ROOM (AJAX) =====
+  async function renameRoom(input) {
+    const newName = input.value.trim();
+    if (!newName) return;
+
+    const roomId = input.dataset.roomId;
+    const form = input.closest('form');
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ newName: newName })
+      });
+
+      if (!response.ok) {
+        input.value = input.defaultValue;
+      }
+    } catch (err) {
+      console.error('Failed to rename room:', err);
+      input.value = input.defaultValue;
+    }
+  }
+
+  // ===== DRAG AND DROP - ROOMS =====
+  document.querySelectorAll('.rooms-grid').forEach(grid => {
+    new Sortable(grid, {
+      handle: '.drag-handle',
+      animation: 150,
+      ghostClass: 'drag-over',
+      dragClass: 'dragging',
+      onEnd: function(evt) {
+        const houseId = grid.dataset.houseId;
+        const roomIds = Array.from(grid.querySelectorAll('.room-card')).map(el => el.dataset.roomId);
+        
+        // Save new order via AJAX
+        fetch('/admin/houses/' + houseId + '/reorder-rooms', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ roomOrder: roomIds })
+        }).catch(err => console.error('Failed to reorder rooms:', err));
+      }
+    });
+  });
+
+  // ===== DRAG AND DROP - TRADES =====
+  document.querySelectorAll('.trades-container').forEach(container => {
+    new Sortable(container, {
+      animation: 150,
+      ghostClass: 'drag-over',
+      dragClass: 'dragging',
+      onEnd: function(evt) {
+        const roomId = container.dataset.roomId;
+        const tradeNames = Array.from(container.querySelectorAll('.trade-item')).map(el => el.textContent.trim());
+        
+        // Save new order via AJAX
+        fetch('/admin/rooms/' + roomId + '/reorder-trades', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ tradeOrder: tradeNames })
+        }).catch(err => console.error('Failed to reorder trades:', err));
+      }
+    });
+  });
+
+  // ===== DELETE MODAL =====
   function openHouseDeleteModal(houseId, houseName) {
-    targetFormId = `delete-house-form-${houseId}`;
+    targetFormId = 'delete-house-form-' + houseId;
     document.getElementById('deleteModalTitle').textContent = 'Delete House';
-    document.getElementById('deleteModalBody').innerHTML = `Are you sure you want to delete <strong class="text-slate-900">${houseName}</strong> and all associated room subfolders?`;
+    document.getElementById('deleteModalBody').innerHTML = 'Are you sure you want to delete <strong class="text-slate-900">' + houseName + '</strong> and all associated room subfolders?';
     document.getElementById('deleteModal').classList.remove('hidden');
   }
 
   function openRoomDeleteModal(roomId, roomName) {
-    targetFormId = `delete-room-form-${roomId}`;
+    targetFormId = 'delete-room-form-' + roomId;
     document.getElementById('deleteModalTitle').textContent = 'Delete Room';
-    document.getElementById('deleteModalBody').innerHTML = `Are you sure you want to delete room <strong class="text-slate-900">${roomName}</strong> and all its spec files?`;
+    document.getElementById('deleteModalBody').innerHTML = 'Are you sure you want to delete room <strong class="text-slate-900">' + roomName + '</strong> and all its spec files?';
     document.getElementById('deleteModal').classList.remove('hidden');
   }
 
@@ -220,42 +395,12 @@
     }
   });
 
-  // Close modal when pressing Escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeDeleteModal();
   });
 
-  // Auto-save inline rename handlers
-  document.querySelectorAll('input[name="newName"]').forEach(input => {
-    let originalValue = input.value;
-
-    input.addEventListener('blur', async () => {
-      const newValue = input.value.trim();
-      if (!newValue || newValue === originalValue) return;
-
-      const form = input.closest('form');
-
-      try {
-        const response = await fetch(form.action, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: JSON.stringify({ newName: newValue })
-        });
-
-        if (response.ok) {
-          originalValue = newValue;
-        } else {
-          input.value = originalValue;
-        }
-      } catch (err) {
-        console.error('Failed to rename:', err);
-        input.value = originalValue;
-      }
-    });
-
+  // Prevent form submission on enter key for rename inputs
+  document.querySelectorAll('.house-name-input, .room-name-input').forEach(input => {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();

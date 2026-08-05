@@ -811,6 +811,41 @@ app.post('/room/:id/comment', upload.array('attachments', 10), async (req, res) 
   }
 });
 
+app.post('/admin/houses/:houseId/reorder-rooms', (req, res) => {
+  try {
+    const data = getData();
+    const house = data.houses.find(h => h.id === req.params.houseId);
+    if (!house) return res.status(404).json({ error: 'House not found' });
+    
+    const { roomOrder } = req.body;
+    // Sort rooms based on the new order
+    house.rooms.sort((a, b) => roomOrder.indexOf(a.id) - roomOrder.indexOf(b.id));
+    saveData(data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error reordering rooms:', err);
+    res.status(500).json({ error: 'Failed to reorder rooms' });
+  }
+});
+
+// Reorder trades within a room
+app.post('/admin/rooms/:roomId/reorder-trades', (req, res) => {
+  try {
+    const data = getData();
+    const { room } = findRoomAndHouseById(data, req.params.roomId);
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+    
+    const { tradeOrder } = req.body;
+    // Sort trades based on the new order
+    room.trades.sort((a, b) => tradeOrder.indexOf(a.name) - tradeOrder.indexOf(b.name));
+    saveData(data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error reordering trades:', err);
+    res.status(500).json({ error: 'Failed to reorder trades' });
+  }
+});
+
 // Admin endpoint to delete a comment and clean up its files from disk
 app.post('/admin/rooms/:roomId/comments/:commentIndex/delete', (req, res) => {
   try {
