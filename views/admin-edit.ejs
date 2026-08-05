@@ -59,9 +59,9 @@
         </div>
       </form>
 
-      <div class="flex-1 overflow-y-auto">
+      <div class="flex-1 overflow-y-auto trades-tabs-container" data-room-id="<%= room.id %>">
         <% room.trades.forEach(t => { %>
-        <div class="flex items-center justify-between group border-b border-slate-100 trade-tab-row"
+        <div class="flex items-center justify-between group border-b border-slate-100 trade-tab-row cursor-move"
           data-trade-id="<%= t.id %>">
           <a href="/admin/edit/<%= room.id %>?trade=<%= t.id %>"
             class="trade-tab-link flex-1 text-left px-4 py-2.5 sm:py-3 text-sm font-medium transition <%= selectedTrade === t.id ? 'bg-amber-50 text-amber-800 border-l-4 border-slate-800' : 'text-slate-600 hover:bg-slate-50 border-l-4 border-transparent' %>">
@@ -90,7 +90,7 @@
       <% if (activeTrade) { %>
       <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2 flex-wrap gap-2">
         <h2 class="text-base sm:text-lg font-bold text-slate-800">
-          Editing: <span class="text-slate-800"><%= activeTrade.name %> Specs</span>
+          Editing: <span class="text-slate-800"><%= activeTrade.name %></span>
         </h2>
       </div>
 
@@ -173,7 +173,7 @@
         <!-- ========================================== -->
         <!-- COMMENTS SECTION (FIXED ATTACHMENTS)       -->
         <!-- ========================================== -->
-        
+
         <div class="border-t border-slate-200 pt-5 mt-6">
           <h3 class="text-xs font-bold text-slate-700 uppercase mb-3">
             Client Comments (<%= (room.comments && room.comments.length) || 0 %>)
@@ -267,6 +267,19 @@
     </div>
   </div>
 </div>
+
+<style>
+  .trade-tab-row.sortable-ghost {
+    background: #fef3c7 !important;
+    border-left: 4px solid #FFB300 !important;
+  }
+
+  .trade-tab-row.sortable-drag {
+    opacity: 0.5 !important;
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
   // ---- Delete Modal State ----
@@ -434,6 +447,41 @@
       }
     });
   });
+</script>
+
+<script>
+  // ===== DRAG AND DROP - TRADE TABS (Sidebar) =====
+  const tradesContainer = document.querySelector('.trades-tabs-container');
+  if (tradesContainer) {
+    new Sortable(tradesContainer, {
+      animation: 150,
+      ghostClass: 'bg-amber-50',
+      dragClass: 'opacity-50',
+      handle: '.trade-tab-row',
+      onEnd: function (evt) {
+        const roomId = tradesContainer.dataset.roomId;
+        // Get trade IDs in new order
+        const tradeIds = Array.from(tradesContainer.querySelectorAll('.trade-tab-row')).map(el => el.dataset.tradeId);
+
+        // Save new order via AJAX
+        fetch('/admin/rooms/' + roomId + '/reorder-trades', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ tradeOrder: tradeIds })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              console.log('Trade tabs reordered successfully');
+            }
+          })
+          .catch(err => console.error('Failed to reorder trade tabs:', err));
+      }
+    });
+  }
 </script>
 
 <%- include('partials/footer') %>
