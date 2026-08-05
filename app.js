@@ -19,6 +19,12 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use((req, res, next) => {
+    res.locals.baseUrl = `${req.protocol}://${req.get('host')}`;
+    res.locals.currentPath = req.path;
+    res.locals.isAdmin = req.session && req.session.isAdmin === true;
+    next();
+});
 
 // Session Configuration
 app.use(session({
