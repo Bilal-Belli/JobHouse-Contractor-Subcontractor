@@ -33,7 +33,6 @@
             }
 
             .pro-card {
-                border: 1px solid #e9e5e0;
                 box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
             }
 
@@ -58,7 +57,7 @@
             .file-item:hover {
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
                 transform: translateY(-2px);
-                border-color: #FFB300;
+                border-color: #94A3B8;
             }
 
             .file-item img {
@@ -269,15 +268,8 @@
                     ✕</button>
 
                 <!-- project context -->
-                <div class="px-4 py-3 border-b border-slate-600 bg-slate-900 mt-8 md:mt-0">
-                    <div class="text-[10px] uppercase text-[#FFFFFF] tracking-wider">Project</div>
-                    <% if (typeof house !== 'undefined' && house) { %>
-                    <div class="flex items-center justify-between mt-0.5">
-                        <span class="text-sm font-semibold text-white truncate"><%= house.name %></span>
-                    </div>
-                    <% } else { %>
-                    <span class="text-sm text-[#FFFFFF]">—</span>
-                    <% } %>
+                <div class="flex items-center justify-center mt-0.5 px-4 py-3 border-b border-slate-600 bg-slate-900">
+                    <img src="<%= baseUrl %>/logo.png" alt="Logo" class="w-32 h-16 object-contain">
                 </div>
 
                 <!-- room switcher -->
@@ -335,8 +327,8 @@
                             <span class="text-black">· <%= room.name %></span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 bg-white px-3 py-1.5 border border-amber-300 shadow-sm">
-                        <span class="text-xs text-black">Room ID</span>
+                    <div class="flex items-center gap-3 bg-white px-3 py-1.5 border border-slate-300 shadow-sm">
+                        <span class="text-xs text-black">House ID</span>
                         <span class="text-xs font-mono text-black"><%= room.id.slice(0,6) %></span>
                     </div>
                 </div>
@@ -345,74 +337,51 @@
                 <% const currentTrade = room.trades.find(t => t.id === activeTrade) || room.trades[0]; %>
                 <% if (currentTrade) { %>
 
-                <!-- visual + drawing -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <!-- render -->
-                    <div
-                        class="flex items-center justify-center min-h-[180px] border border-amber-300 overflow-hidden bg-white">
-                        <% if (currentTrade.renderUrl) { %>
-                        <img src="<%= currentTrade.renderUrl %>" class="w-full h-full object-cover preview-trigger"
-                            data-type="image" data-src="<%= currentTrade.renderUrl %>"
-                            data-title="3D Visual – <%= currentTrade.name %>" alt="3D Visual">
-                        <% } else { %>
-                        <span class="text-black text-xs">no visual</span>
-                        <% } %>
-                    </div>
-                    <!-- drawing -->
-                    <div class="bg-white pro-card p-4 flex flex-col">
-                        <span class="text-[10px] uppercase tracking-wider text-black mb-1">Technical drawing</span>
-                        <div
-                            class="flex-1 bg-amber-400/20 flex items-center justify-center min-h-[180px] p-2 border border-amber-300">
-                            <% if (currentTrade.planUrl) { %>
-                            <% if (currentTrade.planUrl.endsWith('.pdf')) { %>
-                            <button type="button"
-                                class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 text-xs font-semibold preview-trigger"
-                                data-type="pdf" data-src="<%= currentTrade.planUrl %>"
-                                data-title="Technical Drawing – <%= currentTrade.name %>"> Open PDF </button>
-                            <% } else { %>
-                            <img src="<%= currentTrade.planUrl %>"
-                                class="max-h-52 object-contain border border-amber-300 preview-trigger"
-                                data-type="image" data-src="<%= currentTrade.planUrl %>"
-                                data-title="Technical Drawing – <%= currentTrade.name %>" alt="Technical Drawing">
-                            <% } %>
-                            <% } else { %>
-                            <span class="text-black text-xs">no drawing</span>
-                            <% } %>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- FILES GALLERY -->
-                <% if (currentTrade.files && currentTrade.files.length > 0) { %>
+                <!-- GALLERY - Images -->
+                <% if (currentTrade.images && currentTrade.images.length > 0) { %>
                 <div class="bg-white pro-card p-4 md:p-5 mb-6">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2 mb-3">
-                        <span class="w-1 h-4 bg-amber-400 block"></span>
-                        Additional Files & Documents
+                        <span class="w-1 h-4 bg-slate-400 block"></span>
+                        GALLERY
                     </h3>
                     <div class="file-gallery">
-                        <% currentTrade.files.forEach(file => { %>
-                        <div class="file-item preview-trigger" data-type="<%= file.type %>" data-src="<%= file.url %>"
+                        <% currentTrade.images.forEach(file => { %>
+                        <div class="file-item preview-trigger" data-type="image" data-src="<%= file.url %>"
                             data-title="<%= file.originalName %>" data-download="<%= file.url %>">
-                            <% if (file.type === 'image') { %>
                             <img src="<%= file.url %>" alt="<%= file.originalName %>" loading="lazy">
-                            <% } else if (file.type === 'pdf') { %>
-                            <div class="file-icon">📄</div>
-                            <% } else { %>
-                            <div class="file-icon">📎</div>
-                            <% } %>
+                            <span class="file-name text-xs"><%= file.originalName.replace(/\.[^/.]+$/, '') %></span>
                         </div>
                         <% }) %>
                     </div>
                 </div>
                 <% } %>
 
-                <!-- notes -->
+                <!-- FILES & DOCUMENTS -->
+                <% if (currentTrade.files && currentTrade.files.length > 0) { %>
+                <div class="bg-white pro-card p-4 md:p-5 mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2 mb-3">
+                        <span class="w-1 h-4 bg-slate-400 block"></span>
+                        Files & Documents
+                    </h3>
+                    <div class="file-gallery">
+                        <% currentTrade.files.forEach(file => { %>
+                        <div class="file-item preview-trigger" data-type="<%= file.type %>" data-src="<%= file.url %>"
+                            data-title="<%= file.originalName %>" data-download="<%= file.url %>">
+                            <div class="file-icon">📄</div>
+                            <span class="file-name text-xs"><%= file.originalName %></span>
+                        </div>
+                        <% }) %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- notes card -->
                 <div class="bg-white pro-card p-4 md:p-5 mb-6">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                        <span class="w-1 h-4 bg-amber-400 block"></span> Placement notes
+                        <span class="w-1 h-4 bg-slate-400 block"></span> Placement notes
                     </h3>
                     <div
-                        class="mt-2 bg-amber-400/20 border-l-4 border-amber-400 p-4 text-sm text-black whitespace-pre-line leading-relaxed">
+                        class="mt-2 bg-slate-50/80 border-l-4 border-slate-400 p-4 text-sm text-slate-700 whitespace-pre-line leading-relaxed">
                         <%= currentTrade.notes || 'No specific placement notes provided.' %>
                     </div>
                 </div>
@@ -420,10 +389,9 @@
                 <% } %>
 
                 <!-- COMMENTS -->
-                <!-- COMMENTS -->
                 <div id="comments" class="bg-white pro-card p-4 md:p-5 mb-6">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                        <span class="w-1 h-4 bg-amber-400 block"></span> Notes & comments for
+                        <span class="w-1 h-4 bg-slate-400 block"></span> Notes & comments for
                         <%= currentTrade ? currentTrade.name : '' %>
                     </h3>
 
@@ -435,9 +403,9 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <input type="text" name="author" placeholder="Your name / trade" required
-                                class="text-sm p-2 border border-amber-400 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
+                                class="text-sm p-2 border border-slate-400 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
                             <input type="text" name="text" placeholder="Add observation or question..." required
-                                class="sm:col-span-2 text-sm p-2 border border-amber-400 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
+                                class="sm:col-span-2 text-sm p-2 border border-slate-400 focus:ring-2 focus:ring-[#000000] outline-none bg-slate-50 w-full">
                         </div>
 
                         <!-- File/Image Input Container -->
@@ -445,7 +413,7 @@
                             <div class="w-full sm:w-auto">
                                 <label class="block text-xs font-medium text-black mb-1">Attach files or photos:</label>
                                 <input type="file" name="attachments" multiple accept="image/*,.pdf,.doc,.docx,.txt"
-                                    class="block w-full text-xs text-black file:mr-3 file:py-1.5 file:px-3 file:border file:border-amber-300 file:bg-amber-100 file:text-xs file:font-medium file:text-black hover:file:bg-slate-200 file:cursor-pointer cursor-pointer">
+                                    class="block w-full text-xs text-black file:mr-3 file:py-1.5 file:px-3 file:border file:border-slate-300 file:bg-slate-100 file:text-xs file:font-medium file:text-black hover:file:bg-slate-200 file:cursor-pointer cursor-pointer">
                             </div>
                             <button type="submit"
                                 class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-5 py-2 transition w-full sm:w-auto self-end">Post
@@ -457,7 +425,7 @@
                     <div class="mt-5 space-y-3">
                         <% if (currentTrade && currentTrade.comments && currentTrade.comments.length > 0) { %>
                         <% currentTrade.comments.forEach(c => { %>
-                        <div class="bg-amber-400/20 p-3 border border-slate-200 text-xs space-y-2">
+                        <div class="bg-slate-100 p-3 text-xs space-y-2">
                             <div class="flex justify-between items-center flex-wrap gap-1">
                                 <span class="font-bold text-black"><%= c.author %></span>
                                 <span class="text-black"><%= c.timestamp %></span>
@@ -502,8 +470,8 @@
                 </div>
 
                 <div
-                    class="text-[10px] text-black border-t border-slate-200 pt-4 mt-4 flex justify-center flex-wrap gap-2">
-                    <span>© 2026 Manu Romero Construction</span>
+                    class="text-[12px] text-black pt-4 mt-4 flex justify-center flex-wrap gap-2">
+                    <span>© <%= new Date().getFullYear() %> Manu Romero Construction</span>
                 </div>
 
             </main>
@@ -536,11 +504,26 @@
         <div id="filePreviewModal"
             class="hidden fixed inset-0 z-[100] bg-slate-900/80 flex items-center justify-center p-4">
             <div class="relative preview-content bg-white shadow-2xl border border-slate-200 overflow-hidden">
-                <div class="flex items-center justify-center px-4 py-3 bg-slate-50 border-b border-slate-200 relative">
-                    <a id="previewDownload" href="#" download
-                        class="hidden text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 font-medium">Download</a>
-                    <button onclick="closeFilePreview()"
-                        class="absolute right-4 text-black hover:text-black text-2xl leading-none w-8 h-8 flex items-center justify-center">&times;</button>
+                <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+                    <!-- File name display -->
+                    <span id="previewFileName"
+                        class="text-sm font-medium text-black truncate max-w-[200px] md:max-w-[400px]"></span>
+
+                    <div class="flex items-center gap-3">
+                        <a id="previewDownload" href="#" download
+                            class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 font-medium hidden">Download</a>
+                        <button onclick="closeFilePreview()"
+                            class="text-black hover:text-black text-2xl leading-none w-8 h-8 flex items-center justify-center">&times;</button>
+                    </div>
+                </div>
+
+                <!-- Navigation buttons (moved to separate row) -->
+                <div class="flex items-center justify-center gap-3 px-4 py-2 bg-slate-50 border-b border-slate-200">
+                    <button onclick="showPrevPreview()"
+                        class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-black text-sm font-medium">←</button>
+                    <span id="previewCounter" class="text-xs text-black flex items-center"></span>
+                    <button onclick="showNextPreview()"
+                        class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-black text-sm font-medium">→</button>
                 </div>
 
                 <div id="previewBody" class="bg-slate-100 flex items-center justify-center p-2 min-h-[200px]">
@@ -583,14 +566,29 @@
             const previewBody = document.getElementById('previewBody');
             const previewDownload = document.getElementById('previewDownload');
 
-            function openFilePreview(type, src, title = 'Preview', downloadUrl = null) {
+            // Add these variables at the top of your script
+            let previewItems = [];
+            let currentPreviewIndex = 0;
+
+            // Replace your existing openFilePreview function with this:
+            function openFilePreview(type, src, title = 'Preview', downloadUrl = null, index = 0) {
                 previewBody.innerHTML = '';
+                currentPreviewIndex = index;
+
+                const fileNameElement = document.getElementById('previewFileName');
+
+                // Gather all preview items on page
+                previewItems = Array.from(document.querySelectorAll('.preview-trigger'));
 
                 if (downloadUrl) {
                     previewDownload.href = downloadUrl;
                     previewDownload.classList.remove('hidden');
                 } else {
                     previewDownload.classList.add('hidden');
+                }
+
+                if (fileNameElement) {
+                    fileNameElement.textContent = title; // This will show the originalName
                 }
 
                 if (type === 'image') {
@@ -600,11 +598,11 @@
                     img.alt = title;
                     img.onerror = function () {
                         previewBody.innerHTML = `
-                        <div class="text-center p-10">
-                            <div class="text-5xl mb-4">🖼️</div>
-                            <p class="text-black mb-4 text-sm">Failed to load image</p>
-                        </div>
-                    `;
+                <div class="text-center p-10">
+                    <div class="text-5xl mb-4">🖼️</div>
+                    <p class="text-black mb-4 text-sm">Failed to load image</p>
+                </div>
+            `;
                     };
                     previewBody.appendChild(img);
                 } else if (type === 'pdf') {
@@ -615,19 +613,88 @@
                     previewBody.appendChild(iframe);
                 } else {
                     previewBody.innerHTML = `
-                    <div class="text-center p-10">
-                        <div class="text-5xl mb-4">📎</div>
-                        <p class="text-black mb-4 text-sm">${title}</p>
-                        <a href="${src}" download class="inline-block bg-[#000000] hover:bg-[#333333] text-white px-5 py-2 text-sm font-semibold">
-                            Download File
-                        </a>
-                    </div>
-                `;
+            <div class="text-center p-10">
+                <div class="text-5xl mb-4">📎</div>
+                <p class="text-black mb-4 text-sm">${title}</p>
+                <a href="${src}" download class="inline-block bg-[#000000] hover:bg-[#333333] text-white px-5 py-2 text-sm font-semibold">
+                    Download File
+                </a>
+            </div>
+        `;
                 }
 
                 previewModal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
+
+                // Update counter - count only same type items
+                const currentItem = previewItems[currentPreviewIndex];
+                const currentType = currentItem ? (currentItem.dataset.type || 'image') : type;
+                const sameTypeItems = previewItems.filter(item => (item.dataset.type || 'image') === currentType);
+                const currentInSameType = sameTypeItems.indexOf(currentItem);
+
+                const counter = document.getElementById('previewCounter');
+                if (counter && sameTypeItems.length > 1) {
+                    counter.textContent = `${currentInSameType + 1} / ${sameTypeItems.length}`;
+                } else if (counter) {
+                    counter.textContent = '';
+                }
             }
+
+            // Add navigation functions
+            function showNextPreview() {
+                if (previewItems.length === 0) return;
+
+                // Get current item type
+                const currentItem = previewItems[currentPreviewIndex];
+                const currentType = currentItem.dataset.type || 'image';
+
+                // Find only items of the same type
+                const sameTypeItems = previewItems.filter(item => (item.dataset.type || 'image') === currentType);
+
+                if (sameTypeItems.length <= 1) return;
+
+                // Find current index within same type items
+                const currentInSameType = sameTypeItems.indexOf(currentItem);
+                const nextIndex = (currentInSameType + 1) % sameTypeItems.length;
+                const nextItem = sameTypeItems[nextIndex];
+
+                // Update currentPreviewIndex to the actual index in the full list
+                currentPreviewIndex = previewItems.indexOf(nextItem);
+
+                const type = nextItem.dataset.type || 'image';
+                const src = nextItem.dataset.src || nextItem.href || '';
+                const title = nextItem.dataset.title || 'Preview';
+                const download = nextItem.dataset.download || src;
+                openFilePreview(type, src, title, download, currentPreviewIndex);
+            }
+
+            function showPrevPreview() {
+                if (previewItems.length === 0) return;
+
+                // Get current item type
+                const currentItem = previewItems[currentPreviewIndex];
+                const currentType = currentItem.dataset.type || 'image';
+
+                // Find only items of the same type
+                const sameTypeItems = previewItems.filter(item => (item.dataset.type || 'image') === currentType);
+
+                if (sameTypeItems.length <= 1) return;
+
+                // Find current index within same type items
+                const currentInSameType = sameTypeItems.indexOf(currentItem);
+                const prevIndex = (currentInSameType - 1 + sameTypeItems.length) % sameTypeItems.length;
+                const prevItem = sameTypeItems[prevIndex];
+
+                // Update currentPreviewIndex to the actual index in the full list
+                currentPreviewIndex = previewItems.indexOf(prevItem);
+
+                const type = prevItem.dataset.type || 'image';
+                const src = prevItem.dataset.src || prevItem.href || '';
+                const title = prevItem.dataset.title || 'Preview';
+                const download = prevItem.dataset.download || src;
+                openFilePreview(type, src, title, download, currentPreviewIndex);
+            }
+
 
             function closeFilePreview() {
                 previewModal.classList.add('hidden');
@@ -645,9 +712,32 @@
                 const src = trigger.dataset.src || trigger.href || '';
                 const title = trigger.dataset.title || 'Preview';
                 const download = trigger.dataset.download || src;
+                const index = Array.from(document.querySelectorAll('.preview-trigger')).indexOf(trigger);
 
                 if (src) {
-                    openFilePreview(type, src, title, download);
+                    openFilePreview(type, src, title, download, index);
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (previewModal.classList.contains('hidden')) {
+                    if (e.key === 'Escape') {
+                        const sidebar = document.querySelector('.sidebar');
+                        if (sidebar.classList.contains('open')) {
+                            toggleSidebar();
+                        }
+                    }
+                    return;
+                }
+
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    showNextPreview();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    showPrevPreview();
+                } else if (e.key === 'Escape') {
+                    closeFilePreview();
                 }
             });
 
