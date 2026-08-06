@@ -419,16 +419,27 @@
                 </nav>
 
                 <!-- footer actions -->
+                <!-- footer actions -->
                 <div class="px-4 py-3 border-t border-slate-600 bg-slate-900 text-xs">
                     <div class="flex items-center justify-between gap-2">
                         <img src="<%= qrCodeUrl %>" alt="QR"
                             class="w-10 h-10 border border-slate-600 bg-white object-contain">
-                        <div class="flex gap-1">
-                            <a href="#" onclick="openQRPreview(); return false;"
-                                class="bg-slate-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">QR
-                                Code</a>
+                        <div class="flex gap-1 flex-wrap">
+                            <!-- Preview button -->
+                            <button onclick="openQRPreview();"
+                                class="bg-slate-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">
+                                Preview
+                            </button>
+                            <!-- Direct download button -->
+                            <a href="<%= qrCodeUrl %>" download="QR-Code-<%= room.name %>.png"
+                                class="bg-amber-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider inline-block">
+                                Download
+                            </a>
+                            <!-- Share button -->
                             <button onclick="toggleShareModal()"
-                                class="bg-amber-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">Share</button>
+                                class="bg-amber-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">
+                                Share
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -884,21 +895,24 @@
             });
 
             // ===== QR Code Preview =====
+            // ===== QR Code Preview (Enhanced for Mobile) =====
             function openQRPreview() {
                 const qrSrc = '<%= qrCodeUrl %>';
                 const qrTitle = 'QR Code - <%= room.name %>';
 
-                // Clear all other preview items to show only this one
+                // Clear all other preview items
                 previewItems = [];
                 currentPreviewIndex = 0;
 
                 previewBody.innerHTML = '';
 
-                // Create the image
+                // Create the image with better mobile handling
                 const img = document.createElement('img');
                 img.src = qrSrc;
                 img.className = 'preview-image';
                 img.alt = qrTitle;
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
 
                 img.onerror = function () {
                     previewBody.innerHTML = `
@@ -911,29 +925,45 @@
 
                 previewBody.appendChild(img);
 
-                // Add instruction for mobile users
+                // Add save instructions for mobile
                 const instruction = document.createElement('p');
                 instruction.className = 'text-xs text-gray-500 mt-3 text-center';
+                instruction.innerHTML = 'Press and hold the image to save to gallery<br><span class="text-[10px]">(iOS: tap Share button, then Save Image)</span>';
                 previewBody.appendChild(instruction);
 
                 // Set the filename
                 document.getElementById('previewFileName').textContent = qrTitle;
 
-                // Set download link - opens in new tab instead of downloading
+                // Enhanced download handling
                 const downloadLink = document.getElementById('previewDownload');
                 downloadLink.href = qrSrc;
                 downloadLink.textContent = 'Download';
                 downloadLink.setAttribute('download', 'QR-Code-' + '<%= room.name %>.png');
-                downloadLink.removeAttribute('target');
                 downloadLink.classList.remove('hidden');
 
-                // Hide the counter (no navigation needed)
+                // Also add an explicit download button
+                if (!document.getElementById('qrDownloadBtn')) {
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.id = 'qrDownloadBtn';
+                    downloadBtn.className = 'bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 text-sm font-semibold mt-2 ml-2';
+                    downloadBtn.textContent = 'Save Image';
+                    downloadBtn.onclick = function (e) {
+                        e.preventDefault();
+                        // Try to open image in new tab for mobile
+                        window.open(qrSrc, '_blank');
+                    };
+                    // Insert after download link
+                    downloadLink.parentNode.insertBefore(downloadBtn, downloadLink.nextSibling);
+                }
+
+                // Hide counter
                 document.getElementById('previewCounter').textContent = '';
 
-                // Show the modal
+                // Show modal
                 previewModal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
             }
+
             // Close sidebar when selecting a room on mobile
             document.addEventListener('DOMContentLoaded', function () {
                 const mobileRoomSelect = document.querySelector('.room-select-mobile');
