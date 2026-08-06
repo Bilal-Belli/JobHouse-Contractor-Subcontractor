@@ -346,11 +346,13 @@
                     </h3>
                     <div class="file-gallery">
                         <% currentTrade.images.forEach(file => { %>
-                        <div class="file-item preview-trigger" data-type="image" data-src="<%= file.url %>"
-                            data-title="<%= file.originalName %>" data-download="<%= file.url %>">
-                            <img src="<%= file.url %>" alt="<%= file.originalName %>" loading="lazy">
-                            <span class="file-name text-xs"><%= file.originalName.replace(/\.[^/.]+$/, '') %></span>
-                        </div>
+                        <a href="<%= file.url %>" download="<%= file.originalName %>" class="block">
+                            <div class="file-item preview-trigger" data-type="image" data-src="<%= file.url %>"
+                                data-title="<%= file.originalName %>" data-download="<%= file.url %>">
+                                <img src="<%= file.url %>" alt="<%= file.originalName %>" loading="lazy">
+                                <span class="file-name text-xs"><%= file.originalName.replace(/\.[^/.]+$/, '') %></span>
+                            </div>
+                        </a>
                         <% }) %>
                     </div>
                 </div>
@@ -365,11 +367,14 @@
                     </h3>
                     <div class="file-gallery">
                         <% currentTrade.files.forEach(file => { %>
-                        <div class="file-item preview-trigger" data-type="<%= file.type %>" data-src="<%= file.url %>"
-                            data-title="<%= file.originalName %>" data-download="<%= file.url %>">
-                            <div class="file-icon">📄</div>
-                            <span class="file-name text-xs"><%= file.originalName %></span>
-                        </div>
+                        <a href="<%= file.url %>" download="<%= file.originalName %>" class="block">
+                            <div class="file-item preview-trigger" data-type="<%= file.type %>"
+                                data-src="<%= file.url %>" data-title="<%= file.originalName %>"
+                                data-download="<%= file.url %>">
+                                <div class="file-icon">📄</div>
+                                <span class="file-name text-xs"><%= file.originalName %></span>
+                            </div>
+                        </a>
                         <% }) %>
                     </div>
                 </div>
@@ -391,7 +396,7 @@
                 <!-- COMMENTS -->
                 <div id="comments" class="bg-white pro-card p-4 md:p-5 mb-6">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                        <span class="w-1 h-4 bg-slate-400 block"></span> Chat for 
+                        <span class="w-1 h-4 bg-slate-400 block"></span> Chat for
                         <%= currentTrade ? currentTrade.name : '' %>
                     </h3>
 
@@ -581,6 +586,7 @@
 
                 if (downloadUrl) {
                     previewDownload.href = downloadUrl;
+                    previewDownload.download = title; // title contains originalName
                     previewDownload.classList.remove('hidden');
                 } else {
                     previewDownload.classList.add('hidden');
@@ -781,7 +787,6 @@
                 // Add instruction for mobile users
                 const instruction = document.createElement('p');
                 instruction.className = 'text-xs text-gray-500 mt-3 text-center';
-                instruction.textContent = '📱 Press and hold the image to save to your photos';
                 previewBody.appendChild(instruction);
 
                 // Set the filename
@@ -790,9 +795,9 @@
                 // Set download link - opens in new tab instead of downloading
                 const downloadLink = document.getElementById('previewDownload');
                 downloadLink.href = qrSrc;
-                downloadLink.textContent = '📸 Open Image';
-                downloadLink.removeAttribute('download');
-                downloadLink.target = '_blank';
+                downloadLink.textContent = 'Download';
+                downloadLink.setAttribute('download', 'QR-Code-' + '<%= room.name %>.png');
+                downloadLink.removeAttribute('target');
                 downloadLink.classList.remove('hidden');
 
                 // Hide the counter (no navigation needed)
