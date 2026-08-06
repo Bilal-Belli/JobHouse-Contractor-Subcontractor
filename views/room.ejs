@@ -306,7 +306,7 @@
                         <img src="<%= qrCodeUrl %>" alt="QR"
                             class="w-10 h-10 border border-slate-600 bg-white object-contain">
                         <div class="flex gap-1">
-                            <a href="<%= qrCodeUrl %>" download="QR-<%= room.id %>.png"
+                            <a href="#" onclick="openQRPreview(); return false;"
                                 class="bg-slate-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">QR
                                 Code</a>
                             <button onclick="toggleShareModal()"
@@ -469,8 +469,7 @@
                     </div>
                 </div>
 
-                <div
-                    class="text-[12px] text-black pt-4 mt-4 flex justify-center flex-wrap gap-2">
+                <div class="text-[12px] text-black pt-4 mt-4 flex justify-center flex-wrap gap-2">
                     <span>© <%= new Date().getFullYear() %> Manu Romero Construction</span>
                 </div>
 
@@ -750,6 +749,59 @@
                     closeFilePreview();
                 }
             });
+
+            // ===== QR Code Preview =====
+            function openQRPreview() {
+                const qrSrc = '<%= qrCodeUrl %>';
+                const qrTitle = 'QR Code - <%= room.name %>';
+
+                // Clear all other preview items to show only this one
+                previewItems = [];
+                currentPreviewIndex = 0;
+
+                previewBody.innerHTML = '';
+
+                // Create the image
+                const img = document.createElement('img');
+                img.src = qrSrc;
+                img.className = 'preview-image';
+                img.alt = qrTitle;
+
+                img.onerror = function () {
+                    previewBody.innerHTML = `
+            <div class="text-center p-10">
+                <div class="text-5xl mb-4">🖼️</div>
+                <p class="text-black mb-4 text-sm">Failed to load QR code</p>
+            </div>
+        `;
+                };
+
+                previewBody.appendChild(img);
+
+                // Add instruction for mobile users
+                const instruction = document.createElement('p');
+                instruction.className = 'text-xs text-gray-500 mt-3 text-center';
+                instruction.textContent = '📱 Press and hold the image to save to your photos';
+                previewBody.appendChild(instruction);
+
+                // Set the filename
+                document.getElementById('previewFileName').textContent = qrTitle;
+
+                // Set download link - opens in new tab instead of downloading
+                const downloadLink = document.getElementById('previewDownload');
+                downloadLink.href = qrSrc;
+                downloadLink.textContent = '📸 Open Image';
+                downloadLink.removeAttribute('download');
+                downloadLink.target = '_blank';
+                downloadLink.classList.remove('hidden');
+
+                // Hide the counter (no navigation needed)
+                document.getElementById('previewCounter').textContent = '';
+
+                // Show the modal
+                previewModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
         </script>
 
     </body>
