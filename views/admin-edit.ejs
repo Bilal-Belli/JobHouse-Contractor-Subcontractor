@@ -49,7 +49,7 @@
     <div class="flex-1 flex flex-col min-h-0">
       <!-- Top Navigation Bar -->
       <div
-        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-white px-4 sm:px-6 py-3 border-b border-slate-300 shadow-sm flex-shrink-0">
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-[#F4F1EC] px-4 sm:px-6 py-3 shadow-sm flex-shrink-0">
         <div class="w-full sm:w-auto">
           <div class="flex flex-wrap items-center gap-2 sm:gap-3">
             <!-- Room Name: AJAX rename, no page redirect -->
@@ -90,7 +90,7 @@
       </div>
 
       <!-- Content Area -->
-      <div class="flex-1 overflow-y-auto bg-white p-4 sm:p-6">
+      <div class="flex-1 overflow-y-auto bg-[#F4F1EC] p-4 sm:p-6">
         <% const activeTrade = room.trades.find(t => t.id === selectedTrade); %>
 
         <% if (activeTrade) { %>
@@ -106,7 +106,7 @@
           <input type="hidden" name="tradeId" value="<%= activeTrade.id %>">
 
           <!-- Multiple Image Upload Section -->
-          <div class="border border-slate-200 p-4 rounded-none bg-slate-50">
+          <div class="p-4 rounded-none bg-white">
             <label class="block text-xs font-bold text-slate-700 uppercase mb-2">
               Upload Multiple Images
             </label>
@@ -135,7 +135,7 @@
           </div>
 
           <!-- Multiple File Upload Section (Documents) -->
-          <div class="border border-slate-200 p-4 rounded-none bg-slate-50">
+          <div class="p-4 rounded-none bg-white">
             <label class="block text-xs font-bold text-slate-700 uppercase mb-2">
               Upload Documents
             </label>
@@ -168,16 +168,16 @@
           </div>
 
           <!-- Placement Notes -->
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Placement Notes & Instructions</label>
+          <div class="p-4 rounded-none bg-white">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Notes & Comments</label>
             <textarea name="notes" rows="5" placeholder="Specify outlet locations, elevations, notes..."
               class="w-full p-3 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"><%= activeTrade.notes %></textarea>
           </div>
 
           <!-- COMMENTS SECTION -->
-          <div class="border-t border-slate-200 pt-5 mt-6">
+          <div class="p-4 rounded-none bg-white">
             <h3 class="text-xs font-bold text-slate-700 uppercase mb-3">
-              Comments for <%= activeTrade.name %> (<%= (activeTrade.comments && activeTrade.comments.length) || 0 %>)
+              Chat for <%= activeTrade.name %> (<%= (activeTrade.comments && activeTrade.comments.length) || 0 %>)
             </h3>
 
             <% if (activeTrade.comments && activeTrade.comments.length > 0) { %>
