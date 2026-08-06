@@ -386,7 +386,6 @@ app.post('/admin/houses/:houseId/delete', (req, res) => {
   }
 });
 
-// 3. Create Room - Update the trades to include comments array
 // 3. Create Room
 app.post('/admin/houses/:houseId/rooms', (req, res) => {
   try {
@@ -400,9 +399,10 @@ app.post('/admin/houses/:houseId/rooms', (req, res) => {
         name: roomName,
         status: 'draft',
         trades: [
-          { id: 'electrical-' + Date.now(), name: 'Electrical', renderUrl: '', planUrl: '', notes: '', files: [], comments: [] },
-          { id: 'plumbing-' + Date.now(), name: 'Plumbing', renderUrl: '', planUrl: '', notes: '', files: [], comments: [] },
-          { id: 'hvac-' + Date.now(), name: 'HVAC', renderUrl: '', planUrl: '', notes: '', files: [], comments: [] }
+          { id: 'general-' + Date.now(), name: 'General', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] },
+          { id: 'electrical-' + Date.now(), name: 'Electrical', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] },
+          { id: 'plumbing-' + Date.now(), name: 'Plumbing', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] },
+          { id: 'hvac-' + Date.now(), name: 'HVAC', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] }
         ]
       };
       if (!house.rooms) house.rooms = [];
@@ -477,6 +477,7 @@ app.post('/admin/edit/:roomId/rename-trade/:tradeId', (req, res) => {
 app.post('/admin/edit/:roomId/save', upload.fields([
   { name: 'render', maxCount: 1 },
   { name: 'plan', maxCount: 1 },
+  { name: 'images', maxCount: 20 },
   { name: 'files', maxCount: 20 }
 ]), async (req, res) => {
   try {
@@ -492,6 +493,7 @@ app.post('/admin/edit/:roomId/save', upload.fields([
 
     trade.notes = notes || '';
 
+    if (!trade.images) trade.images = [];
     if (!trade.files) trade.files = [];
 
     const houseFolder = house ? house.id : 'unassigned';
@@ -507,6 +509,21 @@ app.post('/admin/edit/:roomId/save', upload.fields([
         if (trade.planUrl) deleteFileFromDisk(trade.planUrl);
         const saved = await saveUploadedFile(req.files.plan[0], houseFolder, room.id);
         trade.planUrl = `/uploads/${houseFolder}/${room.id}/${saved.filename}`;
+      }
+
+      if (req.files.images && req.files.images.length > 0) {
+        for (const file of req.files.images) {
+          const saved = await saveUploadedFile(file, houseFolder, room.id);
+          trade.images.push({
+            url: `/uploads/${houseFolder}/${room.id}/${saved.filename}`,
+            originalName: file.originalname,
+            filename: saved.filename,
+            type: 'image',
+            mimetype: saved.mimetype,
+            size: fs.statSync(path.join(__dirname, 'public', 'uploads', houseFolder, room.id, saved.filename)).size,
+            uploadedAt: new Date().toISOString()
+          });
+        }
       }
 
       if (req.files.files && req.files.files.length > 0) {
@@ -555,13 +572,13 @@ app.post('/admin/edit/:roomId/add-trade', (req, res) => {
           renderUrl: '',
           planUrl: '',
           notes: '',
+          images: [],
           files: [],
-          comments: [] // Add comments array
+          comments: []
         });
         saveData(data);
       }
 
-      // Handle both AJAX and form submissions
       if (req.is('json') || req.xhr) {
         return res.json({ success: true, tradeId: tradeId, tradeName: tradeName });
       }
@@ -648,6 +665,12 @@ app.post('/admin/edit/:roomId/delete-trade/:tradeId', (req, res) => {
         if (tradeToDelete.renderUrl) deleteFileFromDisk(tradeToDelete.renderUrl);
         if (tradeToDelete.planUrl) deleteFileFromDisk(tradeToDelete.planUrl);
 
+        if (tradeToDelete.images && tradeToDelete.images.length > 0) {
+          tradeToDelete.images.forEach(image => {
+            deleteFileFromDisk(image.url);
+          });
+        }
+
         if (tradeToDelete.files && tradeToDelete.files.length > 0) {
           tradeToDelete.files.forEach(file => {
             deleteFileFromDisk(file.url);
@@ -668,6 +691,41 @@ app.post('/admin/edit/:roomId/delete-trade/:tradeId', (req, res) => {
   } catch (err) {
     console.error('Error deleting trade:', err);
     res.status(500).send('Error deleting trade');
+  }
+});
+
+// Delete Image
+app.post('/admin/edit/:roomId/delete-image/:tradeId/:imageIndex', (req, res) => {
+  try {
+    const data = getData();
+    const { roomId, tradeId, imageIndex } = req.params;
+
+    const room = findRoomById(data, roomId);
+    if (!room) return res.status(404).send('Room not found');
+
+    const trade = room.trades.find(t => String(t.id) === String(tradeId));
+    if (!trade) return res.status(404).send('Trade not found');
+
+    const index = parseInt(imageIndex, 10);
+    if (isNaN(index) || !Array.isArray(trade.images) || index < 0 || index >= trade.images.length) {
+      return res.status(404).send('Image not found');
+    }
+
+    const imageToDelete = trade.images[index];
+    if (imageToDelete && imageToDelete.url) {
+      deleteFileFromDisk(imageToDelete.url);
+    }
+
+    trade.images.splice(index, 1);
+    saveData(data);
+
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+    });
+  } catch (err) {
+    console.error('Error deleting image:', err);
+    res.status(500).send('Error deleting image');
   }
 });
 
