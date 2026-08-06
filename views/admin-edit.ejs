@@ -99,33 +99,41 @@
         class="space-y-4 sm:space-y-5" onsubmit="showLoading(); return true;">
         <input type="hidden" name="tradeId" value="<%= activeTrade.id %>">
 
-        <!-- Legacy Single Upload Fields -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="border border-slate-200 p-4 rounded-none bg-slate-50">
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">3D Render / Photo</label>
-            <% if (activeTrade.renderUrl) { %>
-            <img src="<%= activeTrade.renderUrl %>"
-              class="w-full h-32 object-cover rounded-none mb-2 border border-slate-200">
-            <% } %>
-            <input type="file" name="render" accept="image/*" class="text-xs text-slate-500 w-full">
-          </div>
+        <!-- Multiple Image Upload Section -->
+        <div class="border border-slate-200 p-4 rounded-none bg-slate-50">
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-2">
+            Upload Multiple Images
+          </label>
 
-          <div class="border border-slate-200 p-4 rounded-none bg-slate-50">
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Plan / Drawing</label>
-            <% if (activeTrade.planUrl) { %>
-            <a href="<%= activeTrade.planUrl %>" target="_blank"
-              class="text-xs text-slate-800 hover:underline block mb-2 font-medium truncate">
-              View Attached Plan
-            </a>
-            <% } %>
-            <input type="file" name="plan" accept="image/*,application/pdf" class="text-xs text-slate-500 w-full">
+          <!-- Existing Images Display -->
+          <% if (activeTrade.images && activeTrade.images.length > 0) { %>
+          <div class="mb-4 space-y-2">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <% activeTrade.images.forEach((file, index) => { %>
+              <div class="relative bg-white border border-slate-200 p-2 rounded-none">
+                <img src="<%= file.url %>" alt="<%= file.originalName %>" class="w-full h-24 object-cover mb-1">
+                <button type="button"
+                  class="absolute top-1 right-1 text-red-500 hover:text-red-700 text-sm bg-white rounded-full w-5 h-5 flex items-center justify-center shadow"
+                  onclick="openImageDeleteModal('<%= room.id %>', '<%= activeTrade.id %>', '<%= index %>', '<%= file.originalName %>')">
+                  ×
+                </button>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+          <% } %>
+
+          <!-- Images Input -->
+          <div class="mt-2">
+            <input type="file" name="images" multiple accept="image/*" class="text-xs text-slate-500 w-full">
+            <p class="text-xs text-slate-400 mt-1">Hold Ctrl/Cmd to select multiple images.</p>
           </div>
         </div>
 
-        <!-- Multiple Image/File Upload Section -->
+        <!-- Multiple File Upload Section (Documents) -->
         <div class="border border-slate-200 p-4 rounded-none bg-slate-50">
           <label class="block text-xs font-bold text-slate-700 uppercase mb-2">
-            Upload Multiple Images & Files
+            Upload Documents
           </label>
 
           <!-- Existing Files Display -->
@@ -134,14 +142,10 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <% activeTrade.files.forEach((file, index) => { %>
               <div class="relative bg-white border border-slate-200 p-2 rounded-none">
-                <% if (file.type === 'image') { %>
-                <img src="<%= file.url %>" alt="<%= file.originalName %>" class="w-full h-24 object-cover mb-1">
-                <% } else { %>
                 <div class="w-full h-24 bg-slate-100 flex items-center justify-center mb-1">
                   <span class="text-2xl">📄</span>
                 </div>
-                <% } %>
-
+                <p class="text-xs text-slate-600 truncate text-center"><%= file.originalName %></p>
                 <button type="button"
                   class="absolute top-1 right-1 text-red-500 hover:text-red-700 text-sm bg-white rounded-full w-5 h-5 flex items-center justify-center shadow"
                   onclick="openFileDeleteModal('<%= room.id %>', '<%= activeTrade.id %>', '<%= index %>', '<%= file.originalName %>')">
@@ -155,10 +159,9 @@
 
           <!-- File Input -->
           <div class="mt-2">
-            <input type="file" name="files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+            <input type="file" name="files" multiple accept="application/pdf,.doc,.docx,.xls,.xlsx,.txt"
               class="text-xs text-slate-500 w-full">
-            <p class="text-xs text-slate-400 mt-1">Hold Ctrl/Cmd to select multiple files. Supports images, PDFs, and
-              documents.</p>
+            <p class="text-xs text-slate-400 mt-1">Hold Ctrl/Cmd to select multiple files.</p>
           </div>
         </div>
 
@@ -494,6 +497,15 @@
   window.addEventListener('load', function () {
     hideLoading();
   });
+
+  function openImageDeleteModal(roomId, tradeId, fileIndex, fileName) {
+    targetFormId = null;
+    deleteActionUrl = `/admin/edit/${encodeURIComponent(roomId)}/delete-image/${encodeURIComponent(tradeId)}/${fileIndex}`;
+
+    document.getElementById('deleteModalTitle').textContent = 'Delete Image';
+    document.getElementById('deleteModalBody').innerHTML = `Are you sure you want to delete <strong class="text-slate-900">${fileName}</strong>?`;
+    document.getElementById('deleteModal').classList.remove('hidden');
+  }
 </script>
 
 <%- include('partials/footer') %>
