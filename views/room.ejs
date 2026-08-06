@@ -246,13 +246,131 @@
                     display: none !important;
                 }
             }
+
+            /* Add these to your existing CSS */
+
+            /* Mobile top bar with room selector */
+            .mobile-top-bar {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 1001;
+                background: #1e293b;
+                padding: 8px 12px;
+                border-bottom: 1px solid #334155;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .mobile-top-bar select {
+                flex: 1;
+                background: #334155;
+                color: white;
+                border: none;
+                padding: 6px 8px;
+                font-size: 13px;
+                outline: none;
+                min-width: 0;
+            }
+
+            .mobile-top-bar .hamburger-btn-mobile {
+                background: transparent;
+                color: white;
+                border: none;
+                padding: 6px 10px;
+                cursor: pointer;
+                font-size: 20px;
+                border-radius: 4px;
+                flex-shrink: 0;
+            }
+
+            .mobile-top-bar .hamburger-btn-mobile:hover {
+                background: #334155;
+            }
+
+            /* Trade tags on mobile */
+            .trade-tags {
+                display: none;
+                gap: 6px;
+                flex-wrap: wrap;
+                padding: 8px 0;
+                margin-top: 4px;
+            }
+
+            .trade-tag {
+                background: #e9e5e0;
+                padding: 4px 12px;
+                font-size: 11px;
+                font-weight: 500;
+                color: #1e293b;
+                border-radius: 20px;
+                cursor: pointer;
+                transition: all 0.15s;
+                text-decoration: none;
+                display: inline-block;
+                border: 1px solid transparent;
+            }
+
+            .trade-tag:hover {
+                background: #d4d0cb;
+            }
+
+            .trade-tag.active {
+                background: #FFB300;
+                color: #1e293b;
+                border-color: #FFB300;
+            }
+
+            /* Show on mobile */
+            @media (max-width: 768px) {
+                .mobile-top-bar {
+                    display: flex;
+                }
+
+                .trade-tags {
+                    display: flex;
+                }
+
+                /* Keep sidebar elements visible but adjust positioning */
+                .sidebar .room-switcher-desktop {
+                    display: block !important;
+                }
+
+                .sidebar .trade-tabs-desktop {
+                    display: block !important;
+                }
+
+                /* Adjust sidebar padding for mobile since top bar is fixed */
+                .sidebar {
+                    padding-top: 56px !important;
+                }
+            }
+
+            /* Hide mobile top bar on desktop */
+            @media (min-width: 769px) {
+                .mobile-top-bar {
+                    display: none !important;
+                }
+
+                .trade-tags {
+                    display: none !important;
+                }
+            }
         </style>
     </head>
 
     <body class="min-h-screen font-sans text-black bg-[#f4f1ec]">
-
-        <!-- Mobile Hamburger -->
-        <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Toggle menu"> ☰ </button>
+        <!-- Mobile Top Bar -->
+        <div class="mobile-top-bar">
+            <button class="hamburger-btn-mobile" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
+            <select onchange="window.location.href=this.value" class="room-select-mobile">
+                <% (typeof house !== 'undefined' && house && house.rooms || []).forEach(r => { %>
+                <option value="/room/<%= r.id %>" <%= r.id === room.id ? 'selected' : '' %>><%= r.name %></option>
+                <% }) %>
+            </select>
+        </div>
 
         <!-- Overlay -->
         <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -318,7 +436,15 @@
 
             <!-- ===== MAIN CONTENT ===== -->
             <main class="main-content flex-1 px-4 md:px-6 py-4 md:py-6 bg-[#f4f1ec] min-h-screen">
-
+                <!-- Trade Tags (Mobile) -->
+                <div class="trade-tags">
+                    <% room.trades.forEach(trade => { %>
+                    <a href="/room/<%= room.id %>?trade=<%= trade.id %>"
+                        class="trade-tag <%= activeTrade === trade.id ? 'active' : '' %>">
+                        <%= trade.name %>
+                    </a>
+                    <% }) %>
+                </div>
                 <!-- room header -->
                 <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -808,6 +934,35 @@
                 previewModal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
             }
+            // Close sidebar when selecting a room on mobile
+            document.addEventListener('DOMContentLoaded', function () {
+                const mobileRoomSelect = document.querySelector('.room-select-mobile');
+                if (mobileRoomSelect) {
+                    mobileRoomSelect.addEventListener('change', function () {
+                        // Close sidebar if open
+                        const sidebar = document.querySelector('.sidebar');
+                        const overlay = document.querySelector('.sidebar-overlay');
+                        if (sidebar && sidebar.classList.contains('open')) {
+                            sidebar.classList.remove('open');
+                            overlay.classList.remove('active');
+                            document.body.style.overflow = '';
+                        }
+                    });
+                }
+
+                // Close sidebar when clicking a trade tag on mobile
+                document.querySelectorAll('.trade-tag').forEach(tag => {
+                    tag.addEventListener('click', function () {
+                        const sidebar = document.querySelector('.sidebar');
+                        const overlay = document.querySelector('.sidebar-overlay');
+                        if (sidebar && sidebar.classList.contains('open')) {
+                            sidebar.classList.remove('open');
+                            overlay.classList.remove('active');
+                            document.body.style.overflow = '';
+                        }
+                    });
+                });
+            });
         </script>
 
     </body>
