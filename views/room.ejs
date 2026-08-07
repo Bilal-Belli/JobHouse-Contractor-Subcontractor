@@ -618,14 +618,14 @@
 
                 <!-- Navigation buttons (moved to separate row) -->
                 <div class="flex items-center justify-center gap-3 px-4 py-2 bg-slate-50 border-b border-slate-200">
-                    <button onclick="showPrevPreview()"
+                    <button id="prevBtn" onclick="showPrevPreview()"
                         class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-black text-sm font-medium">←</button>
                     <span id="previewCounter" class="text-xs text-black flex items-center"></span>
-                    <button onclick="showNextPreview()"
+                    <button id="nextBtn" onclick="showNextPreview()"
                         class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-black text-sm font-medium">→</button>
                 </div>
 
-                <div id="previewBody" class="bg-slate-100 flex items-center justify-center p-2 min-h-[200px]">
+                <div id="previewBody" class="bg-slate-100 flex flex-col items-center justify-center p-2 min-h-[200px]">
                 </div>
             </div>
         </div>
@@ -650,6 +650,9 @@
             }
 
             function openFilePreview(type, src, title = 'Preview', downloadUrl = null, index = 0) {
+                document.getElementById('prevBtn').classList.remove('hidden');
+                document.getElementById('nextBtn').classList.remove('hidden');
+
                 previewBody.innerHTML = '';
                 currentPreviewIndex = index;
 
@@ -780,6 +783,9 @@
             }
 
             function openQRPreview() {
+                document.getElementById('prevBtn').classList.add('hidden');
+                document.getElementById('nextBtn').classList.add('hidden');
+
                 const qrSrc = '<%= qrCodeUrl %>';
                 const qrTitle = 'QR Code - <%= room.name %>';
 
@@ -809,9 +815,9 @@
                 previewBody.appendChild(img);
 
                 // Add save instructions for mobile
-                const instruction = document.createElement('p');
-                instruction.className = 'text-xs text-gray-500 mt-3 text-center';
-                instruction.innerHTML = 'Press and hold the image to save to gallery<br><span class="text-[10px]">(iOS: tap Share button, then Save Image)</span>';
+                const instruction = document.createElement('div');
+                instruction.className = 'w-full text-xs text-gray-500 mt-3 text-center';
+                instruction.innerHTML = 'Press and hold the image to save to gallery';
                 previewBody.appendChild(instruction);
 
                 // Set the filename
@@ -823,21 +829,6 @@
                 downloadLink.textContent = 'Download';
                 downloadLink.setAttribute('download', 'QR-Code-' + '<%= room.name %>.png');
                 downloadLink.classList.remove('hidden');
-
-                // Also add an explicit download button
-                if (!document.getElementById('qrDownloadBtn')) {
-                    const downloadBtn = document.createElement('button');
-                    downloadBtn.id = 'qrDownloadBtn';
-                    downloadBtn.className = 'bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 text-sm font-semibold mt-2 ml-2';
-                    downloadBtn.textContent = 'Save Image';
-                    downloadBtn.onclick = function (e) {
-                        e.preventDefault();
-                        // Try to open image in new tab for mobile
-                        window.open(qrSrc, '_blank');
-                    };
-                    // Insert after download link
-                    downloadLink.parentNode.insertBefore(downloadBtn, downloadLink.nextSibling);
-                }
 
                 // Hide counter
                 document.getElementById('previewCounter').textContent = '';
