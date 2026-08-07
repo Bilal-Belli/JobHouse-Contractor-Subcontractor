@@ -1,12 +1,11 @@
 <%- include('partials/admin-header-edit') %>
 <meta name="csrf-token" content="<%= Date.now() %>">
 
-<div class="flex flex-col min-h-[calc(100vh-64px)] h-auto w-full">
+<div class="flex flex-col h-auto sm:h-[calc(100vh-64px)] w-full overflow-hidden">
   <!-- Flex container for sidebar + top nav and content -->
   <div class="flex flex-col sm:flex-row flex-1 min-h-0">
     <!-- SIDEBAR: Trade Tabs (LEFT COLUMN) -->
-    <div
-      class="w-full sm:w-64 flex-shrink-0 bg-slate-900 border-b sm:border-b-0 sm:border-r border-slate-500 flex flex-col max-h-[300px] sm:max-h-none sm:h-auto overflow-y-auto">
+    <div class="w-full sm:w-64 flex-shrink-0 bg-slate-900 border-b sm:border-b-0 sm:border-r border-slate-500 flex flex-col h-auto sm:h-[calc(100vh-64px)] max-h-[300px] sm:max-h-none overflow-hidden">
       <div class="flex items-center justify-between px-4 pt-3 pb-2 sm:pt-4">
         <h2 class="text-xs text-white uppercase tracking-wider">Trade Tabs</h2>
       </div>
@@ -46,7 +45,7 @@
     </div>
 
     <!-- RIGHT COLUMN: Top Navigation + Content -->
-    <div class="flex-1 flex flex-col min-h-0">
+    <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
       <!-- Top Navigation Bar -->
       <div
         class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 bg-[#F4F1EC] px-4 sm:px-6 py-3 shadow-sm flex-shrink-0">
@@ -171,7 +170,7 @@
           <div class="p-4 rounded-none bg-white">
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Notes & Comments</label>
             <textarea name="notes" rows="5" placeholder="Specify outlet locations, elevations, notes..."
-              class="w-full p-3 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"><%= activeTrade.notes %></textarea>
+              class="w-full p-3 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"><%= activeTrade.notes %></textarea>
           </div>
 
           <!-- COMMENTS SECTION -->
@@ -197,7 +196,7 @@
                   <div class="flex flex-wrap gap-2 mt-3 pt-2 border-t border-slate-200/60">
                     <% c.attachments.forEach(att => { %>
                     <a href="<%= typeof att === 'string' ? att : att.url %>" target="_blank"
-                      class="inline-flex items-center gap-1.5 text-xs text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2 py-1 transition font-medium">
+                      class="inline-flex items-center gap-1.5 text-xs text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2 py-1 transition font-medium">
                       <span>📎</span>
                       <span
                         class="truncate max-w-[180px]"><%= typeof att === 'string' ? 'Attachment' : (att.originalName || att.filename) %></span>
