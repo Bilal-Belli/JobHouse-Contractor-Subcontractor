@@ -8,7 +8,6 @@
         <link rel="icon" type="image/x-icon" href="<%= baseUrl %>/favicon.ico">
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            /* scrollbar styles */
             .sidebar-scroll::-webkit-scrollbar {
                 width: 4px;
             }
@@ -114,9 +113,6 @@
                 opacity: 0.92;
             }
 
-            /* ===== RESPONSIVE FIXES ===== */
-
-            /* Hide sidebar on mobile by default */
             .sidebar {
                 position: fixed;
                 top: 0;
@@ -124,7 +120,6 @@
                 width: 280px;
                 height: 100vh;
                 z-index: 1000;
-                /* FIXED: Increased from 50 to 1000 */
                 transition: left 0.3s ease;
                 overflow-y: auto;
             }
@@ -133,7 +128,6 @@
                 left: 0;
             }
 
-            /* Overlay for mobile */
             .sidebar-overlay {
                 display: none;
                 position: fixed;
@@ -146,7 +140,6 @@
                 display: block;
             }
 
-            /* Hamburger button */
             .hamburger-btn {
                 display: none;
                 position: fixed;
@@ -162,94 +155,6 @@
                 border-radius: 4px;
             }
 
-            /* Show hamburger and hide sidebar on mobile */
-            @media (max-width: 768px) {
-                .hamburger-btn {
-                    display: block;
-                }
-
-                .sidebar {
-                    display: block !important;
-                }
-
-                /* Main content gets full width */
-                .main-content {
-                    padding-left: 12px !important;
-                    padding-right: 12px !important;
-                    padding-top: 70px !important;
-                    width: 100% !important;
-                    max-width: 100% !important;
-                }
-
-                /* Stack grids on mobile */
-                .grid-cols-1.md\:grid-cols-2 {
-                    grid-template-columns: 1fr !important;
-                }
-
-                /* Smaller file gallery items */
-                .file-gallery {
-                    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
-                    gap: 8px !important;
-                }
-
-                /* Fix comment form */
-                .sm\:grid-cols-3 {
-                    grid-template-columns: 1fr !important;
-                }
-
-                .sm\:col-span-2 {
-                    grid-column: span 1 !important;
-                }
-
-                /* Adjust modal for mobile */
-                .preview-content {
-                    min-width: 90vw !important;
-                    max-width: 95vw !important;
-                }
-
-                #filePreviewModal iframe.preview-pdf {
-                    width: 85vw !important;
-                    height: 60vh !important;
-                }
-
-                /* Better spacing */
-                .pro-card {
-                    padding: 12px !important;
-                }
-
-                /* Room header */
-                .flex-wrap {
-                    flex-direction: column !important;
-                    align-items: stretch !important;
-                }
-            }
-
-            /* Desktop: show sidebar normally */
-            @media (min-width: 769px) {
-                .sidebar {
-                    position: sticky;
-                    top: 0;
-                    left: 0;
-                    width: 220px;
-                    height: 100vh;
-                    display: flex !important;
-                    flex-shrink: 0;
-                    z-index: auto;
-                    /* FIXED: Reset z-index on desktop */
-                }
-
-                .sidebar-overlay {
-                    display: none !important;
-                }
-
-                .hamburger-btn {
-                    display: none !important;
-                }
-            }
-
-            /* Add these to your existing CSS */
-
-            /* Mobile top bar with room selector */
             .mobile-top-bar {
                 display: none;
                 position: fixed;
@@ -290,7 +195,6 @@
                 background: #334155;
             }
 
-            /* Trade tags on mobile */
             .trade-tags {
                 display: none;
                 gap: 6px;
@@ -323,8 +227,88 @@
                 border-color: #FFB300;
             }
 
-            /* Show on mobile */
-            @media (max-width: 768px) {
+            @media (min-width: 769px) {
+                .sidebar {
+                    position: sticky;
+                    top: 0;
+                    left: 0;
+                    width: 220px;
+                    height: 100vh;
+                    display: flex !important;
+                    flex-shrink: 0;
+                    z-index: auto;
+                }
+
+                .sidebar-overlay {
+                    display: none !important;
+                }
+
+                .hamburger-btn {
+                    display: none !important;
+                }
+
+                .mobile-top-bar {
+                    display: none !important;
+                }
+
+                .trade-tags {
+                    display: none !important;
+                }
+            }
+
+            @media (max-width: 769px) {
+                .hamburger-btn {
+                    display: block;
+                }
+
+                .sidebar {
+                    display: block !important;
+                }
+
+                .main-content {
+                    padding-left: 12px !important;
+                    padding-right: 12px !important;
+                    padding-top: 70px !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                }
+
+                .grid-cols-1.md\:grid-cols-2 {
+                    grid-template-columns: 1fr !important;
+                }
+
+                .file-gallery {
+                    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+                    gap: 8px !important;
+                }
+
+                .sm\:grid-cols-3 {
+                    grid-template-columns: 1fr !important;
+                }
+
+                .sm\:col-span-2 {
+                    grid-column: span 1 !important;
+                }
+
+                .preview-content {
+                    min-width: 90vw !important;
+                    max-width: 95vw !important;
+                }
+
+                #filePreviewModal iframe.preview-pdf {
+                    width: 85vw !important;
+                    height: 60vh !important;
+                }
+
+                .pro-card {
+                    padding: 12px !important;
+                }
+
+                .flex-wrap {
+                    flex-direction: column !important;
+                    align-items: stretch !important;
+                }
+
                 .mobile-top-bar {
                     display: flex;
                 }
@@ -333,7 +317,6 @@
                     display: flex;
                 }
 
-                /* Keep sidebar elements visible but adjust positioning */
                 .sidebar .room-switcher-desktop {
                     display: block !important;
                 }
@@ -342,20 +325,8 @@
                     display: block !important;
                 }
 
-                /* Adjust sidebar padding for mobile since top bar is fixed */
                 .sidebar {
                     padding-top: 56px !important;
-                }
-            }
-
-            /* Hide mobile top bar on desktop */
-            @media (min-width: 769px) {
-                .mobile-top-bar {
-                    display: none !important;
-                }
-
-                .trade-tags {
-                    display: none !important;
                 }
             }
         </style>
@@ -375,22 +346,19 @@
         <!-- Overlay -->
         <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-        <!-- ===== LAYOUT ===== -->
         <div class="flex min-h-screen">
 
             <!-- ===== SIDEBAR ===== -->
             <aside class="sidebar bg-slate-900 text-[#FFFFFF] flex flex-col">
-
                 <!-- Close button for mobile -->
                 <button onclick="toggleSidebar()" class="md:hidden absolute top-3 right-3 text-white text-2xl p-2">
                     ✕</button>
 
-                <!-- project context -->
                 <div class="flex items-center justify-center mt-0.5 px-4 py-3 border-b border-slate-600 bg-slate-900">
                     <img src="<%= baseUrl %>/logo.png" alt="Logo" class="w-32 h-16 object-contain">
                 </div>
 
-                <!-- room switcher -->
+                <!-- Room Switcher -->
                 <div class="px-4 py-3 border-b border-slate-600 bg-slate-900 mt-8 md:mt-0">
                     <div class="text-[10px] uppercase text-[#FFFFFF] tracking-wider">Room</div>
                     <div class="flex items-center justify-between mt-1">
@@ -418,8 +386,6 @@
                     <div class="h-4"></div>
                 </nav>
 
-                <!-- footer actions -->
-                <!-- footer actions -->
                 <div class="px-4 py-3 border-t border-slate-600 bg-slate-900 text-xs">
                     <div class="flex items-center justify-between gap-2">
                         <img src="<%= qrCodeUrl %>" alt="QR"
@@ -440,8 +406,9 @@
                 </div>
             </aside>
 
-            <!-- ===== MAIN CONTENT ===== -->
+            <!-- ===== MAIN CONTENT (Right) ===== -->
             <main class="main-content flex-1 px-4 md:px-6 py-4 md:py-6 bg-[#f4f1ec] min-h-screen">
+
                 <!-- Trade Tags (Mobile) -->
                 <div class="trade-tags">
                     <% room.trades.forEach(trade => { %>
@@ -451,7 +418,8 @@
                     </a>
                     <% }) %>
                 </div>
-                <!-- room header -->
+
+                <!-- Room Header -->
                 <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <div class="flex items-center gap-2 text-xs text-black uppercase tracking-wider flex-wrap">
@@ -508,7 +476,7 @@
                 </div>
                 <% } %>
 
-                <!-- notes card -->
+                <!-- Notes Section -->
                 <div class="bg-white pro-card p-4 md:p-5 mb-6">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
                         <span class="w-1 h-4 bg-slate-400 block"></span> Notes & Comments
@@ -518,7 +486,6 @@
                         <%= currentTrade.notes || 'No specific placement notes provided.' %>
                     </div>
                 </div>
-
                 <% } %>
 
                 <!-- COMMENTS -->
@@ -575,7 +542,6 @@
                                         <%  const isImg = file.type && file.type.startsWith('image/');
                                 const fileType = isImg ? 'image' : (file.type === 'application/pdf' ? 'pdf' : 'other'); %>
 
-                                        <!-- Image or Document Icon Trigger -->
                                         <div class="preview-trigger cursor-pointer" data-type="<%= fileType %>"
                                             data-src="<%= file.url %>" data-title="<%= file.originalName %>"
                                             data-download="<%= file.url %>">
@@ -638,7 +604,6 @@
             class="hidden fixed inset-0 z-[100] bg-slate-900/80 flex items-center justify-center p-4">
             <div class="relative preview-content bg-white shadow-2xl border border-slate-200 overflow-hidden">
                 <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
-                    <!-- File name display -->
                     <span id="previewFileName"
                         class="text-sm font-medium text-black truncate max-w-[200px] md:max-w-[400px]"></span>
 
@@ -660,13 +625,17 @@
                 </div>
 
                 <div id="previewBody" class="bg-slate-100 flex items-center justify-center p-2 min-h-[200px]">
-                    <!-- content injected by JS -->
                 </div>
             </div>
         </div>
 
         <script>
-            // ===== Sidebar Toggle =====
+            const previewModal = document.getElementById('filePreviewModal');
+            const previewBody = document.getElementById('previewBody');
+            const previewDownload = document.getElementById('previewDownload');
+            let previewItems = [];
+            let currentPreviewIndex = 0;
+
             function toggleSidebar() {
                 const sidebar = document.querySelector('.sidebar');
                 const overlay = document.querySelector('.sidebar-overlay');
@@ -675,35 +644,10 @@
                 document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
             }
 
-            // Close on escape key
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') {
-                    const sidebar = document.querySelector('.sidebar');
-                    if (sidebar.classList.contains('open')) {
-                        toggleSidebar();
-                    }
-                }
-            });
-
-            // ===== Share Modal =====
             function toggleShareModal() {
                 document.getElementById('shareModal').classList.toggle('hidden');
             }
 
-            document.getElementById('shareModal')?.addEventListener('click', function (e) {
-                if (e.target === this) toggleShareModal();
-            });
-
-            // ===== File Preview =====
-            const previewModal = document.getElementById('filePreviewModal');
-            const previewBody = document.getElementById('previewBody');
-            const previewDownload = document.getElementById('previewDownload');
-
-            // Add these variables at the top of your script
-            let previewItems = [];
-            let currentPreviewIndex = 0;
-
-            // Replace your existing openFilePreview function with this:
             function openFilePreview(type, src, title = 'Preview', downloadUrl = null, index = 0) {
                 previewBody.innerHTML = '';
                 currentPreviewIndex = index;
@@ -774,7 +718,6 @@
                 }
             }
 
-            // Add navigation functions
             function showNextPreview() {
                 if (previewItems.length === 0) return;
 
@@ -829,64 +772,12 @@
                 openFilePreview(type, src, title, download, currentPreviewIndex);
             }
 
-
             function closeFilePreview() {
                 previewModal.classList.add('hidden');
                 previewBody.innerHTML = '';
                 document.body.style.overflow = '';
             }
 
-            document.addEventListener('click', function (e) {
-                const trigger = e.target.closest('.preview-trigger');
-                if (!trigger) return;
-
-                e.preventDefault();
-
-                const type = trigger.dataset.type || 'image';
-                const src = trigger.dataset.src || trigger.href || '';
-                const title = trigger.dataset.title || 'Preview';
-                const download = trigger.dataset.download || src;
-                const index = Array.from(document.querySelectorAll('.preview-trigger')).indexOf(trigger);
-
-                if (src) {
-                    openFilePreview(type, src, title, download, index);
-                }
-            });
-
-            document.addEventListener('keydown', function (e) {
-                if (previewModal.classList.contains('hidden')) {
-                    if (e.key === 'Escape') {
-                        const sidebar = document.querySelector('.sidebar');
-                        if (sidebar.classList.contains('open')) {
-                            toggleSidebar();
-                        }
-                    }
-                    return;
-                }
-
-                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    showNextPreview();
-                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    showPrevPreview();
-                } else if (e.key === 'Escape') {
-                    closeFilePreview();
-                }
-            });
-
-            previewModal.addEventListener('click', function (e) {
-                if (e.target === previewModal) closeFilePreview();
-            });
-
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && !previewModal.classList.contains('hidden')) {
-                    closeFilePreview();
-                }
-            });
-
-            // ===== QR Code Preview =====
-            // ===== QR Code Preview (Enhanced for Mobile) =====
             function openQRPreview() {
                 const qrSrc = '<%= qrCodeUrl %>';
                 const qrTitle = 'QR Code - <%= room.name %>';
@@ -954,7 +845,68 @@
                 document.body.style.overflow = 'hidden';
             }
 
-            // Close sidebar when selecting a room on mobile
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar.classList.contains('open')) {
+                        toggleSidebar();
+                    }
+                }
+            });
+
+            document.getElementById('shareModal')?.addEventListener('click', function (e) {
+                if (e.target === this) toggleShareModal();
+            });
+
+            document.addEventListener('click', function (e) {
+                const trigger = e.target.closest('.preview-trigger');
+                if (!trigger) return;
+
+                e.preventDefault();
+
+                const type = trigger.dataset.type || 'image';
+                const src = trigger.dataset.src || trigger.href || '';
+                const title = trigger.dataset.title || 'Preview';
+                const download = trigger.dataset.download || src;
+                const index = Array.from(document.querySelectorAll('.preview-trigger')).indexOf(trigger);
+
+                if (src) {
+                    openFilePreview(type, src, title, download, index);
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (previewModal.classList.contains('hidden')) {
+                    if (e.key === 'Escape') {
+                        const sidebar = document.querySelector('.sidebar');
+                        if (sidebar.classList.contains('open')) {
+                            toggleSidebar();
+                        }
+                    }
+                    return;
+                }
+
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    showNextPreview();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    showPrevPreview();
+                } else if (e.key === 'Escape') {
+                    closeFilePreview();
+                }
+            });
+
+            previewModal.addEventListener('click', function (e) {
+                if (e.target === previewModal) closeFilePreview();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !previewModal.classList.contains('hidden')) {
+                    closeFilePreview();
+                }
+            });
+
             document.addEventListener('DOMContentLoaded', function () {
                 const mobileRoomSelect = document.querySelector('.room-select-mobile');
                 if (mobileRoomSelect) {
