@@ -270,8 +270,6 @@
                 }
 
                 .main-content {
-                    padding-top: 110px !important;
-                    /* Increased from 70px to account for taller top bar */
                     padding-left: 12px !important;
                     padding-right: 12px !important;
                     width: 100% !important;
@@ -330,9 +328,6 @@
                     display: block !important;
                 }
 
-                .sidebar {
-                    padding-top: 56px !important;
-                }
             }
 
             .trade-tags-mobile {
@@ -998,6 +993,50 @@
                         }
                     });
                 });
+            });
+
+            function adjustMobileTopBarHeight() {
+                const topBar = document.querySelector('.mobile-top-bar');
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+
+                if (window.innerWidth <= 769 && topBar) {
+                    // Get the actual height of the top bar
+                    const topBarHeight = topBar.offsetHeight;
+
+                    // Apply the height as padding-top to main content and sidebar
+                    if (mainContent) {
+                        mainContent.style.paddingTop = topBarHeight + 'px';
+                    }
+                    if (sidebar) {
+                        sidebar.style.paddingTop = topBarHeight + 'px';
+                    }
+                }
+            }
+
+            // Run on load
+            document.addEventListener('DOMContentLoaded', function () {
+                adjustMobileTopBarHeight();
+
+                // Run on resize
+                window.addEventListener('resize', function () {
+                    adjustMobileTopBarHeight();
+                });
+
+                // Also run after a small delay to ensure everything is rendered
+                setTimeout(adjustMobileTopBarHeight, 100);
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                adjustMobileTopBarHeight();
+
+                // Run on resize
+                window.addEventListener('resize', function () {
+                    adjustMobileTopBarHeight();
+                });
+
+                // Also run after a small delay to ensure everything is rendered
+                setTimeout(adjustMobileTopBarHeight, 100);
             });
         </script>
 
