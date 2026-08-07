@@ -430,11 +430,6 @@
                                 class="bg-slate-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">
                                 Preview
                             </button>
-                            <!-- Direct download button -->
-                            <a href="<%= qrCodeUrl %>" download="QR-Code-<%= room.name %>.png"
-                                class="bg-amber-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider inline-block">
-                                Download
-                            </a>
                             <!-- Share button -->
                             <button onclick="toggleShareModal()"
                                 class="bg-amber-600 hover:bg-amber-500 text-[#ffffff] px-2 py-1 text-[10px] uppercase tracking-wider">
@@ -463,10 +458,6 @@
                             <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 font-bold">Active spec</span>
                             <span class="text-black">· <%= room.name %></span>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-3 bg-white px-3 py-1.5 border border-slate-300 shadow-sm">
-                        <span class="text-xs text-black">House ID</span>
-                        <span class="text-xs font-mono text-black"><%= room.id.slice(0,6) %></span>
                     </div>
                 </div>
 
