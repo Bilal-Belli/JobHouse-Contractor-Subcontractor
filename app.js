@@ -604,6 +604,26 @@ app.post('/admin/edit/:roomId/add-trade', (req, res) => {
   }
 });
 
+// Reorder houses
+app.post('/admin/houses/reorder', (req, res) => {
+  try {
+    const data = getData();
+    const { houseOrder } = req.body;
+    
+    if (!houseOrder || !Array.isArray(houseOrder)) {
+      return res.status(400).json({ error: 'Invalid house order' });
+    }
+    
+    // Sort houses based on the new order
+    data.houses.sort((a, b) => houseOrder.indexOf(a.id) - houseOrder.indexOf(b.id));
+    saveData(data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error reordering houses:', err);
+    res.status(500).json({ error: 'Failed to reorder houses' });
+  }
+});
+
 // Public - Add comment to a specific trade
 app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, res) => {
   try {

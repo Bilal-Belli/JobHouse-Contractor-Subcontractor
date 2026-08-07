@@ -31,6 +31,11 @@
       class="bg-white rounded-none border border-slate-300 shadow-sm overflow-hidden">
 
       <!-- House (Folder) Header - Click to expand/collapse -->
+      <div class="drag-handle-house cursor-move text-amber-500/50 hover:text-amber-500 mr-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+        </svg>
+      </div>
       <div
         class="house-header bg-slate-900 text-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer"
         onclick="toggleHouse(this.closest('[data-house-card]'))">
@@ -547,6 +552,26 @@
       input.value = '';
     }
   }
+
+  // Add this after the existing Sortable initialization
+  new Sortable(document.getElementById('housesContainer'), {
+    handle: '.drag-handle-house', // We'll add this
+    animation: 150,
+    ghostClass: 'drag-over',
+    dragClass: 'dragging',
+    onEnd: function (evt) {
+      const houseIds = Array.from(document.querySelectorAll('[data-house-card]')).map(el => el.dataset.houseId);
+
+      fetch('/admin/houses/reorder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ houseOrder: houseIds })
+      }).catch(err => console.error('Failed to reorder houses:', err));
+    }
+  });
 </script>
 
 </main>
