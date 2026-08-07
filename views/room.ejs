@@ -113,28 +113,28 @@
                 opacity: 0.92;
             }
 
-            .sidebar {
-                position: fixed;
-                top: 0;
-                left: -100%;
-                width: 280px;
-                height: 100vh;
-                z-index: 1000;
-                transition: left 0.3s ease;
-                overflow-y: auto;
-            }
+     .sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 280px;
+    height: 100vh;
+    z-index: 1002; /* Increased from 1000 to be above top bar (z-index: 1001) */
+    transition: left 0.3s ease;
+    overflow-y: auto;
+}
 
             .sidebar.open {
                 left: 0;
             }
 
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 999;
-            }
+       .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1002; /* Match sidebar z-index */
+}
 
             .sidebar-overlay.active {
                 display: block;
@@ -261,18 +261,17 @@
                 .hamburger-btn {
                     display: block;
                 }
+ .sidebar {
+        padding-top: 110px !important; /* Match the top bar height */
+    }
 
-                .sidebar {
-                    display: block !important;
-                }
-
-                .main-content {
-                    padding-left: 12px !important;
-                    padding-right: 12px !important;
-                    padding-top: 70px !important;
-                    width: 100% !important;
-                    max-width: 100% !important;
-                }
+                 .main-content {
+        padding-top: 110px !important; /* Increased from 70px to account for taller top bar */
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
 
                 .grid-cols-1.md\:grid-cols-2 {
                     grid-template-columns: 1fr !important;
@@ -330,19 +329,83 @@
                     padding-top: 56px !important;
                 }
             }
+            .trade-tags-mobile {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 6px 0 4px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.trade-tags-mobile .trade-tag {
+    white-space: nowrap;
+    font-size: 11px;
+    padding: 4px 12px;
+    background: #e9e5e0;
+    border-radius: 20px;
+    color: #1e293b;
+    text-decoration: none;
+    font-weight: 500;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+}
+
+.trade-tags-mobile .trade-tag.active {
+    background: #FFB300;
+    color: #1e293b;
+    border-color: #FFB300;
+}
+
+@media (max-width: 769px) {
+    .mobile-top-bar {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 8px 12px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1001;
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+    }
+   .trade-tags-mobile {
+        display: flex !important;
+        gap: 6px;
+        flex-wrap: wrap;
+        padding: 6px 0 2px 0;
+    }
+      
+    .trade-tags {
+        display: none !important;
+    }
+}
         </style>
     </head>
 
     <body class="min-h-screen font-sans text-black bg-[#f4f1ec]">
         <!-- Mobile Top Bar -->
         <div class="mobile-top-bar">
-            <button class="hamburger-btn-mobile" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
-            <select onchange="window.location.href=this.value" class="room-select-mobile">
-                <% (typeof house !== 'undefined' && house && house.rooms || []).forEach(r => { %>
-                <option value="/room/<%= r.id %>" <%= r.id === room.id ? 'selected' : '' %>><%= r.name %></option>
-                <% }) %>
-            </select>
-        </div>
+    <div class="flex items-center gap-2">
+        <button class="hamburger-btn-mobile" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
+        <select onchange="window.location.href=this.value" class="room-select-mobile flex-1">
+            <% (typeof house !== 'undefined' && house && house.rooms || []).forEach(r => { %>
+            <option value="/room/<%= r.id %>" <%= r.id === room.id ? 'selected' : '' %>><%= r.name %></option>
+            <% }) %>
+        </select>
+    </div>
+    <!-- Trade Tags Section -->
+    <div class="trade-tags-mobile">
+        <% room.trades.forEach(trade => { %>
+        <a href="/room/<%= room.id %>?trade=<%= trade.id %>"
+            class="trade-tag <%= activeTrade === trade.id ? 'active' : '' %>">
+            <%= trade.name %>
+        </a>
+        <% }) %>
+    </div>
+</div>
 
         <!-- Overlay -->
         <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
