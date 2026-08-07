@@ -3,22 +3,17 @@ name: Automated VPS Deployment
 on:
   push:
     branches:
-      - main  # Triggers automatically when pushing to main branch
+      - main
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Deploy to Hostinger VPS via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /var/www/jobhouse
-            git pull origin main
-            npm install --production
-            npm run build --if-present
-            pm2 restart jobhouse || pm2 start app.js --name "jobhouse"
+      - name: Deploy on local self-hosted runner
+        run: |
+          cd /var/www/jobhouse
+          git pull origin main
+          npm install --production
+          npm run build --if-present
+          pm2 restart jobhouse || pm2 start app.js --name "jobhouse"
