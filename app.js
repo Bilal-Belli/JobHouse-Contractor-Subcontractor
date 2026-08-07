@@ -5,7 +5,7 @@ const sharp = require('sharp');
 const multer = require('multer');
 const QRCode = require('qrcode');
 const session = require('express-session');
-
+const nodemailer = require('nodemailer');
 const app = express();
 const DATA_FILE = path.join(__dirname, 'data', 'jobsite_data.json');
 
@@ -25,6 +25,14 @@ app.use((req, res, next) => {
   res.locals.currentPath = req.path;
   res.locals.isAdmin = req.session && req.session.isAdmin === true;
   next();
+});
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_APP_PASSWORD
+  }
 });
 
 // Session Configuration
@@ -613,6 +621,7 @@ app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, r
 
     const houseFolder = house ? house.id : 'unassigned';
     const attachments = [];
+    const mailAttachments = [];
 
     // Process uploaded attachments (if any)
     if (req.files && req.files.length > 0) {
@@ -626,6 +635,11 @@ app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, r
           filename: saved.filename,
           type: saved.mimetype,
           size: fs.statSync(filePath).size
+        });
+
+        mailAttachments.push({
+          filename: file.originalname,
+          path: filePath
         });
       }
     }
@@ -644,8 +658,72 @@ app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, r
 
     saveData(data);
 
-    // Redirect back with the same trade selected
+    // Prepare email parameters
     const activeTrade = req.body.activeTrade || tradeId;
+    const houseName = house ? (house.name || house.id) : 'Unassigned';
+    const roomName = room.name || room.id;
+    const tradeName = trade.name || trade.id;
+
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const replyUrl = `${baseUrl}/room/${req.params.roomId}?trade=${activeTrade}`;
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.RECEIVER_ADMIN_EMAIL,
+      subject: `New comment by '${newComment.author}' in '${houseName}' - '${roomName}' - '${tradeName}'`,
+      attachments: mailAttachments,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+            .container { max-width: 600px; background: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e0e0e0; margin: 0 auto; }
+            .header { border-bottom: 2px solid #0056b3; padding-bottom: 12px; margin-bottom: 20px; }
+            .header h2 { margin: 0; color: #0056b3; font-size: 20px; }
+            .meta-table { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
+            .meta-table td { padding: 6px 0; font-size: 14px; }
+            .meta-label { font-weight: bold; color: #555; width: 100px; }
+            .comment-box { background: #f8f9fa; border-left: 4px solid #0056b3; padding: 15px; border-radius: 4px; margin-bottom: 24px; font-size: 15px; white-space: pre-wrap; }
+            .button { display: inline-block; background-color: #0056b3; color: #ffffff !important; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; font-size: 14px; }
+            .footer { margin-top: 24px; font-size: 12px; color: #777; border-top: 1px solid #eee; padding-top: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h2>New Comment Received</h2>
+            </div>
+            
+            <table class="meta-table">
+              <tr><td class="meta-label">Author:</td><td>${newComment.author}</td></tr>
+              <tr><td class="meta-label">House:</td><td>${houseName}</td></tr>
+              <tr><td class="meta-label">Room:</td><td>${roomName}</td></tr>
+              <tr><td class="meta-label">Trade:</td><td>${tradeName}</td></tr>
+              <tr><td class="meta-label">Date:</td><td>${newComment.timestamp}</td></tr>
+            </table>
+
+            <div class="comment-box">
+              ${newComment.text || '<i>No text content</i>'}
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${replyUrl}" class="button">View & Reply to Comment</a>
+            </div>
+
+            <div class="footer">
+              This is an automated notification from JobHouse. Do not reply directly to this email.
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    // Send email without blocking the user response flow
+    transporter.sendMail(mailOptions).catch(err => console.error('Email sending failed:', err));
+
+    // Redirect back with the same trade selected
     res.redirect(`/room/${req.params.roomId}?trade=${activeTrade}`);
   } catch (err) {
     console.error('Comment submission error:', err);
