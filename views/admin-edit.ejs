@@ -29,6 +29,7 @@
         <% room.trades.forEach(t => { %>
         <div class="flex items-center justify-between group mb-1 mt-1 trade-tab-row cursor-move"
           data-trade-id="<%= t.id %>">
+          <span class="drag-handle cursor-move px-2 text-slate-500 hover:text-white">⠿</span>
           <a href="/admin/edit/<%= room.id %>?trade=<%= t.id %>"
             class="trade-tab-link flex-1 text-left px-4 py-2.5 sm:py-3 text-sm font-medium transition <%= selectedTrade === t.id ? 'bg-slate-800 text-white border-l-4 border-amber-600' : 'text-white hover:bg-slate-800 border-l-4 border-transparent' %>">
             <%= t.name %>
@@ -465,31 +466,31 @@
   const tradesContainer = document.querySelector('.trades-tabs-container');
   if (tradesContainer) {
     new Sortable(tradesContainer, {
-      animation: 150,
-      ghostClass: 'bg-amber-50',
-      dragClass: 'opacity-50',
-      handle: '.trade-tab-row',
-      onEnd: function (evt) {
-        const roomId = tradesContainer.dataset.roomId;
-        const tradeIds = Array.from(tradesContainer.querySelectorAll('.trade-tab-row')).map(el => el.dataset.tradeId);
+  animation: 150,
+  ghostClass: 'bg-amber-50',
+  dragClass: 'opacity-50',
+  handle: '.drag-handle', // Only drag when clicking the handle
+  onEnd: function (evt) {
+    const roomId = tradesContainer.dataset.roomId;
+    const tradeIds = Array.from(tradesContainer.querySelectorAll('.trade-tab-row')).map(el => el.dataset.tradeId);
 
-        fetch('/admin/rooms/' + roomId + '/reorder-trades', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: JSON.stringify({ tradeOrder: tradeIds })
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              console.log('Trade tabs reordered successfully');
-            }
-          })
-          .catch(err => console.error('Failed to reorder trade tabs:', err));
-      }
-    });
+    fetch('/admin/rooms/' + roomId + '/reorder-trades', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ tradeOrder: tradeIds })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('Trade tabs reordered successfully');
+        }
+      })
+      .catch(err => console.error('Failed to reorder trade tabs:', err));
+  }
+});
   }
 </script>
 
