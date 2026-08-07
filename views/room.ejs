@@ -201,6 +201,7 @@
                 flex-wrap: wrap;
                 padding: 8px 0;
                 margin-top: 4px;
+                margin-bottom: 8px;
             }
 
             .trade-tag {
@@ -420,7 +421,7 @@
                 </div>
 
                 <!-- Room Header -->
-                <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+                <div class="hidden md:flex mb-6 flex-wrap items-start justify-between gap-3">
                     <div>
                         <div class="flex items-center gap-2 text-xs text-black uppercase tracking-wider flex-wrap">
                             <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 font-bold">Active spec</span>
@@ -568,7 +569,7 @@
                     </div>
                 </div>
 
-                <div class="text-[12px] text-black pt-4 mt-4 flex justify-center flex-wrap gap-2">
+                <div class="hidden md:flex text-[12px] text-black pt-4 mt-4 justify-center flex-wrap gap-2">
                     <span>© <%= new Date().getFullYear() %> Manu Romero Construction</span>
                 </div>
 
