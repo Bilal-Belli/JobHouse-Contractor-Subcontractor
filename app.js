@@ -199,7 +199,7 @@ async function saveUploadedFile(file, houseFolder, roomFolder) {
 }
 
 // ==========================================
-// AUTH ROUTES (Unprotected)
+// AUTH ROUTES
 // ==========================================
 
 app.get('/admin/login', (req, res) => {
@@ -254,7 +254,7 @@ app.use('/admin', (req, res, next) => {
   requireAuth(req, res, next);
 });
 
-// 1. Admin Dashboard
+// Admin Dashboard
 app.get('/admin', (req, res) => {
   try {
     const data = getData();
@@ -265,7 +265,7 @@ app.get('/admin', (req, res) => {
   }
 });
 
-// 2. Create House
+// Create House
 app.post('/admin/houses', (req, res) => {
   try {
     const data = getData();
@@ -289,7 +289,7 @@ app.post('/admin/houses', (req, res) => {
   }
 });
 
-// Rename House (Supports both standard form POST and AJAX)
+// Rename House
 app.post('/admin/houses/:houseId/rename', (req, res) => {
   try {
     const data = getData();
@@ -316,7 +316,80 @@ app.post('/admin/houses/:houseId/rename', (req, res) => {
   }
 });
 
-// Rename Room (Supports both standard form POST and AJAX)
+// Delete House
+app.post('/admin/houses/:houseId/delete', (req, res) => {
+  try {
+    const data = getData();
+    data.houses = data.houses.filter(h => h.id !== req.params.houseId);
+    saveData(data);
+
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect('/admin');
+    });
+  } catch (err) {
+    console.error('Error deleting house:', err);
+    res.status(500).send('Error deleting house');
+  }
+});
+
+// Reorder houses
+app.post('/admin/houses/reorder', (req, res) => {
+  try {
+    const data = getData();
+    const { houseOrder } = req.body;
+    
+    if (!houseOrder || !Array.isArray(houseOrder)) {
+      return res.status(400).json({ error: 'Invalid house order' });
+    }
+    
+    // Sort houses based on the new order
+    data.houses.sort((a, b) => houseOrder.indexOf(a.id) - houseOrder.indexOf(b.id));
+    saveData(data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error reordering houses:', err);
+    res.status(500).json({ error: 'Failed to reorder houses' });
+  }
+});
+
+// Create Room
+app.post('/admin/houses/:houseId/rooms', (req, res) => {
+  try {
+    const data = getData();
+    const house = data.houses.find(h => h.id === req.params.houseId);
+
+    if (house) {
+      const roomName = req.body.roomName;
+      const newRoom = {
+        id: `${house.id}-${roomName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-')}`,
+        name: roomName,
+        status: 'draft',
+        trades: [
+          { id: 'general-' + Date.now(), name: 'General', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] },
+          { id: 'electrical-' + Date.now(), name: 'Electrical', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] },
+          { id: 'plumbing-' + Date.now(), name: 'Plumbing', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] },
+          { id: 'hvac-' + Date.now(), name: 'HVAC', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] }
+        ]
+      };
+      if (!house.rooms) house.rooms = [];
+      house.rooms.push(newRoom);
+      saveData(data);
+
+      req.session.save((err) => {
+        if (err) console.error('Session save error:', err);
+        res.redirect('/admin');
+      });
+    } else {
+      res.status(404).send('House not found');
+    }
+  } catch (err) {
+    console.error('Error creating room:', err);
+    res.status(500).send('Error creating room');
+  }
+});
+
+// Rename Room
 app.post('/admin/rooms/:roomId/rename', (req, res) => {
   try {
     const data = getData();
@@ -377,60 +450,7 @@ app.post('/admin/rooms/:roomId/delete', (req, res) => {
   }
 });
 
-// Delete House
-app.post('/admin/houses/:houseId/delete', (req, res) => {
-  try {
-    const data = getData();
-    data.houses = data.houses.filter(h => h.id !== req.params.houseId);
-    saveData(data);
-
-    req.session.save((err) => {
-      if (err) console.error('Session save error:', err);
-      res.redirect('/admin');
-    });
-  } catch (err) {
-    console.error('Error deleting house:', err);
-    res.status(500).send('Error deleting house');
-  }
-});
-
-// 3. Create Room
-app.post('/admin/houses/:houseId/rooms', (req, res) => {
-  try {
-    const data = getData();
-    const house = data.houses.find(h => h.id === req.params.houseId);
-
-    if (house) {
-      const roomName = req.body.roomName;
-      const newRoom = {
-        id: `${house.id}-${roomName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-')}`,
-        name: roomName,
-        status: 'draft',
-        trades: [
-          { id: 'general-' + Date.now(), name: 'General', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] },
-          { id: 'electrical-' + Date.now(), name: 'Electrical', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] },
-          { id: 'plumbing-' + Date.now(), name: 'Plumbing', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] },
-          { id: 'hvac-' + Date.now(), name: 'HVAC', renderUrl: '', planUrl: '', notes: '', images: [], files: [], comments: [] }
-        ]
-      };
-      if (!house.rooms) house.rooms = [];
-      house.rooms.push(newRoom);
-      saveData(data);
-
-      req.session.save((err) => {
-        if (err) console.error('Session save error:', err);
-        res.redirect('/admin');
-      });
-    } else {
-      res.status(404).send('House not found');
-    }
-  } catch (err) {
-    console.error('Error creating room:', err);
-    res.status(500).send('Error creating room');
-  }
-});
-
-// 4. Edit Room Interface
+// Edit Room
 app.get('/admin/edit/:id', (req, res) => {
   try {
     const data = getData();
@@ -446,7 +466,70 @@ app.get('/admin/edit/:id', (req, res) => {
   }
 });
 
-// Rename Trade Tab
+app.get('/admin/edit/:roomId', (req, res) => {
+  const { roomId } = req.params;
+  const data = getData();
+  const { room } = findRoomAndHouseById(data, roomId);
+
+  if (!room) return res.status(404).send('Room not found');
+
+  room.trades.forEach(t => {
+    if (!t.comments) t.comments = [];
+    if (!t.files) t.files = [];
+  });
+
+  const selectedTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : null);
+
+  res.render('admin-edit-room', {
+    room,
+    selectedTrade
+  });
+});
+
+// Add Trade Tab
+app.post('/admin/edit/:roomId/add-trade', (req, res) => {
+  try {
+    const data = getData();
+    const { roomId } = req.params;
+    const { tradeName } = req.body;
+
+    const room = findRoomById(data, roomId);
+    if (room) {
+      const tradeId = tradeName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-') + '-' + Date.now();
+      const existingTrade = room.trades.find(t => t.id === tradeId);
+
+      if (!existingTrade) {
+        room.trades.push({
+          id: tradeId,
+          name: tradeName,
+          renderUrl: '',
+          planUrl: '',
+          notes: '',
+          images: [],
+          files: [],
+          comments: []
+        });
+        saveData(data);
+      }
+
+      if (req.is('json') || req.xhr) {
+        return res.json({ success: true, tradeId: tradeId, tradeName: tradeName });
+      }
+
+      req.session.save((err) => {
+        if (err) console.error('Session save error:', err);
+        res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+      });
+    } else {
+      res.status(404).send('Room not found');
+    }
+  } catch (err) {
+    console.error('Error adding trade:', err);
+    res.status(500).send('Error adding trade');
+  }
+});
+
+// Rename Trade
 app.post('/admin/edit/:roomId/rename-trade/:tradeId', (req, res) => {
   try {
     const data = getData();
@@ -481,7 +564,7 @@ app.post('/admin/edit/:roomId/rename-trade/:tradeId', (req, res) => {
   }
 });
 
-// 5. Save Room Trade Details
+// Save Trade
 app.post('/admin/edit/:roomId/save', upload.fields([
   { name: 'render', maxCount: 1 },
   { name: 'plan', maxCount: 1 },
@@ -561,70 +644,323 @@ app.post('/admin/edit/:roomId/save', upload.fields([
   }
 });
 
-// 6. Add Trade Tab
-app.post('/admin/edit/:roomId/add-trade', (req, res) => {
+// Delete Trade
+app.post('/admin/edit/:roomId/delete-trade/:tradeId', (req, res) => {
   try {
     const data = getData();
-    const { roomId } = req.params;
-    const { tradeName } = req.body;
+    const room = findRoomById(data, req.params.roomId);
 
-    const room = findRoomById(data, roomId);
     if (room) {
-      const tradeId = tradeName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-') + '-' + Date.now();
-      const existingTrade = room.trades.find(t => t.id === tradeId);
+      const tradeToDelete = room.trades.find(t => t.id === req.params.tradeId);
+      if (tradeToDelete) {
+        if (tradeToDelete.renderUrl) deleteFileFromDisk(tradeToDelete.renderUrl);
+        if (tradeToDelete.planUrl) deleteFileFromDisk(tradeToDelete.planUrl);
 
-      if (!existingTrade) {
-        room.trades.push({
-          id: tradeId,
-          name: tradeName,
-          renderUrl: '',
-          planUrl: '',
-          notes: '',
-          images: [],
-          files: [],
-          comments: []
-        });
-        saveData(data);
+        if (tradeToDelete.images && tradeToDelete.images.length > 0) {
+          tradeToDelete.images.forEach(image => {
+            deleteFileFromDisk(image.url);
+          });
+        }
+
+        if (tradeToDelete.files && tradeToDelete.files.length > 0) {
+          tradeToDelete.files.forEach(file => {
+            deleteFileFromDisk(file.url);
+          });
+        }
       }
 
-      if (req.is('json') || req.xhr) {
-        return res.json({ success: true, tradeId: tradeId, tradeName: tradeName });
-      }
+      room.trades = room.trades.filter(t => t.id !== req.params.tradeId);
+      saveData(data);
 
       req.session.save((err) => {
         if (err) console.error('Session save error:', err);
-        res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+        res.redirect(`/admin/edit/${room.id}`);
       });
     } else {
       res.status(404).send('Room not found');
     }
   } catch (err) {
-    console.error('Error adding trade:', err);
-    res.status(500).send('Error adding trade');
+    console.error('Error deleting trade:', err);
+    res.status(500).send('Error deleting trade');
   }
 });
 
-// Reorder houses
-app.post('/admin/houses/reorder', (req, res) => {
+// Reorder Trades
+app.post('/admin/rooms/:roomId/reorder-trades', (req, res) => {
   try {
     const data = getData();
-    const { houseOrder } = req.body;
-    
-    if (!houseOrder || !Array.isArray(houseOrder)) {
-      return res.status(400).json({ error: 'Invalid house order' });
-    }
-    
-    // Sort houses based on the new order
-    data.houses.sort((a, b) => houseOrder.indexOf(a.id) - houseOrder.indexOf(b.id));
+    const { room } = findRoomAndHouseById(data, req.params.roomId);
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+
+    const { tradeOrder } = req.body;
+    // Sort trades based on the new order by ID
+    room.trades.sort((a, b) => tradeOrder.indexOf(a.id) - tradeOrder.indexOf(b.id));
     saveData(data);
     res.json({ success: true });
   } catch (err) {
-    console.error('Error reordering houses:', err);
-    res.status(500).json({ error: 'Failed to reorder houses' });
+    console.error('Error reordering trades:', err);
+    res.status(500).json({ error: 'Failed to reorder trades' });
   }
 });
 
-// Public - Add comment to a specific trade
+// Rename Trade
+app.post('/admin/rooms/:roomId/rename-trade/:tradeId', (req, res) => {
+  try {
+    const data = getData();
+    const { room } = findRoomAndHouseById(data, req.params.roomId);
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+
+    const trade = room.trades.find(t => t.id === req.params.tradeId);
+    if (!trade) return res.status(404).json({ error: 'Trade not found' });
+
+    const newName = req.body.newName.trim();
+    if (!newName) return res.status(400).json({ error: 'Name is required' });
+
+    trade.name = newName;
+    saveData(data);
+    res.json({ success: true, newName: newName });
+  } catch (err) {
+    console.error('Error renaming trade:', err);
+    res.status(500).json({ error: 'Failed to rename trade' });
+  }
+});
+
+// Delete comment
+app.post('/admin/rooms/:roomId/trades/:tradeId/comments/:commentIndex/delete', (req, res) => {
+  try {
+    const data = getData();
+    const { roomId, tradeId, commentIndex } = req.params;
+    const { room } = findRoomAndHouseById(data, roomId);
+
+    if (!room) return res.status(404).send('Room not found');
+
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (!trade) return res.status(404).send('Trade not found');
+
+    if (!trade.comments) trade.comments = [];
+
+    const index = parseInt(commentIndex, 10);
+    if (isNaN(index) || index < 0 || index >= trade.comments.length) {
+      return res.status(404).send('Invalid comment index');
+    }
+
+    // Remove associated files from disk
+    const commentToDelete = trade.comments[index];
+    if (commentToDelete.attachments && commentToDelete.attachments.length > 0) {
+      commentToDelete.attachments.forEach(file => {
+        deleteFileFromDisk(file.url);
+      });
+    }
+
+    // Remove comment from trade comments
+    trade.comments.splice(index, 1);
+    saveData(data);
+
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+    });
+  } catch (err) {
+    console.error('Error deleting comment:', err);
+    res.status(500).send('Error deleting comment');
+  }
+});
+
+// Delete Image
+app.post('/admin/edit/:roomId/delete-image/:tradeId/:imageIndex', (req, res) => {
+  try {
+    const data = getData();
+    const { roomId, tradeId, imageIndex } = req.params;
+
+    const room = findRoomById(data, roomId);
+    if (!room) return res.status(404).send('Room not found');
+
+    const trade = room.trades.find(t => String(t.id) === String(tradeId));
+    if (!trade) return res.status(404).send('Trade not found');
+
+    const index = parseInt(imageIndex, 10);
+    if (isNaN(index) || !Array.isArray(trade.images) || index < 0 || index >= trade.images.length) {
+      return res.status(404).send('Image not found');
+    }
+
+    const imageToDelete = trade.images[index];
+    if (imageToDelete && imageToDelete.url) {
+      deleteFileFromDisk(imageToDelete.url);
+    }
+
+    trade.images.splice(index, 1);
+    saveData(data);
+
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+    });
+  } catch (err) {
+    console.error('Error deleting image:', err);
+    res.status(500).send('Error deleting image');
+  }
+});
+
+// Download Image
+app.get('/download/:roomId/:tradeId/:filename', (req, res) => {
+  try {
+    const data = getData();
+    const room = findRoomById(data, req.params.roomId);
+    if (!room) return res.status(404).send('Room not found');
+
+    const trade = room.trades.find(t => t.id === req.params.tradeId);
+    if (!trade || !trade.files) return res.status(404).send('File not found');
+
+    const file = trade.files.find(f => f.filename === req.params.filename);
+    if (!file) return res.status(404).send('File not found');
+
+    const filePath = path.join(__dirname, 'public', file.url);
+    if (fs.existsSync(filePath)) {
+      res.download(filePath, file.originalName);
+    } else {
+      res.status(404).send('File not found on server');
+    }
+  } catch (err) {
+    console.error('Download error:', err);
+    res.status(500).send('Error downloading file');
+  }
+});
+
+// Delete File
+app.post('/admin/edit/:roomId/delete-file/:tradeId/:fileIndex', (req, res) => {
+  try {
+    const data = getData();
+    const { roomId, tradeId, fileIndex } = req.params;
+
+    // 1. Find Room
+    const room = findRoomById(data, roomId);
+    if (!room) return res.status(404).send('Room not found');
+
+    // 2. Find Trade (Converting both to String prevents strict type mismatches)
+    const trade = room.trades ? room.trades.find(t => String(t.id) === String(tradeId)) : null;
+    if (!trade) return res.status(404).send('Trade not found');
+
+    // 3. Parse and Validate File Index
+    const index = parseInt(fileIndex, 10);
+    if (isNaN(index) || !Array.isArray(trade.files) || index < 0 || index >= trade.files.length) {
+      return res.status(404).send('File not found');
+    }
+
+    // 4. Remove file from disk
+    const fileToDelete = trade.files[index];
+    if (fileToDelete && fileToDelete.url) {
+      deleteFileFromDisk(fileToDelete.url);
+    }
+
+    // 5. Remove file entry from array
+    trade.files.splice(index, 1);
+
+    // 6. Save data and redirect
+    saveData(data);
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+    });
+  } catch (err) {
+    console.error('Error deleting file:', err);
+    res.status(500).send('Error deleting file');
+  }
+});
+
+// Delete Files of a trade
+app.post('/admin/edit/:roomId/delete-all-files/:tradeId', (req, res) => {
+  try {
+    const data = getData();
+    const { roomId, tradeId } = req.params;
+
+    const room = findRoomById(data, roomId);
+    if (!room) return res.status(404).send('Room not found');
+
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (!trade) return res.status(404).send('Trade not found');
+
+    if (trade.files && trade.files.length > 0) {
+      trade.files.forEach(file => {
+        deleteFileFromDisk(file.url);
+      });
+      trade.files = [];
+      saveData(data);
+    }
+
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+    });
+  } catch (err) {
+    console.error('Error deleting all files:', err);
+    res.status(500).send('Error deleting files');
+  }
+});
+
+// Change Draft Status
+app.post('/admin/toggle-publish/:id', (req, res) => {
+  try {
+    const data = getData();
+    const room = findRoomById(data, req.params.id);
+
+    if (room) {
+      room.status = room.status === 'published' ? 'draft' : 'published';
+      saveData(data);
+    }
+
+    req.session.save((err) => {
+      if (err) console.error('Session save error:', err);
+      res.redirect(`/admin/edit/${req.params.id}`);
+    });
+  } catch (err) {
+    console.error('Error toggling publish status:', err);
+    res.status(500).send('Error toggling publish status');
+  }
+});
+
+// ==========================================
+// PUBLIC VIEW ROUTES (Unprotected)
+// ==========================================
+
+app.get('/house/:id', (req, res) => {
+  try {
+    const data = getData();
+    const house = data.houses.find(h => h.id === req.params.id);
+
+    if (!house) return res.status(404).send('House project not found');
+
+    res.render('house', { house, rooms: house.rooms || [] });
+  } catch (err) {
+    console.error('House view error:', err);
+    res.status(500).send('Error loading house');
+  }
+});
+
+app.get('/room/:id', async (req, res) => {
+  try {
+    const data = getData();
+    const { room, house } = findRoomAndHouseById(data, req.params.id);
+
+    if (!room) return res.status(404).send('Room specifications not found');
+
+    const roomUrl = `${req.protocol}://${req.get('host')}/room/${room.id}`;
+    const qrCodeUrl = await QRCode.toDataURL(roomUrl);
+    const activeTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : '');
+
+    res.render('room', {
+      room,
+      house: house || null,
+      activeTrade,
+      qrCodeUrl,
+      roomUrl
+    });
+  } catch (err) {
+    console.error('Room view error:', err);
+    res.status(500).send('Error loading room');
+  }
+});
+
+// Add comment
 app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, res) => {
   try {
     const data = getData();
@@ -635,7 +971,6 @@ app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, r
     const tradeId = req.body.tradeId;
     if (!tradeId) return res.status(400).send('Trade ID is required');
 
-    // Find the specific trade
     const trade = room.trades.find(t => t.id === tradeId);
     if (!trade) return res.status(404).send('Trade not found');
 
@@ -643,7 +978,6 @@ app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, r
     const attachments = [];
     const mailAttachments = [];
 
-    // Process uploaded attachments (if any)
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         const saved = await saveUploadedFile(file, houseFolder, room.id);
@@ -672,7 +1006,6 @@ app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, r
       attachments: attachments
     };
 
-    // Initialize comments array for the trade if it doesn't exist
     if (!trade.comments) trade.comments = [];
     trade.comments.unshift(newComment);
 
@@ -751,238 +1084,6 @@ app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, r
   }
 });
 
-// 7. Delete Trade Tab
-app.post('/admin/edit/:roomId/delete-trade/:tradeId', (req, res) => {
-  try {
-    const data = getData();
-    const room = findRoomById(data, req.params.roomId);
-
-    if (room) {
-      const tradeToDelete = room.trades.find(t => t.id === req.params.tradeId);
-      if (tradeToDelete) {
-        if (tradeToDelete.renderUrl) deleteFileFromDisk(tradeToDelete.renderUrl);
-        if (tradeToDelete.planUrl) deleteFileFromDisk(tradeToDelete.planUrl);
-
-        if (tradeToDelete.images && tradeToDelete.images.length > 0) {
-          tradeToDelete.images.forEach(image => {
-            deleteFileFromDisk(image.url);
-          });
-        }
-
-        if (tradeToDelete.files && tradeToDelete.files.length > 0) {
-          tradeToDelete.files.forEach(file => {
-            deleteFileFromDisk(file.url);
-          });
-        }
-      }
-
-      room.trades = room.trades.filter(t => t.id !== req.params.tradeId);
-      saveData(data);
-
-      req.session.save((err) => {
-        if (err) console.error('Session save error:', err);
-        res.redirect(`/admin/edit/${room.id}`);
-      });
-    } else {
-      res.status(404).send('Room not found');
-    }
-  } catch (err) {
-    console.error('Error deleting trade:', err);
-    res.status(500).send('Error deleting trade');
-  }
-});
-
-// Delete Image
-app.post('/admin/edit/:roomId/delete-image/:tradeId/:imageIndex', (req, res) => {
-  try {
-    const data = getData();
-    const { roomId, tradeId, imageIndex } = req.params;
-
-    const room = findRoomById(data, roomId);
-    if (!room) return res.status(404).send('Room not found');
-
-    const trade = room.trades.find(t => String(t.id) === String(tradeId));
-    if (!trade) return res.status(404).send('Trade not found');
-
-    const index = parseInt(imageIndex, 10);
-    if (isNaN(index) || !Array.isArray(trade.images) || index < 0 || index >= trade.images.length) {
-      return res.status(404).send('Image not found');
-    }
-
-    const imageToDelete = trade.images[index];
-    if (imageToDelete && imageToDelete.url) {
-      deleteFileFromDisk(imageToDelete.url);
-    }
-
-    trade.images.splice(index, 1);
-    saveData(data);
-
-    req.session.save((err) => {
-      if (err) console.error('Session save error:', err);
-      res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
-    });
-  } catch (err) {
-    console.error('Error deleting image:', err);
-    res.status(500).send('Error deleting image');
-  }
-});
-
-app.get('/download/:roomId/:tradeId/:filename', (req, res) => {
-  try {
-    const data = getData();
-    const room = findRoomById(data, req.params.roomId);
-    if (!room) return res.status(404).send('Room not found');
-
-    const trade = room.trades.find(t => t.id === req.params.tradeId);
-    if (!trade || !trade.files) return res.status(404).send('File not found');
-
-    const file = trade.files.find(f => f.filename === req.params.filename);
-    if (!file) return res.status(404).send('File not found');
-
-    const filePath = path.join(__dirname, 'public', file.url);
-    if (fs.existsSync(filePath)) {
-      res.download(filePath, file.originalName);
-    } else {
-      res.status(404).send('File not found on server');
-    }
-  } catch (err) {
-    console.error('Download error:', err);
-    res.status(500).send('Error downloading file');
-  }
-});
-
-app.post('/admin/edit/:roomId/delete-file/:tradeId/:fileIndex', (req, res) => {
-  try {
-    const data = getData();
-    const { roomId, tradeId, fileIndex } = req.params;
-
-    // 1. Find Room
-    const room = findRoomById(data, roomId);
-    if (!room) return res.status(404).send('Room not found');
-
-    // 2. Find Trade (Converting both to String prevents strict type mismatches)
-    const trade = room.trades ? room.trades.find(t => String(t.id) === String(tradeId)) : null;
-    if (!trade) return res.status(404).send('Trade not found');
-
-    // 3. Parse and Validate File Index
-    const index = parseInt(fileIndex, 10);
-    if (isNaN(index) || !Array.isArray(trade.files) || index < 0 || index >= trade.files.length) {
-      return res.status(404).send('File not found');
-    }
-
-    // 4. Remove file from disk
-    const fileToDelete = trade.files[index];
-    if (fileToDelete && fileToDelete.url) {
-      deleteFileFromDisk(fileToDelete.url);
-    }
-
-    // 5. Remove file entry from array
-    trade.files.splice(index, 1);
-
-    // 6. Save data and redirect
-    saveData(data);
-    req.session.save((err) => {
-      if (err) console.error('Session save error:', err);
-      res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
-    });
-  } catch (err) {
-    console.error('Error deleting file:', err);
-    res.status(500).send('Error deleting file');
-  }
-});
-
-app.post('/admin/edit/:roomId/delete-all-files/:tradeId', (req, res) => {
-  try {
-    const data = getData();
-    const { roomId, tradeId } = req.params;
-
-    const room = findRoomById(data, roomId);
-    if (!room) return res.status(404).send('Room not found');
-
-    const trade = room.trades.find(t => t.id === tradeId);
-    if (!trade) return res.status(404).send('Trade not found');
-
-    if (trade.files && trade.files.length > 0) {
-      trade.files.forEach(file => {
-        deleteFileFromDisk(file.url);
-      });
-      trade.files = [];
-      saveData(data);
-    }
-
-    req.session.save((err) => {
-      if (err) console.error('Session save error:', err);
-      res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
-    });
-  } catch (err) {
-    console.error('Error deleting all files:', err);
-    res.status(500).send('Error deleting files');
-  }
-});
-
-// 8. Toggle Room Publish / Draft Status
-app.post('/admin/toggle-publish/:id', (req, res) => {
-  try {
-    const data = getData();
-    const room = findRoomById(data, req.params.id);
-
-    if (room) {
-      room.status = room.status === 'published' ? 'draft' : 'published';
-      saveData(data);
-    }
-
-    req.session.save((err) => {
-      if (err) console.error('Session save error:', err);
-      res.redirect(`/admin/edit/${req.params.id}`);
-    });
-  } catch (err) {
-    console.error('Error toggling publish status:', err);
-    res.status(500).send('Error toggling publish status');
-  }
-});
-
-// ==========================================
-// PUBLIC VIEW ROUTES (Unprotected)
-// ==========================================
-
-app.get('/house/:id', (req, res) => {
-  try {
-    const data = getData();
-    const house = data.houses.find(h => h.id === req.params.id);
-
-    if (!house) return res.status(404).send('House project not found');
-
-    res.render('house', { house, rooms: house.rooms || [] });
-  } catch (err) {
-    console.error('House view error:', err);
-    res.status(500).send('Error loading house');
-  }
-});
-
-app.get('/room/:id', async (req, res) => {
-  try {
-    const data = getData();
-    const { room, house } = findRoomAndHouseById(data, req.params.id);
-
-    if (!room) return res.status(404).send('Room specifications not found');
-
-    const roomUrl = `${req.protocol}://${req.get('host')}/room/${room.id}`;
-    const qrCodeUrl = await QRCode.toDataURL(roomUrl);
-    const activeTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : '');
-
-    res.render('room', {
-      room,
-      house: house || null,
-      activeTrade,
-      qrCodeUrl,
-      roomUrl
-    });
-  } catch (err) {
-    console.error('Room view error:', err);
-    res.status(500).send('Error loading room');
-  }
-});
-
 app.post('/room/:id/comment', upload.array('attachments', 10), async (req, res) => {
   try {
     const data = getData();
@@ -1056,47 +1157,7 @@ app.post('/admin/houses/:houseId/reorder-rooms', (req, res) => {
   }
 });
 
-// Reorder trades within a room
-app.post('/admin/rooms/:roomId/reorder-trades', (req, res) => {
-  try {
-    const data = getData();
-    const { room } = findRoomAndHouseById(data, req.params.roomId);
-    if (!room) return res.status(404).json({ error: 'Room not found' });
-
-    const { tradeOrder } = req.body;
-    // Sort trades based on the new order by ID
-    room.trades.sort((a, b) => tradeOrder.indexOf(a.id) - tradeOrder.indexOf(b.id));
-    saveData(data);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Error reordering trades:', err);
-    res.status(500).json({ error: 'Failed to reorder trades' });
-  }
-});
-
-// Rename trade (by index)
-app.post('/admin/rooms/:roomId/rename-trade/:tradeId', (req, res) => {
-  try {
-    const data = getData();
-    const { room } = findRoomAndHouseById(data, req.params.roomId);
-    if (!room) return res.status(404).json({ error: 'Room not found' });
-
-    const trade = room.trades.find(t => t.id === req.params.tradeId);
-    if (!trade) return res.status(404).json({ error: 'Trade not found' });
-
-    const newName = req.body.newName.trim();
-    if (!newName) return res.status(400).json({ error: 'Name is required' });
-
-    trade.name = newName;
-    saveData(data);
-    res.json({ success: true, newName: newName });
-  } catch (err) {
-    console.error('Error renaming trade:', err);
-    res.status(500).json({ error: 'Failed to rename trade' });
-  }
-});
-
-// Legacy route - redirect to new format
+// Redirect
 app.post('/admin/edit/:roomId/delete-comment/:tradeId/:commentId', (req, res) => {
   const { roomId, tradeId, commentId } = req.params;
   const data = getData();
@@ -1122,81 +1183,41 @@ app.post('/admin/edit/:roomId/delete-comment/:tradeId/:commentId', (req, res) =>
   res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
 });
 
-// Admin - Delete comment from a specific trade
-app.post('/admin/rooms/:roomId/trades/:tradeId/comments/:commentIndex/delete', (req, res) => {
-  try {
-    const data = getData();
-    const { roomId, tradeId, commentIndex } = req.params;
-    const { room } = findRoomAndHouseById(data, roomId);
-
-    if (!room) return res.status(404).send('Room not found');
-
-    const trade = room.trades.find(t => t.id === tradeId);
-    if (!trade) return res.status(404).send('Trade not found');
-
-    if (!trade.comments) trade.comments = [];
-
-    const index = parseInt(commentIndex, 10);
-    if (isNaN(index) || index < 0 || index >= trade.comments.length) {
-      return res.status(404).send('Invalid comment index');
-    }
-
-    // Remove associated files from disk
-    const commentToDelete = trade.comments[index];
-    if (commentToDelete.attachments && commentToDelete.attachments.length > 0) {
-      commentToDelete.attachments.forEach(file => {
-        deleteFileFromDisk(file.url);
-      });
-    }
-
-    // Remove comment from trade comments
-    trade.comments.splice(index, 1);
-    saveData(data);
-
-    req.session.save((err) => {
-      if (err) console.error('Session save error:', err);
-      res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
-    });
-  } catch (err) {
-    console.error('Error deleting comment:', err);
-    res.status(500).send('Error deleting comment');
-  }
+// 400 Handler
+app.use((req, res) => {
+  res.status(400).render('errors/400');
 });
 
-app.get('/admin/edit/:roomId', (req, res) => {
-  const { roomId } = req.params;
-  const data = getData();
-  const { room } = findRoomAndHouseById(data, roomId);
-
-  if (!room) return res.status(404).send('Room not found');
-
-  // Ensure default structure for older data
-  room.trades.forEach(t => {
-    if (!t.comments) t.comments = [];
-    if (!t.files) t.files = [];
-  });
-
-  const selectedTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : null);
-
-  res.render('admin-edit-room', {
-    room,
-    selectedTrade
-  });
+// 401 Handler
+app.use('/error/401', (req, res) => {
+  res.status(401).render('errors/401');
 });
+
+// 403 Handler
+app.use('/error/403', (req, res) => {
+  res.status(403).render('errors/403');
+});
+
 // 404 Handler
 app.use((req, res) => {
-  res.status(404).render('404');
+  res.status(404).render('errors/404');
 });
 
-// Unhandled Errors Handler
+// 500 Handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
-  res.status(500).send('Internal server error');
+  res.status(500).render('errors/500');
 });
 
-// ==========================================
-// START SERVER
-// ==========================================
+// 502 Handler
+app.use('/error/502', (req, res) => {
+  res.status(502).render('errors/502');
+});
+
+// 503 Handler
+app.use('/error/503', (req, res) => {
+  res.status(503).render('errors/503');
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

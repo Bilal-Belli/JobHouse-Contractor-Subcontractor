@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>400 - Invalid Request</title>
+        <link rel="icon" type="image/x-icon" href="<%= baseUrl %>/favicon.png">
+        <!-- Tailwind CSS via CDN -->
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+
+    <body class="bg-[#F4F1EC] text-slate-900 antialiased font-serif flex flex-col min-h-screen">
+
+        <main class="flex-grow flex items-center justify-center p-4">
+            <div class="max-w-md w-full bg-white shadow-lg p-8 text-center font-sans space-y-6">
+
+                <!-- Big Visual Indicator -->
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-amber-100 rounded-full text-amber-600">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                        </path>
+                    </svg>
+                </div>
+
+                <!-- Error Content -->
+                <div class="space-y-2">
+                    <h1 class="text-5xl font-black text-slate-900 tracking-tight">400</h1>
+                    <h2 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Invalid Request</h2>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        The server could not process your request due to invalid data.
+                    </p>
+                </div>
+            </div>
+        </main>
+    </body>
+
+</html>
