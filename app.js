@@ -1040,39 +1040,37 @@ app.get('/room/:id', async (req, res) => {
     }
 
     const roomUrl = `${req.protocol}://${req.get('host')}/room/${room.id}`;
-    
+
     // Generate QR code as buffer
     const qrBuffer = await QRCode.toBuffer(roomUrl, {
       width: 300,
       margin: 2
     });
-    
+
     // Create canvas with title
     const title = `${house ? house.name : ''} - ${room.name}`;
     const canvas = createCanvas(300, 360);
     const ctx = canvas.getContext('2d');
-    
+
     // White background
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, 300, 360);
-    
+
     // Load QR image
     const img = await loadImage(qrBuffer);
-    
+
     // Draw QR code
     ctx.drawImage(img, 0, 50, 300, 300);
-    
+
     // Draw title text with registered font
     ctx.fillStyle = '#000000';
     ctx.font = 'bold 16px "Roboto-Bold", "Arial", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(title, 150, 15);
-    
     // Draw subtitle
     ctx.fillStyle = '#666666';
     ctx.font = '10px "Roboto", "Arial", sans-serif';
-    
     // Convert to data URL
     const qrCodeUrl = canvas.toDataURL('image/png');
 

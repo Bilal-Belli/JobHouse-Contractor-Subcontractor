@@ -880,7 +880,7 @@
                 document.getElementById('nextBtn').classList.add('hidden');
 
                 const qrSrc = '<%= qrCodeUrl %>';
-                const qrTitle = '<%= room.id.slice(0,6) %> - <%= room.name %>';
+                const qrTitle = '<%= room.id.slice(0,6).charAt(0).toUpperCase() + room.id.slice(0,6).slice(1) %> - <%= room.name %>';
 
                 // Clear all other preview items
                 previewItems = [];
