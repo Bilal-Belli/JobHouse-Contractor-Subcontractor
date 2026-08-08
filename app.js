@@ -160,6 +160,41 @@ function deleteFileFromDisk(webUrl) {
   }
 }
 
+function deleteRoomFiles(roomId) {
+  try {
+    const data = getData();
+    const { room, house } = findRoomAndHouseById(data, roomId);
+    
+    if (room && house) {
+      room.trades.forEach(trade => {
+        if (trade.renderUrl) deleteFileFromDisk(trade.renderUrl);
+        if (trade.planUrl) deleteFileFromDisk(trade.planUrl);
+        if (trade.images && trade.images.length > 0) {
+          trade.images.forEach(image => {
+            deleteFileFromDisk(image.url);
+          });
+        }
+        if (trade.files && trade.files.length > 0) {
+          trade.files.forEach(file => {
+            deleteFileFromDisk(file.url);
+          });
+        }
+        if (trade.comments && trade.comments.length > 0) {
+          trade.comments.forEach(comment => {
+            if (comment.attachments && comment.attachments.length > 0) {
+              comment.attachments.forEach(attachment => {
+                deleteFileFromDisk(attachment.url);
+              });
+            }
+          });
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Error deleting room files:', err);
+  }
+}
+
 // ==========================================
 // FILE UPLOAD CONFIGURATION
 // ==========================================
@@ -320,6 +355,19 @@ app.post('/admin/houses/:houseId/rename', (req, res) => {
 app.post('/admin/houses/:houseId/delete', (req, res) => {
   try {
     const data = getData();
+    const houseToDelete = data.houses.find(h => h.id === req.params.houseId);
+    
+    if (houseToDelete) {
+      houseToDelete.rooms.forEach(room => {
+        deleteRoomFiles(room.id);
+      });
+      
+      const houseFolder = path.join(__dirname, 'public', 'uploads', houseToDelete.id);
+      if (fs.existsSync(houseFolder)) {
+        fs.rmSync(houseFolder, { recursive: true, force: true });
+      }
+    }
+    
     data.houses = data.houses.filter(h => h.id !== req.params.houseId);
     saveData(data);
 
@@ -423,18 +471,27 @@ app.post('/admin/rooms/:roomId/delete', (req, res) => {
     const roomId = req.params.roomId;
 
     let roomFound = false;
+    let houseId = null;
 
-    // Search through houses to find and remove the room
     data.houses.forEach((house) => {
       const initialLength = house.rooms.length;
       house.rooms = house.rooms.filter((room) => room.id !== roomId);
 
       if (house.rooms.length < initialLength) {
         roomFound = true;
+        houseId = house.id;
       }
     });
 
     if (roomFound) {
+      deleteRoomFiles(roomId);
+      if (houseId) {
+        const roomFolder = path.join(__dirname, 'public', 'uploads', houseId, roomId);
+        if (fs.existsSync(roomFolder)) {
+          fs.rmSync(roomFolder, { recursive: true, force: true });
+        }
+      }
+      
       saveData(data);
 
       req.session.save((err) => {
