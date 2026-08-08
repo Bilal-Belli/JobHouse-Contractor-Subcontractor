@@ -148,6 +148,10 @@
                 class="flex-1 text-center bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold py-1.5 rounded-none transition">
                 Edit
               </a>
+              <button type="button" onclick="duplicateRoom('<%= room.id %>', '<%= room.name %>', '<%= house.id %>')"
+                class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold py-1.5 rounded-none transition">
+                Duplicate
+              </button>
               <form id="delete-room-form-<%= room.id %>" action="/admin/rooms/<%= room.id %>/delete" method="POST"
                 class="flex-1 flex">
                 <button type="button" onclick="openRoomDeleteModal('<%= room.id %>', '<%= room.name %>')"
@@ -482,6 +486,35 @@
       }).catch(err => console.error('Failed to reorder houses:', err));
     }
   });
+
+  async function duplicateRoom(roomId, roomName, houseId) {
+    if (!confirm(`Duplicate room "${roomName}"?`)) return;
+
+    try {
+      const response = await fetch(`/admin/rooms/${roomId}/duplicate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          newName: `${roomName} (Copy)`,
+          houseId: houseId
+        })
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const data = await response.json();
+        alert(data.message || 'Failed to duplicate room');
+      }
+    } catch (err) {
+      console.error('Error duplicating room:', err);
+      alert('Failed to duplicate room. Please try again.');
+    }
+  }
+
 </script>
 
 </main>

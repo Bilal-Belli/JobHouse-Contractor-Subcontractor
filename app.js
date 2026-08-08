@@ -1367,6 +1367,88 @@ app.post('/admin/rooms/:roomId/trades/:tradeId/reorder-files', (req, res) => {
   }
 });
 
+app.post('/admin/rooms/:roomId/duplicate', (req, res) => {
+  const roomId = req.params.roomId;
+  const { newName, houseId } = req.body;
+
+  try {
+    const data = getData();
+    
+    // Find the original room and its house
+    let originalRoom = null;
+    let originalHouse = null;
+    
+    for (const house of data.houses) {
+      const foundRoom = house.rooms.find(r => r.id === roomId);
+      if (foundRoom) {
+        originalRoom = foundRoom;
+        originalHouse = house;
+        break;
+      }
+    }
+
+    if (!originalRoom) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    // Find the target house (use the provided houseId or the original house)
+    let targetHouse = null;
+    if (houseId) {
+      targetHouse = data.houses.find(h => h.id === houseId);
+    }
+    if (!targetHouse) {
+      targetHouse = originalHouse;
+    }
+
+    if (!targetHouse) {
+      return res.status(404).json({ message: 'Target house not found' });
+    }
+
+    // Generate a new unique room ID
+    const baseId = `${targetHouse.id}-${newName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-')}`;
+    let newRoomId = baseId;
+    let counter = 1;
+    
+    // Check if room ID already exists and add counter if needed
+    while (targetHouse.rooms.some(r => r.id === newRoomId)) {
+      newRoomId = `${baseId}-${counter}`;
+      counter++;
+    }
+
+    // Create the duplicate room with deep copy of trades
+    const newRoom = {
+      id: newRoomId,
+      name: newName || `${originalRoom.name} (Copy)`,
+      status: originalRoom.status || 'draft',
+      trades: originalRoom.trades.map(trade => ({
+        id: `${trade.id}-copy-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        name: trade.name,
+        renderUrl: '', // Don't copy files to avoid duplicates
+        planUrl: '',
+        notes: '',
+        images: [],
+        files: [],
+        comments: []
+      }))
+    };
+
+    // Add the new room to the target house
+    targetHouse.rooms.push(newRoom);
+    
+    // Save the data
+    saveData(data);
+
+    res.status(200).json({ 
+      success: true, 
+      roomId: newRoom.id,
+      message: 'Room duplicated successfully' 
+    });
+  } catch (error) {
+    console.error('Error duplicating room:', error);
+    res.status(500).json({ message: 'Failed to duplicate room' });
+  }
+});
+
 app.get('/error/400', (req, res) => {
   res.status(400).render('errors/400');
 });
