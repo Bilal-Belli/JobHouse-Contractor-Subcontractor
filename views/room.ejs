@@ -265,8 +265,10 @@
                 }
 
                 .sidebar {
-                    padding-top: 110px !important;
-                    /* Match the top bar height */
+                    display: flex !important;
+                    flex-direction: column !important;
+                    height: 100vh !important;
+                    padding-top: 0 !important;
                 }
 
                 .main-content {
@@ -328,6 +330,19 @@
                     display: block !important;
                 }
 
+                .sidebar nav {
+                    flex: 1 !important;
+                    overflow-y: auto !important;
+                    min-height: 0 !important;
+                }
+
+                .sidebar .border-t {
+                    flex-shrink: 0 !important;
+                    position: sticky !important;
+                    bottom: 0 !important;
+                    background: #0f172a !important;
+                    z-index: 10 !important;
+                }
             }
 
             .trade-tags-mobile {
