@@ -269,8 +269,6 @@
                     flex-direction: column !important;
                     height: 100vh !important;
                     padding-top: 0 !important;
-                    overflow: hidden !important;
-                    /* Prevent sidebar scrolling */
                 }
 
                 .main-content {
@@ -341,12 +339,11 @@
                 .sidebar .border-t {
                     flex-shrink: 0 !important;
                     margin-top: auto !important;
-                    /* Push to bottom */
                     background: #0f172a !important;
                     border-top: 1px solid #334155 !important;
+                    width: 100% !important;
                     position: relative !important;
                     bottom: 0 !important;
-                    width: 100% !important;
                 }
 
                 .sidebar-scroll {
@@ -354,7 +351,6 @@
                     overflow-y: auto !important;
                     min-height: 0 !important;
                 }
-
             }
 
             .trade-tags-mobile {
