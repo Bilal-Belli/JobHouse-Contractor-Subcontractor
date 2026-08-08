@@ -149,7 +149,7 @@
                 Edit
               </a>
               <button type="button" onclick="duplicateRoom('<%= room.id %>', '<%= room.name %>', '<%= house.id %>')"
-                class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold py-1.5 rounded-none transition">
+                class="flex-1 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold py-1.5 rounded-none transition">
                 Duplicate
               </button>
               <form id="delete-room-form-<%= room.id %>" action="/admin/rooms/<%= room.id %>/delete" method="POST"
