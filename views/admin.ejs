@@ -5,7 +5,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
     <div>
       <h1 class="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-      <p class="text-xs text-slate-600">Manage houses, rooms, and trade specifications</p>
+      <p class="hidden md:block text-xs text-slate-600">Manage houses, rooms, and trade specifications</p>
     </div>
 
     <!-- Create House (Main Folder) Form -->
@@ -14,10 +14,6 @@
         class="px-3 py-2 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
       <button type="submit"
         class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-none shadow transition flex items-center gap-1.5">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-        </svg>
         + Create House
       </button>
     </form>
@@ -29,12 +25,9 @@
     <% houses.forEach(house => { %>
     <div data-house-card data-house-name="<%= house.name %>" data-house-id="<%= house.id %>"
       class="bg-white rounded-none border border-slate-300 shadow-sm overflow-hidden">
-
       <!-- House (Folder) Header - Click to expand/collapse -->
-      <div class="drag-handle-house cursor-move text-amber-500/50 hover:text-amber-500 mr-1">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-        </svg>
+      <div class="drag-handle-house cursor-move text-slate-900 hover:text-slate-800 mr-1">
+        ⠿
       </div>
       <div
         class="house-header bg-slate-900 text-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer"
@@ -46,7 +39,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
 
-          <svg class="w-6 h-6 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="hidden md:block w-6 h-6 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 001 1m-6 0h6" />
           </svg>
@@ -57,7 +51,7 @@
                 class="house-name-input bg-transparent text-lg font-bold tracking-wide border-b-2 border-transparent hover:border-amber-500/50 focus:border-amber-500 focus:outline-none px-1 text-white w-auto min-w-[100px]"
                 onblur="renameHouse(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
                 placeholder="Rename house..." data-house-id="<%= house.id %>">
-              <span class="text-xs text-slate-400"><%= house.rooms.length %> Room Subfolder(s)</span>
+              <span class="hidden md:inline text-xs text-slate-400"><%= house.rooms.length %> Room Subfolder(s)</span>
             </form>
           </div>
         </div>
@@ -68,7 +62,7 @@
             <input type="text" name="roomName" placeholder="New Room" required
               class="px-2.5 py-1 text-xs text-slate-900 rounded-none focus:outline-none">
             <button type="submit"
-              class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3 py-1 rounded-none transition">
+              class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-1 rounded-none transition">
               + Add Room
             </button>
           </form>
@@ -94,11 +88,9 @@
                 <div class="flex items-center gap-2 flex-1">
                   <!-- Drag handle -->
                   <div class="drag-handle cursor-move text-slate-400 hover:text-slate-600">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-                    </svg>
+                    ⠿
                   </div>
-                  <svg class="w-4 h-4 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor"
+                  <svg class="hidden md:block  w-4 h-4 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -149,7 +141,7 @@
             <!-- ROOM ACTION BUTTONS (3-BUTTON ROW) -->
             <div class="flex gap-1.5 pt-2 border-t border-slate-200">
               <a href="/room/<%= room.id %>" target="_blank"
-                class="flex-1 text-center bg-black hover:bg-slate-900 text-white text-xs font-semibold py-1.5 rounded-none transition">
+                class="flex-1 text-center bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-1.5 rounded-none transition">
                 View
               </a>
               <a href="/admin/edit/<%= room.id %>"
@@ -182,9 +174,7 @@
   <% } %>
 </div>
 
-<!-- ========================================== -->
-<!-- UNIFIED TAILWIND DELETE CONFIRMATION MODAL -->
-<!-- ========================================== -->
+<!-- DELETE CONFIRMATION MODAL -->
 <div id="deleteModal"
   class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
   <div class="bg-white border border-slate-300 shadow-2xl max-w-md w-full p-6 space-y-4 rounded-none mx-4">
@@ -218,68 +208,11 @@
   </div>
 </div>
 
-<style>
-  .group:hover .opacity-0 {
-    opacity: 1 !important;
-  }
-
-  .house-rooms-container {
-    transition: all 0.3s ease;
-  }
-
-  .house-rooms-container.collapsed {
-    display: none;
-  }
-
-  .house-toggle-icon {
-    transition: transform 0.2s ease;
-  }
-
-  .house-toggle-icon.collapsed {
-    transform: rotate(-90deg);
-  }
-
-  /* Drag and drop styles */
-  .room-card.dragging {
-    opacity: 0.5;
-  }
-
-  .room-card.drag-over {
-    border-color: #FFB300;
-    border-width: 2px;
-    background: #fef9e7;
-  }
-
-  .trade-item.dragging {
-    opacity: 0.5;
-  }
-
-  .trade-item.drag-over {
-    border-color: #FFB300;
-    border-width: 2px;
-    background: #fef9e7;
-  }
-
-  .trade-item:hover .trade-rename-btn {
-    opacity: 1 !important;
-  }
-
-  .trade-rename-input.active {
-    display: inline-block !important;
-  }
-
-  .trade-name.hidden {
-    display: none !important;
-  }
-</style>
-
-<!-- SortableJS for drag and drop -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
   let targetFormId = null;
 
-  // ===== EXPAND/COLLAPSE HOUSES =====
   function toggleHouse(houseCard) {
     const container = houseCard.querySelector('.house-rooms-container');
     const icon = houseCard.querySelector('.house-toggle-icon');
@@ -287,25 +220,11 @@
     container.classList.toggle('collapsed');
     icon.classList.toggle('collapsed');
 
-    // Save state to localStorage
     const houseId = houseCard.dataset.houseId;
     const isCollapsed = container.classList.contains('collapsed');
     localStorage.setItem('house_' + houseId + '_collapsed', isCollapsed);
   }
 
-  // Restore collapse states from localStorage
-  document.querySelectorAll('[data-house-card]').forEach(card => {
-    const houseId = card.dataset.houseId;
-    const isCollapsed = localStorage.getItem('house_' + houseId + '_collapsed') === 'true';
-    if (isCollapsed) {
-      const container = card.querySelector('.house-rooms-container');
-      const icon = card.querySelector('.house-toggle-icon');
-      container.classList.add('collapsed');
-      icon.classList.add('collapsed');
-    }
-  });
-
-  // ===== RENAME HOUSE (AJAX) =====
   async function renameHouse(input) {
     const newName = input.value.trim();
     if (!newName) return;
@@ -332,7 +251,6 @@
     }
   }
 
-  // ===== RENAME TRADE (Inline) =====
   function enableTradeRename(btn) {
     const tradeItem = btn.closest('.trade-item');
     const nameSpan = tradeItem.querySelector('.trade-name');
@@ -341,7 +259,6 @@
     const tradeId = input.dataset.tradeId;
     const originalName = nameSpan.textContent.trim();
 
-    // Show input, hide name
     nameSpan.classList.add('hidden');
     input.classList.remove('hidden');
     input.classList.add('active');
@@ -349,7 +266,6 @@
     input.focus();
     input.select();
 
-    // Save on blur
     input.onblur = async function () {
       const newName = this.value.trim();
       if (!newName || newName === originalName) {
@@ -397,7 +313,6 @@
     };
   }
 
-  // ===== RENAME ROOM (AJAX) =====
   async function renameRoom(input) {
     const newName = input.value.trim();
     if (!newName) return;
@@ -424,56 +339,6 @@
     }
   }
 
-  // ===== DRAG AND DROP - ROOMS =====
-  document.querySelectorAll('.rooms-grid').forEach(grid => {
-    new Sortable(grid, {
-      handle: '.drag-handle',
-      animation: 150,
-      ghostClass: 'drag-over',
-      dragClass: 'dragging',
-      onEnd: function (evt) {
-        const houseId = grid.dataset.houseId;
-        const roomIds = Array.from(grid.querySelectorAll('.room-card')).map(el => el.dataset.roomId);
-
-        // Save new order via AJAX
-        fetch('/admin/houses/' + houseId + '/reorder-rooms', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: JSON.stringify({ roomOrder: roomIds })
-        }).catch(err => console.error('Failed to reorder rooms:', err));
-      }
-    });
-  });
-
-  // ===== DRAG AND DROP - TRADES =====
-  // ===== DRAG AND DROP - TRADES =====
-  document.querySelectorAll('.trades-container').forEach(container => {
-    new Sortable(container, {
-      animation: 150,
-      ghostClass: 'drag-over',
-      dragClass: 'dragging',
-      onEnd: function (evt) {
-        const roomId = container.dataset.roomId;
-        // Get trade IDs in new order
-        const tradeIds = Array.from(container.querySelectorAll('.trade-item')).map(el => el.dataset.tradeId);
-
-        // Save new order via AJAX
-        fetch('/admin/rooms/' + roomId + '/reorder-trades', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: JSON.stringify({ tradeOrder: tradeIds })
-        }).catch(err => console.error('Failed to reorder trades:', err));
-      }
-    });
-  });
-
-  // ===== DELETE MODAL =====
   function openHouseDeleteModal(houseId, houseName) {
     targetFormId = 'delete-house-form-' + houseId;
     document.getElementById('deleteModalTitle').textContent = 'Delete House';
@@ -493,37 +358,11 @@
     document.getElementById('deleteModal').classList.add('hidden');
   }
 
-  document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-    if (targetFormId) {
-      document.getElementById(targetFormId).submit();
-    }
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeDeleteModal();
-  });
-
-  // Prevent form submission on enter key for rename inputs
-  document.querySelectorAll('.house-name-input, .room-name-input').forEach(input => {
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        input.blur();
-      }
-    });
-  });
-</script>
-
-<script>
-  // ===== ADD TRADE FROM INPUT =====
   async function addTradeFromInput(input) {
     const tradeName = input.value.trim();
     const roomId = input.dataset.roomId;
 
-    // Reset placeholder
     input.placeholder = '+ Add';
-
-    // If empty, just reset
     if (!tradeName) {
       input.value = '';
       return;
@@ -540,7 +379,6 @@
       });
 
       if (response.ok) {
-        // Reload the page to show the new trade
         window.location.reload();
       } else {
         alert('Failed to add trade. Please try again.');
@@ -553,7 +391,79 @@
     }
   }
 
-  // Add this after the existing Sortable initialization
+  document.querySelectorAll('[data-house-card]').forEach(card => {
+    const houseId = card.dataset.houseId;
+    const isCollapsed = localStorage.getItem('house_' + houseId + '_collapsed') === 'true';
+    if (isCollapsed) {
+      const container = card.querySelector('.house-rooms-container');
+      const icon = card.querySelector('.house-toggle-icon');
+      container.classList.add('collapsed');
+      icon.classList.add('collapsed');
+    }
+  });
+
+  document.querySelectorAll('.rooms-grid').forEach(grid => {
+    new Sortable(grid, {
+      handle: '.drag-handle',
+      animation: 150,
+      ghostClass: 'drag-over',
+      dragClass: 'dragging',
+      onEnd: function (evt) {
+        const houseId = grid.dataset.houseId;
+        const roomIds = Array.from(grid.querySelectorAll('.room-card')).map(el => el.dataset.roomId);
+
+        fetch('/admin/houses/' + houseId + '/reorder-rooms', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ roomOrder: roomIds })
+        }).catch(err => console.error('Failed to reorder rooms:', err));
+      }
+    });
+  });
+
+  document.querySelectorAll('.trades-container').forEach(container => {
+    new Sortable(container, {
+      animation: 150,
+      ghostClass: 'drag-over',
+      dragClass: 'dragging',
+      onEnd: function (evt) {
+        const roomId = container.dataset.roomId;
+        const tradeIds = Array.from(container.querySelectorAll('.trade-item')).map(el => el.dataset.tradeId);
+
+        fetch('/admin/rooms/' + roomId + '/reorder-trades', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ tradeOrder: tradeIds })
+        }).catch(err => console.error('Failed to reorder trades:', err));
+      }
+    });
+  });
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+    if (targetFormId) {
+      document.getElementById(targetFormId).submit();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDeleteModal();
+  });
+
+  document.querySelectorAll('.house-name-input, .room-name-input').forEach(input => {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
+    });
+  });
+
   new Sortable(document.getElementById('housesContainer'), {
     handle: '.drag-handle-house', // We'll add this
     animation: 150,

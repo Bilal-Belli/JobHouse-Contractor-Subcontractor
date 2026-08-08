@@ -1,4 +1,4 @@
-<%- include('partials/admin-header-edit') %>
+<%- include('partials/admin-edit-header') %>
 <meta name="csrf-token" content="<%= Date.now() %>">
 
 <div class="flex flex-col h-auto sm:h-[calc(100vh-64px)] w-full overflow-hidden">
@@ -37,12 +37,18 @@
           <input type="text" value="<%= t.name %>"
             class="trade-tab-input hidden flex-1 text-sm font-medium px-4 py-2.5 sm:py-3 border-0 border-l-4 border-slate-800 bg-amber-50 text-amber-800 focus:outline-none">
           <div class="flex items-center gap-1 pr-2 opacity-0 group-hover:opacity-100 transition">
-            <button type="button" class="mr-6 trade-rename-btn text-slate-400 hover:text-white text-xs"
-              title="Rename">✎</button>
+            <button type="button" class="mr-5 ml-1 trade-rename-btn text-slate-400 hover:text-white text-xs"
+              title="Rename">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
             <form id="delete-trade-form-<%= t.id %>" action="/admin/edit/<%= room.id %>/delete-trade/<%= t.id %>"
               method="POST" class="inline">
               <button type="button" onclick="openTradeDeleteModal('<%= t.id %>', '<%= t.name %>')"
-                class="text-slate-400 hover:text-red-600" title="Delete">X</button>
+                class="text-slate-400 hover:text-red-600" title="Delete">x</button>
             </form>
           </div>
         </div>
@@ -282,23 +288,12 @@
   </div>
 </div>
 
-<style>
-  .trade-tab-row.sortable-ghost {
-    background: #fef3c7 !important;
-    border-left: 4px solid #FFB300 !important;
-  }
-
-  .trade-tab-row.sortable-drag {
-    opacity: 0.5 !important;
-  }
-</style>
-
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-  // ---- Delete Modal State ----
   let deleteActionUrl = null;
   let targetFormId = null;
+  const tradesContainer = document.querySelector('.trades-tabs-container');
 
   function openTradeDeleteModal(tradeId, tradeName) {
     targetFormId = `delete-trade-form-${tradeId}`;
@@ -333,27 +328,15 @@
     document.getElementById('deleteModal').classList.add('hidden');
   }
 
-  document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-    if (targetFormId) {
-      const form = document.getElementById(targetFormId);
-      if (form) form.submit();
-      return;
-    }
+  function openImageDeleteModal(roomId, tradeId, fileIndex, fileName) {
+    targetFormId = null;
+    deleteActionUrl = `/admin/edit/${encodeURIComponent(roomId)}/delete-image/${encodeURIComponent(tradeId)}/${fileIndex}`;
 
-    if (deleteActionUrl) {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = deleteActionUrl;
-      document.body.appendChild(form);
-      form.submit();
-    }
-  });
+    document.getElementById('deleteModalTitle').textContent = 'Delete Image';
+    document.getElementById('deleteModalBody').innerHTML = `Are you sure you want to delete <strong class="text-slate-900">${fileName}</strong>?`;
+    document.getElementById('deleteModal').classList.remove('hidden');
+  }
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeDeleteModal();
-  });
-
-  // ---- Room name: AJAX rename ----
   (function () {
     const input = document.getElementById('roomNameInput');
     const status = document.getElementById('roomNameStatus');
@@ -398,7 +381,26 @@
     });
   })();
 
-  // ---- Trade tabs: inline rename ----
+  document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+    if (targetFormId) {
+      const form = document.getElementById(targetFormId);
+      if (form) form.submit();
+      return;
+    }
+
+    if (deleteActionUrl) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = deleteActionUrl;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDeleteModal();
+  });
+
   document.querySelectorAll('.trade-tab-row').forEach(row => {
     const link = row.querySelector('.trade-tab-link');
     const input = row.querySelector('.trade-tab-input');
@@ -459,59 +461,36 @@
       }
     });
   });
-</script>
 
-<script>
-  // ===== DRAG AND DROP - TRADE TABS (Sidebar) =====
-  const tradesContainer = document.querySelector('.trades-tabs-container');
-  if (tradesContainer) {
-    new Sortable(tradesContainer, {
-  animation: 150,
-  ghostClass: 'bg-amber-50',
-  dragClass: 'opacity-50',
-  handle: '.drag-handle', // Only drag when clicking the handle
-  onEnd: function (evt) {
-    const roomId = tradesContainer.dataset.roomId;
-    const tradeIds = Array.from(tradesContainer.querySelectorAll('.trade-tab-row')).map(el => el.dataset.tradeId);
-
-    fetch('/admin/rooms/' + roomId + '/reorder-trades', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: JSON.stringify({ tradeOrder: tradeIds })
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          console.log('Trade tabs reordered successfully');
-        }
-      })
-      .catch(err => console.error('Failed to reorder trade tabs:', err));
-  }
-});
-  }
-</script>
-
-<script>
-  // Show loading when form submits
   document.querySelector('form[action*="/save"]')?.addEventListener('submit', function (e) {
     showLoading();
   });
 
-  // Hide loading when page loads
   window.addEventListener('load', function () {
     hideLoading();
   });
 
-  function openImageDeleteModal(roomId, tradeId, fileIndex, fileName) {
-    targetFormId = null;
-    deleteActionUrl = `/admin/edit/${encodeURIComponent(roomId)}/delete-image/${encodeURIComponent(tradeId)}/${fileIndex}`;
-
-    document.getElementById('deleteModalTitle').textContent = 'Delete Image';
-    document.getElementById('deleteModalBody').innerHTML = `Are you sure you want to delete <strong class="text-slate-900">${fileName}</strong>?`;
-    document.getElementById('deleteModal').classList.remove('hidden');
+  if (tradesContainer) {
+    new Sortable(tradesContainer, {
+      animation: 150,
+      ghostClass: 'bg-amber-50',
+      dragClass: 'opacity-50',
+      handle: '.drag-handle', 
+      onEnd: function (evt) {
+        const roomId = tradesContainer.dataset.roomId;
+        const tradeIds = Array.from(tradesContainer.querySelectorAll('.trade-tab-row')).map(el => el.dataset.tradeId);
+        fetch('/admin/rooms/' + roomId + '/reorder-trades', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ tradeOrder: tradeIds })
+        })
+          .then(response => response.json())
+          .catch(err => console.error('Failed to reorder trade tabs:', err));
+      }
+    });
   }
 </script>
 

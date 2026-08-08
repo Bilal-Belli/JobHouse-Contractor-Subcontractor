@@ -8,6 +8,59 @@
         <link rel="icon" type="image/x-icon" href="<%= baseUrl %>/favicon.png">
         <!-- Tailwind CSS via CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            .group:hover .opacity-0 {
+                opacity: 1 !important;
+            }
+
+            .house-rooms-container {
+                transition: all 0.3s ease;
+            }
+
+            .house-rooms-container.collapsed {
+                display: none;
+            }
+
+            .house-toggle-icon {
+                transition: transform 0.2s ease;
+            }
+
+            .house-toggle-icon.collapsed {
+                transform: rotate(-90deg);
+            }
+
+            .room-card.dragging {
+                opacity: 0.5;
+            }
+
+            .room-card.drag-over {
+                border-color: #FFB300;
+                border-width: 2px;
+                background: #fef9e7;
+            }
+
+            .trade-item.dragging {
+                opacity: 0.5;
+            }
+
+            .trade-item.drag-over {
+                border-color: #FFB300;
+                border-width: 2px;
+                background: #fef9e7;
+            }
+
+            .trade-item:hover .trade-rename-btn {
+                opacity: 1 !important;
+            }
+
+            .trade-rename-input.active {
+                display: inline-block !important;
+            }
+
+            .trade-name.hidden {
+                display: none !important;
+            }
+        </style>
     </head>
 
     <body class="bg-[#F4F1EC] text-slate-900 antialiased flex flex-col min-h-screen">
@@ -53,7 +106,6 @@
 
         <!-- Client-side helper script for search filter and Basic Auth logout -->
         <script>
-            // 1. Client-side Live Search Filter
             function filterHouses() {
                 const query = document.getElementById('houseSearchInput').value.toLowerCase().trim();
                 const houseCards = document.querySelectorAll('[data-house-card]');
@@ -77,7 +129,6 @@
                         }
                     });
 
-                    // If either the house name matches or at least one room inside matches, show the house block
                     if (houseMatches || matchingRoomCount > 0 || query === '') {
                         houseCard.style.display = '';
                     } else {
@@ -86,8 +137,6 @@
                 });
             }
 
-            // 2. HTTP Basic Auth Logout Workaround
-            // Sending invalid credentials forces the browser to drop the cached Basic Auth token
             function logoutAdmin() {
                 if (confirm('Are you sure you want to log out of the Admin portal?')) {
                     const xhr = new XMLHttpRequest();
