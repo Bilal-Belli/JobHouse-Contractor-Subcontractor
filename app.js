@@ -1288,6 +1288,87 @@ app.post('/admin/houses/:houseId/reorder-rooms', (req, res) => {
   }
 });
 
+
+// Reorder Images
+app.post('/admin/rooms/:roomId/trades/:tradeId/reorder-images', (req, res) => {
+  try {
+    const data = getData();
+    const { roomId, tradeId } = req.params;
+    const { imageOrder } = req.body;
+
+    const { room } = findRoomAndHouseById(data, roomId);
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (!trade) return res.status(404).json({ error: 'Trade not found' });
+
+    if (!trade.images) trade.images = [];
+
+    // Reorder images based on the new order
+    const reorderedImages = [];
+    imageOrder.forEach(index => {
+      if (index >= 0 && index < trade.images.length) {
+        reorderedImages.push(trade.images[index]);
+      }
+    });
+
+    // Keep any images that weren't in the order array (just in case)
+    const usedIndices = new Set(imageOrder);
+    for (let i = 0; i < trade.images.length; i++) {
+      if (!usedIndices.has(i)) {
+        reorderedImages.push(trade.images[i]);
+      }
+    }
+
+    trade.images = reorderedImages;
+    saveData(data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error reordering images:', err);
+    res.status(500).json({ error: 'Failed to reorder images' });
+  }
+});
+
+// Reorder Files
+app.post('/admin/rooms/:roomId/trades/:tradeId/reorder-files', (req, res) => {
+  try {
+    const data = getData();
+    const { roomId, tradeId } = req.params;
+    const { fileOrder } = req.body;
+
+    const { room } = findRoomAndHouseById(data, roomId);
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (!trade) return res.status(404).json({ error: 'Trade not found' });
+
+    if (!trade.files) trade.files = [];
+
+    // Reorder files based on the new order
+    const reorderedFiles = [];
+    fileOrder.forEach(index => {
+      if (index >= 0 && index < trade.files.length) {
+        reorderedFiles.push(trade.files[index]);
+      }
+    });
+
+    // Keep any files that weren't in the order array (just in case)
+    const usedIndices = new Set(fileOrder);
+    for (let i = 0; i < trade.files.length; i++) {
+      if (!usedIndices.has(i)) {
+        reorderedFiles.push(trade.files[i]);
+      }
+    }
+
+    trade.files = reorderedFiles;
+    saveData(data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error reordering files:', err);
+    res.status(500).json({ error: 'Failed to reorder files' });
+  }
+});
+
 app.get('/error/400', (req, res) => {
   res.status(400).render('errors/400');
 });

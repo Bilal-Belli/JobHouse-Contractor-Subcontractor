@@ -125,9 +125,11 @@
 
             <% if (activeTrade.images && activeTrade.images.length > 0) { %>
             <div class="mb-4 space-y-2">
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 image-gallery" data-trade-id="<%= activeTrade.id %>"
+                data-room-id="<%= room.id %>">
                 <% activeTrade.images.forEach((file, index) => { %>
-                <div class="relative bg-white border border-slate-200 p-2 rounded-none">
+                <div class="relative bg-white border border-slate-200 p-2 rounded-none cursor-move image-item"
+                  data-index="<%= index %>">
                   <img src="<%= file.url %>" alt="<%= file.originalName %>" class="w-full h-24 object-cover mb-1">
                   <button type="button"
                     class="absolute top-1 right-1 text-red-500 hover:text-red-700 text-sm bg-white rounded-full w-5 h-5 flex items-center justify-center shadow"
@@ -155,9 +157,11 @@
 
             <% if (activeTrade.files && activeTrade.files.length > 0) { %>
             <div class="mb-4 space-y-2">
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 file-gallery" data-trade-id="<%= activeTrade.id %>"
+                data-room-id="<%= room.id %>">
                 <% activeTrade.files.forEach((file, index) => { %>
-                <div class="relative bg-white border border-slate-200 p-2 rounded-none">
+                <div class="relative bg-white border border-slate-200 p-2 rounded-none cursor-move file-item"
+                  data-index="<%= index %>">
                   <div class="w-full h-24 bg-slate-100 flex items-center justify-center mb-1">
                     <span class="text-2xl">📄</span>
                   </div>
@@ -475,7 +479,7 @@
       animation: 150,
       ghostClass: 'bg-amber-50',
       dragClass: 'opacity-50',
-      handle: '.drag-handle', 
+      handle: '.drag-handle',
       onEnd: function (evt) {
         const roomId = tradesContainer.dataset.roomId;
         const tradeIds = Array.from(tradesContainer.querySelectorAll('.trade-tab-row')).map(el => el.dataset.tradeId);
@@ -492,6 +496,60 @@
       }
     });
   }
+
+  // Image drag and drop
+  const imageGalleries = document.querySelectorAll('.image-gallery');
+  imageGalleries.forEach(gallery => {
+    new Sortable(gallery, {
+      animation: 150,
+      ghostClass: 'bg-amber-50',
+      dragClass: 'opacity-50',
+      handle: '.image-item',
+      onEnd: function (evt) {
+        const roomId = gallery.dataset.roomId;
+        const tradeId = gallery.dataset.tradeId;
+        const imageIndices = Array.from(gallery.querySelectorAll('.image-item')).map(el => parseInt(el.dataset.index));
+
+        fetch(`/admin/rooms/${roomId}/trades/${tradeId}/reorder-images`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ imageOrder: imageIndices })
+        })
+          .then(response => response.json())
+          .catch(err => console.error('Failed to reorder images:', err));
+      }
+    });
+  });
+
+  // File drag and drop
+  const fileGalleries = document.querySelectorAll('.file-gallery');
+  fileGalleries.forEach(gallery => {
+    new Sortable(gallery, {
+      animation: 150,
+      ghostClass: 'bg-amber-50',
+      dragClass: 'opacity-50',
+      handle: '.file-item',
+      onEnd: function (evt) {
+        const roomId = gallery.dataset.roomId;
+        const tradeId = gallery.dataset.tradeId;
+        const fileIndices = Array.from(gallery.querySelectorAll('.file-item')).map(el => parseInt(el.dataset.index));
+
+        fetch(`/admin/rooms/${roomId}/trades/${tradeId}/reorder-files`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ fileOrder: fileIndices })
+        })
+          .then(response => response.json())
+          .catch(err => console.error('Failed to reorder files:', err));
+      }
+    });
+  });
 </script>
 
 </main>
