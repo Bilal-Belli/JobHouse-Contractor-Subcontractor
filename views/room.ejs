@@ -880,7 +880,7 @@
                 document.getElementById('nextBtn').classList.add('hidden');
 
                 const qrSrc = '<%= qrCodeUrl %>';
-                const qrTitle = 'QR Code - <%= room.name %>';
+                const qrTitle = '<%= room.id.slice(0,6) %> - <%= room.name %>';
 
                 // Clear all other preview items
                 previewItems = [];
@@ -920,7 +920,7 @@
                 const downloadLink = document.getElementById('previewDownload');
                 downloadLink.href = qrSrc;
                 downloadLink.textContent = 'Download';
-                downloadLink.setAttribute('download', 'QR-Code-' + '<%= room.name %>.png');
+                downloadLink.setAttribute('download', '<%= room.id.slice(0,6) %> -' + '<%= room.name %>.png');
                 downloadLink.classList.remove('hidden');
 
                 // Hide counter
