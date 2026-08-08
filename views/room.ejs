@@ -936,10 +936,9 @@
                 const mainContent = document.querySelector('.main-content');
 
                 if (window.innerWidth <= 769 && topBar) {
-                    // Get the actual height of the top bar
+                    // Force reflow to get accurate height
                     const topBarHeight = topBar.offsetHeight;
 
-                    // Apply the height as padding-top to main content and sidebar
                     if (mainContent) {
                         mainContent.style.paddingTop = topBarHeight + 'px';
                     }
@@ -1041,27 +1040,25 @@
             });
 
             document.addEventListener('DOMContentLoaded', function () {
-                adjustMobileTopBarHeight();
+                // Initial adjustment
+                setTimeout(adjustMobileTopBarHeight, 100);
 
-                // Run on resize
+                // Listen to resize
+                let resizeTimeout;
                 window.addEventListener('resize', function () {
-                    adjustMobileTopBarHeight();
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(adjustMobileTopBarHeight, 100);
                 });
 
-                // Also run after a small delay to ensure everything is rendered
-                setTimeout(adjustMobileTopBarHeight, 100);
-            });
-
-            document.addEventListener('DOMContentLoaded', function () {
-                adjustMobileTopBarHeight();
-
-                // Run on resize
-                window.addEventListener('resize', function () {
-                    adjustMobileTopBarHeight();
+                // Listen to orientation change
+                window.addEventListener('orientationchange', function () {
+                    setTimeout(adjustMobileTopBarHeight, 300);
                 });
 
-                // Also run after a small delay to ensure everything is rendered
-                setTimeout(adjustMobileTopBarHeight, 100);
+                // Listen to fullscreen changes
+                document.addEventListener('fullscreenchange', function () {
+                    setTimeout(adjustMobileTopBarHeight, 200);
+                });
             });
         </script>
 
