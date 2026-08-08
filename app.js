@@ -1072,7 +1072,6 @@ app.get('/room/:id', async (req, res) => {
     // Draw subtitle
     ctx.fillStyle = '#666666';
     ctx.font = '10px "Roboto", "Arial", sans-serif';
-    ctx.fillText('Scan to view specs', 150, 36);
     
     // Convert to data URL
     const qrCodeUrl = canvas.toDataURL('image/png');
