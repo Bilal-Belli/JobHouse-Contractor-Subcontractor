@@ -4,6 +4,7 @@ const path = require('path');
 const sharp = require('sharp');
 const multer = require('multer');
 const QRCode = require('qrcode');
+const { createCanvas, loadImage } = require('canvas');
 const session = require('express-session');
 const nodemailer = require('nodemailer');
 const app = express();
@@ -164,7 +165,7 @@ function deleteRoomFiles(roomId) {
   try {
     const data = getData();
     const { room, house } = findRoomAndHouseById(data, roomId);
-    
+
     if (room && house) {
       room.trades.forEach(trade => {
         if (trade.renderUrl) deleteFileFromDisk(trade.renderUrl);
@@ -356,18 +357,18 @@ app.post('/admin/houses/:houseId/delete', (req, res) => {
   try {
     const data = getData();
     const houseToDelete = data.houses.find(h => h.id === req.params.houseId);
-    
+
     if (houseToDelete) {
       houseToDelete.rooms.forEach(room => {
         deleteRoomFiles(room.id);
       });
-      
+
       const houseFolder = path.join(__dirname, 'public', 'uploads', houseToDelete.id);
       if (fs.existsSync(houseFolder)) {
         fs.rmSync(houseFolder, { recursive: true, force: true });
       }
     }
-    
+
     data.houses = data.houses.filter(h => h.id !== req.params.houseId);
     saveData(data);
 
@@ -386,11 +387,11 @@ app.post('/admin/houses/reorder', (req, res) => {
   try {
     const data = getData();
     const { houseOrder } = req.body;
-    
+
     if (!houseOrder || !Array.isArray(houseOrder)) {
       return res.status(400).json({ error: 'Invalid house order' });
     }
-    
+
     // Sort houses based on the new order
     data.houses.sort((a, b) => houseOrder.indexOf(a.id) - houseOrder.indexOf(b.id));
     saveData(data);
@@ -491,7 +492,7 @@ app.post('/admin/rooms/:roomId/delete', (req, res) => {
           fs.rmSync(roomFolder, { recursive: true, force: true });
         }
       }
-      
+
       saveData(data);
 
       req.session.save((err) => {
@@ -1036,7 +1037,42 @@ app.get('/room/:id', async (req, res) => {
     }
 
     const roomUrl = `${req.protocol}://${req.get('host')}/room/${room.id}`;
-    const qrCodeUrl = await QRCode.toDataURL(roomUrl);
+
+    // Generate QR code as buffer
+    const qrBuffer = await QRCode.toBuffer(roomUrl, {
+      width: 300,
+      margin: 2
+    });
+
+    // Create canvas with title
+    const title = `${house ? house.name : ''} - ${room.name}`;
+    const canvas = createCanvas(300, 360);
+    const ctx = canvas.getContext('2d');
+
+    // White background
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, 300, 360);
+
+    // Load QR image
+    const img = await loadImage(qrBuffer);
+
+    // Draw QR code
+    ctx.drawImage(img, 0, 50, 300, 300);
+
+    // Draw title text
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(title, 150, 15);
+
+    // Draw subtitle
+    ctx.fillStyle = '#666666';
+    ctx.font = '10px Arial';
+
+    // Convert to data URL
+    const qrCodeUrl = canvas.toDataURL('image/png');
+
     const activeTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : '');
 
     res.render('room', {
@@ -1280,7 +1316,7 @@ app.use((err, req, res, next) => {
   res.status(500).render('errors/500');
 });
 
-const PORT = process.env.PORT || 3000; 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Admin panel running: http://localhost:${PORT}/admin`);
 });
