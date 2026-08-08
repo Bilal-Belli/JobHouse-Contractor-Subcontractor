@@ -904,6 +904,25 @@
                 document.body.style.overflow = 'hidden';
             }
 
+            function adjustMobileTopBarHeight() {
+                const topBar = document.querySelector('.mobile-top-bar');
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+
+                if (window.innerWidth <= 769 && topBar) {
+                    // Get the actual height of the top bar
+                    const topBarHeight = topBar.offsetHeight;
+
+                    // Apply the height as padding-top to main content and sidebar
+                    if (mainContent) {
+                        mainContent.style.paddingTop = topBarHeight + 'px';
+                    }
+                    if (sidebar) {
+                        sidebar.style.paddingTop = topBarHeight + 'px';
+                    }
+                }
+            }
+
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
                     const sidebar = document.querySelector('.sidebar');
@@ -995,26 +1014,6 @@
                 });
             });
 
-            function adjustMobileTopBarHeight() {
-                const topBar = document.querySelector('.mobile-top-bar');
-                const sidebar = document.querySelector('.sidebar');
-                const mainContent = document.querySelector('.main-content');
-
-                if (window.innerWidth <= 769 && topBar) {
-                    // Get the actual height of the top bar
-                    const topBarHeight = topBar.offsetHeight;
-
-                    // Apply the height as padding-top to main content and sidebar
-                    if (mainContent) {
-                        mainContent.style.paddingTop = topBarHeight + 'px';
-                    }
-                    if (sidebar) {
-                        sidebar.style.paddingTop = topBarHeight + 'px';
-                    }
-                }
-            }
-
-            // Run on load
             document.addEventListener('DOMContentLoaded', function () {
                 adjustMobileTopBarHeight();
 
