@@ -35,6 +35,10 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// ==========================================
+// AUTHENTICATION MIDDLEWARE
+// ==========================================
+
 // Session Configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret-key-change-this-in-production',
@@ -49,7 +53,7 @@ app.use(session({
   }
 }));
 
-// Global Session Interceptor: Ensures session is saved before any redirect occurs
+// Global Session Interceptor
 app.use((req, res, next) => {
   const originalRedirect = res.redirect;
   res.redirect = function (url) {
@@ -64,10 +68,6 @@ app.use((req, res, next) => {
   };
   next();
 });
-
-// ==========================================
-// AUTHENTICATION MIDDLEWARE
-// ==========================================
 
 function requireAuth(req, res, next) {
   if (req.session && req.session.isAdmin === true) {
@@ -243,9 +243,9 @@ app.get('/admin/logout', (req, res) => {
   });
 });
 
-// ==========================================
-// PROTECTED ADMIN ROUTE GATEKEEPER
-// ==========================================
+// ======================
+// PROTECTED ADMIN ROUTE 
+// ======================
 
 app.use('/admin', (req, res, next) => {
   if (req.path === '/login' || req.path === '/login/' || (req.method === 'POST' && req.path === '/login')) {
@@ -918,9 +918,35 @@ app.post('/admin/toggle-publish/:id', (req, res) => {
   }
 });
 
-// ==========================================
-// PUBLIC VIEW ROUTES (Unprotected)
-// ==========================================
+// Redirect
+app.post('/admin/edit/:roomId/delete-comment/:tradeId/:commentId', (req, res) => {
+  const { roomId, tradeId, commentId } = req.params;
+  const data = getData();
+  const { room } = findRoomAndHouseById(data, roomId);
+
+  if (room && room.trades) {
+    const trade = room.trades.find(t => t.id === tradeId);
+    if (trade && trade.comments) {
+      const commentIndex = trade.comments.findIndex(c => String(c.id) === String(commentId));
+      if (commentIndex !== -1) {
+        const commentToDelete = trade.comments[commentIndex];
+        if (commentToDelete.attachments && commentToDelete.attachments.length > 0) {
+          commentToDelete.attachments.forEach(file => {
+            deleteFileFromDisk(file.url);
+          });
+        }
+        trade.comments.splice(commentIndex, 1);
+        saveData(data);
+      }
+    }
+  }
+
+  res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
+});
+
+// =====================
+// PUBLIC VIEW ROUTES
+// =====================
 
 app.get('/house/:id', (req, res) => {
   try {
@@ -943,6 +969,15 @@ app.get('/room/:id', async (req, res) => {
 
     if (!room) return res.status(404).send('Room specifications not found');
 
+    if (room.status !== 'published') {
+      if (!req.session || !req.session.isAdmin) {
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+          return res.status(401).json({ error: 'Unauthorized - Room not published' });
+        }
+        return res.redirect('/error/401');
+      }
+    }
+
     const roomUrl = `${req.protocol}://${req.get('host')}/room/${room.id}`;
     const qrCodeUrl = await QRCode.toDataURL(roomUrl);
     const activeTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : '');
@@ -960,7 +995,7 @@ app.get('/room/:id', async (req, res) => {
   }
 });
 
-// Add comment
+// Add Comment
 app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, res) => {
   try {
     const data = getData();
@@ -1157,66 +1192,35 @@ app.post('/admin/houses/:houseId/reorder-rooms', (req, res) => {
   }
 });
 
-// Redirect
-app.post('/admin/edit/:roomId/delete-comment/:tradeId/:commentId', (req, res) => {
-  const { roomId, tradeId, commentId } = req.params;
-  const data = getData();
-  const { room } = findRoomAndHouseById(data, roomId);
-
-  if (room && room.trades) {
-    const trade = room.trades.find(t => t.id === tradeId);
-    if (trade && trade.comments) {
-      const commentIndex = trade.comments.findIndex(c => String(c.id) === String(commentId));
-      if (commentIndex !== -1) {
-        const commentToDelete = trade.comments[commentIndex];
-        if (commentToDelete.attachments && commentToDelete.attachments.length > 0) {
-          commentToDelete.attachments.forEach(file => {
-            deleteFileFromDisk(file.url);
-          });
-        }
-        trade.comments.splice(commentIndex, 1);
-        saveData(data);
-      }
-    }
-  }
-
-  res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
-});
-
-// 400 Handler
-app.use((req, res) => {
+app.get('/error/400', (req, res) => {
   res.status(400).render('errors/400');
 });
 
-// 401 Handler
-app.use('/error/401', (req, res) => {
+app.get('/error/401', (req, res) => {
   res.status(401).render('errors/401');
 });
 
-// 403 Handler
-app.use('/error/403', (req, res) => {
+app.get('/error/403', (req, res) => {
   res.status(403).render('errors/403');
 });
 
-// 404 Handler
+app.get('/error/502', (req, res) => {
+  res.status(502).render('errors/502');
+});
+
+app.get('/error/503', (req, res) => {
+  res.status(503).render('errors/503');
+});
+
+// 404 Catch-all - MUST BE LAST BEFORE ERROR HANDLER
 app.use((req, res) => {
   res.status(404).render('errors/404');
 });
 
-// 500 Handler
+// 500 Error Handler - ABSOLUTELY LAST
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).render('errors/500');
-});
-
-// 502 Handler
-app.use('/error/502', (req, res) => {
-  res.status(502).render('errors/502');
-});
-
-// 503 Handler
-app.use('/error/503', (req, res) => {
-  res.status(503).render('errors/503');
 });
 
 const PORT = process.env.PORT || 3000;
