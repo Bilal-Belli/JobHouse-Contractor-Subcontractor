@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Manu Romero Construction</title>
+        <link rel="icon" type="image/x-icon" href="<%= baseUrl %>/favicon.png">
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+
+    <body class="min-h-screen font-sans text-black bg-[#f4f1ec]">
+        <div class="min-h-screen">
+            <!-- Header -->
+            <header class="bg-slate-900 text-white sticky top-0 z-30">
+                <div class="max-w-7xl mx-auto px-4 py-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                            <h1 class="text-xl font-bold">Construction Schedule - <%= house.id.charAt(0).toUpperCase() + house.id.slice(1) %></h1>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span id="jobCount" class="text-xs bg-slate-800 px-3 py-1 rounded">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="max-w-7xl mx-auto px-4 py-6">
+                <!-- Gantt Chart -->
+                <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-200">
+                        <h2 class="text-sm font-bold text-slate-800">Project Timeline</h2>
+                    </div>
+                    <div id="ganttContainer" class="p-2 sm:p-4 overflow-x-auto">
+                        <div id="ganttChart" class="relative min-h-[300px]">
+                            <!-- Rendered by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Details Modal -->
+                <div id="detailModal"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+                    <div class="bg-white border border-slate-200 shadow-xl max-w-md w-full p-6 mx-4 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 id="detailJobName" class="text-lg font-bold text-slate-900">Job Details</h3>
+                            <button onclick="closeDetailModal()"
+                                class="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-xs text-slate-500">Duration</p>
+                                <p id="detailDuration" class="text-sm font-medium text-slate-700"></p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500">Start Date</p>
+                                <p id="detailStart" class="text-sm font-medium text-slate-700"></p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500">End Date</p>
+                                <p id="detailEnd" class="text-sm font-medium text-slate-700"></p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500">Total Days</p>
+                                <p id="detailDays" class="text-sm font-medium text-slate-700"></p>
+                            </div>
+                        </div>
+                        <button onclick="closeDetailModal()"
+                            class="mt-4 w-full px-4 py-2 text-sm font-medium text-white bg-slate-700 hover:bg-slate-800 transition rounded">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-slate-900 border-t border-slate-600 flex-shrink-0">
+                <div class="max-w-7xl mx-auto px-4 py-6 text-center text-xs text-white">
+                    &copy; 2026. Manu Romero Construction.
+                </div>
+            </footer>
+        </div>
+
+        <script>
+            const houseId = '<%= house.id %>';
+            let jobs = <%- JSON.stringify(house.schedule?.jobs || []) %>;
+
+            // Format date
+            function formatDate(dateStr) {
+                if (!dateStr) return 'N/A';
+                const d = new Date(dateStr + 'T00:00:00');
+                return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            }
+
+            // Format date short
+            function formatDateShort(dateStr) {
+                if (!dateStr) return 'N/A';
+                const d = new Date(dateStr + 'T00:00:00');
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+
+            // Get month name
+            function getMonthName(dateStr) {
+                const d = new Date(dateStr + 'T00:00:00');
+                return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            }
+
+            // Render Gantt Chart
+            function renderGantt() {
+                const container = document.getElementById('ganttChart');
+                const countEl = document.getElementById('jobCount');
+
+                countEl.textContent = `${jobs.length} job${jobs.length !== 1 ? 's' : ''}`;
+
+                if (jobs.length === 0) {
+                    container.innerHTML = `
+          <div class="text-center py-16">
+            <div class="text-4xl mb-3">📋</div>
+            <p class="text-slate-500 text-sm">No jobs scheduled yet.</p>
+            <p class="text-slate-400 text-xs mt-1">Check back later for updates.</p>
+          </div>
+        `;
+                    return;
+                }
+
+                const today = new Date();
+                const startDates = jobs.map(j => new Date(j.startDate + 'T00:00:00'));
+                const endDates = jobs.map(j => new Date(j.endDate + 'T00:00:00'));
+
+                const minDate = new Date(Math.min(...startDates));
+                minDate.setDate(minDate.getDate() - 2);
+
+                const maxDate = new Date(Math.max(...endDates));
+                maxDate.setDate(maxDate.getDate() + 2);
+
+                const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
+
+                // Responsive day width
+                let dayWidth;
+                if (window.innerWidth < 640) {
+                    dayWidth = Math.max(20, Math.min(35, 400 / totalDays));
+                } else if (window.innerWidth < 1024) {
+                    dayWidth = Math.max(25, Math.min(45, 600 / totalDays));
+                } else {
+                    dayWidth = Math.max(30, Math.min(60, 800 / totalDays));
+                }
+
+                const totalWidth = totalDays * dayWidth;
+
+                let html = `<div class="flex">`;
+
+                // Fixed Job Name Column
+                html += `<div class="flex-shrink-0" style="width: 150px;">`;
+
+                // Header
+                html += `<div class="border-b border-slate-200 bg-white sticky top-0 z-20" style="height: 50px;">`;
+                html += `<div class="p-2 font-bold text-xs text-slate-600">Job</div>`;
+                html += `</div>`;
+
+                // Job rows
+                jobs.forEach(job => {
+                    html += `<div class="border-b border-slate-100 hover:bg-slate-50" style="height: 44px;">`;
+                    html += `<div class="p-2 text-xs sm:text-sm font-medium text-slate-700 flex items-center gap-1">`;
+                    html += `<span class="truncate">${job.name}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+
+                html += `</div>`;
+
+                // Scrollable Timeline Column
+                html += `<div class="overflow-x-auto flex-1">`;
+                html += `<div style="width: ${totalWidth}px;">`;
+
+                // Header with month labels
+                html += `<div class="border-b border-slate-200 bg-white sticky top-0 z-10" style="height: 50px;">`;
+                html += `<div class="relative w-full" style="height: 50px;">`;
+
+                // Month labels
+                let currentMonth = '';
+                let monthStartDay = 0;
+                for (let i = 0; i <= totalDays; i++) {
+                    const date = new Date(minDate);
+                    date.setDate(date.getDate() + i);
+                    const monthKey = date.getFullYear() + '-' + date.getMonth();
+
+                    if (monthKey !== currentMonth) {
+                        if (currentMonth !== '') {
+                            const monthWidth = (i - monthStartDay) * dayWidth;
+                            html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 bg-slate-50 px-1 sm:px-2 py-0.5 rounded" 
+                      style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
+                            html += `${getMonthName(date.toISOString().split('T')[0])}`;
+                            html += `</div>`;
+                        }
+                        currentMonth = monthKey;
+                        monthStartDay = i;
+                    }
+                }
+                // Last month
+                if (currentMonth !== '') {
+                    const monthWidth = (totalDays - monthStartDay + 1) * dayWidth;
+                    html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 bg-slate-50 px-1 sm:px-2 py-0.5 rounded" 
+                  style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
+                    html += `${getMonthName(maxDate.toISOString().split('T')[0])}`;
+                    html += `</div>`;
+                }
+
+                // Day markers
+                html += `<div class="absolute bottom-0 flex w-full">`;
+                for (let i = 0; i <= totalDays; i++) {
+                    const date = new Date(minDate);
+                    date.setDate(date.getDate() + i);
+                    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                    const isToday = date.toDateString() === today.toDateString();
+
+                    html += `<div class="text-[6px] sm:text-[8px] text-slate-400 ${isToday ? 'font-bold text-amber-600' : ''}" 
+                  style="width: ${dayWidth}px; text-align: center; ${isWeekend ? 'color: #94a3b8;' : ''}">`;
+                    html += `${date.getDate()}`;
+                    html += `</div>`;
+                }
+                html += `</div>`;
+
+                html += `</div></div>`;
+
+                // Job rows in timeline
+                jobs.forEach(job => {
+                    const start = new Date(job.startDate + 'T00:00:00');
+                    const end = new Date(job.endDate + 'T00:00:00');
+
+                    const startOffset = Math.max(0, (start - minDate) / (1000 * 60 * 60 * 24));
+                    const duration = Math.max(1, (end - start) / (1000 * 60 * 60 * 24) + 1);
+
+                    // Solid colors
+                    let hash = 0;
+                    for (let i = 0; i < job.id.length; i++) {
+                        hash = job.id.charCodeAt(i) + ((hash << 5) - hash);
+                    }
+                    const colorIndex = Math.abs(hash) % 7;
+                    const colors = [
+                        { bg: '#f59e0b', border: '#d97706' },
+                        { bg: '#3b82f6', border: '#2563eb' },
+                        { bg: '#10b981', border: '#059669' },
+                        { bg: '#8b5cf6', border: '#7c3aed' },
+                        { bg: '#ef4444', border: '#dc2626' },
+                        { bg: '#ec4899', border: '#db2777' },
+                        { bg: '#14b8a6', border: '#0d9488' }
+                    ];
+                    const color = colors[colorIndex];
+
+                    html += `<div class="border-b border-slate-100 hover:bg-slate-50" style="height: 44px; position: relative;">`;
+
+                    // Job bar - clickable to show details
+                    html += `<div class="absolute top-1 rounded-sm cursor-pointer hover:opacity-80 transition" 
+                  style="left: ${startOffset * dayWidth}px; 
+                         width: ${duration * dayWidth - 4}px; 
+                         height: 32px; 
+                         background: ${color.bg}; 
+                         border: 2px solid ${color.border};
+                         min-width: 12px;"
+                  onclick="showJobDetails('${job.id}')"
+                  title="Click for details: ${job.name}">`;
+
+                    if (duration * dayWidth > 60) {
+                        html += `<span class="text-white text-[8px] sm:text-[10px] font-semibold px-2 leading-[28px] block truncate">${job.name}</span>`;
+                    } else {
+                        html += `<span class="text-white text-[10px] leading-[28px] block text-center">●</span>`;
+                    }
+
+                    html += `</div>`;
+
+                    html += `</div>`;
+                });
+
+                html += `</div>`;
+                html += `</div>`;
+                html += `</div>`;
+
+                container.innerHTML = html;
+
+                // Update last updated time
+                document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+            }
+
+            // Show job details in modal
+            function showJobDetails(jobId) {
+                const job = jobs.find(j => j.id === jobId);
+                if (!job) return;
+
+                const start = new Date(job.startDate + 'T00:00:00');
+                const end = new Date(job.endDate + 'T00:00:00');
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+                document.getElementById('detailJobName').textContent = job.name;
+                document.getElementById('detailDuration').textContent = `${formatDate(job.startDate)} → ${formatDate(job.endDate)}`;
+                document.getElementById('detailStart').textContent = formatDate(job.startDate);
+                document.getElementById('detailEnd').textContent = formatDate(job.endDate);
+                document.getElementById('detailDays').textContent = `${days} day${days !== 1 ? 's' : ''}`;
+
+                document.getElementById('detailModal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeDetailModal() {
+                document.getElementById('detailModal').classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            // Close modal on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeDetailModal();
+            });
+
+            // Close modal on click outside
+            document.getElementById('detailModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeDetailModal();
+            });
+
+            // Handle resize
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(renderGantt, 250);
+            });
+
+            // Initial render
+            renderGantt();
+        </script>
+    </body>
+
+</html>

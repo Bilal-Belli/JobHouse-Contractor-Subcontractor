@@ -66,6 +66,11 @@
               + Add Room
             </button>
           </form>
+          <a href="/admin/houses/schedule/<%= house.id %>"
+            class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-1 rounded-none transition">
+            Schedule
+          </a>
+          
           <!-- Delete House Form -->
           <form id="delete-house-form-<%= house.id %>" action="/admin/houses/<%= house.id %>/delete" method="POST">
             <button type="button" onclick="openHouseDeleteModal('<%= house.id %>', '<%= house.name %>')"

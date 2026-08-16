@@ -21,12 +21,6 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use((req, res, next) => {
-  res.locals.baseUrl = `${req.protocol}://${req.get('host')}`;
-  res.locals.currentPath = req.path;
-  res.locals.isAdmin = req.session && req.session.isAdmin === true;
-  next();
-});
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -67,6 +61,13 @@ app.use((req, res, next) => {
       originalRedirect.call(this, url);
     }
   };
+  next();
+});
+
+app.use((req, res, next) => {
+  res.locals.baseUrl = `${req.protocol}://${req.get('host')}`;
+  res.locals.currentPath = req.path;
+  res.locals.isAdmin = req.session && req.session.isAdmin === true;
   next();
 });
 
@@ -283,12 +284,7 @@ app.get('/admin/logout', (req, res) => {
 // PROTECTED ADMIN ROUTE 
 // ======================
 
-app.use('/admin', (req, res, next) => {
-  if (req.path === '/login' || req.path === '/login/' || (req.method === 'POST' && req.path === '/login')) {
-    return next();
-  }
-  requireAuth(req, res, next);
-});
+app.use('/admin', requireAuth);
 
 // Admin Dashboard
 app.get('/admin', (req, res) => {
@@ -509,21 +505,6 @@ app.post('/admin/rooms/:roomId/delete', (req, res) => {
 });
 
 // Edit Room
-app.get('/admin/edit/:id', (req, res) => {
-  try {
-    const data = getData();
-    const room = findRoomById(data, req.params.id);
-
-    if (!room) return res.status(404).send('Room not found');
-    const selectedTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : '');
-
-    res.render('admin-edit', { room, selectedTrade });
-  } catch (err) {
-    console.error('Error loading edit page:', err);
-    res.status(500).send('Error loading edit page');
-  }
-});
-
 app.get('/admin/edit/:roomId', (req, res) => {
   const { roomId } = req.params;
   const data = getData();
@@ -1002,6 +983,186 @@ app.post('/admin/edit/:roomId/delete-comment/:tradeId/:commentId', (req, res) =>
   res.redirect(`/admin/edit/${roomId}?trade=${tradeId}`);
 });
 
+// =================
+// SCHEDULE ROUTES 
+// =================
+
+app.post('/admin/houses/schedule/:houseId/jobs', (req, res) => {
+    const { houseId } = req.params;
+    const { name, startDate, endDate } = req.body;
+
+    if (!name || !startDate || !endDate) {
+        return res.status(400).json({
+            success: false,
+            error: 'All fields are required'
+        });
+    }
+
+    const data = getData();
+
+    const house = data.houses.find(h => h.id === houseId);
+
+    if (!house) {
+        return res.status(404).json({
+            success: false,
+            error: 'House not found'
+        });
+    }
+
+    if (!house.schedule) {
+        house.schedule = { jobs: [] };
+    }
+
+    if (!house.schedule.jobs) {
+        house.schedule.jobs = [];
+    }
+
+    const job = {
+        id: Date.now().toString(),
+        name,
+        startDate,
+        endDate
+    };
+
+    house.schedule.jobs.push(job);
+
+    saveData(data);
+
+    res.json({
+        success: true,
+        job
+    });
+});
+
+// Update job
+app.put('/admin/houses/schedule/:houseId/jobs/:jobId', (req, res) => {
+  try {
+    const data = getData();
+    const house = data.houses.find(h => h.id === req.params.houseId);
+    
+    if (!house) return res.status(404).json({ error: 'House not found' });
+    
+    if (!house.schedule) return res.status(404).json({ error: 'Schedule not found' });
+    
+    const job = house.schedule.jobs.find(j => j.id === req.params.jobId);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    
+    const { name, startDate, endDate } = req.body;
+    if (name) job.name = name.trim();
+    if (startDate) job.startDate = startDate;
+    if (endDate) job.endDate = endDate;
+    
+    saveData(data);
+    res.json({ success: true, job });
+  } catch (err) {
+    console.error('Error updating job:', err);
+    res.status(500).json({ error: 'Failed to update job' });
+  }
+});
+
+// Delete job
+app.delete('/admin/houses/schedule/:houseId/jobs/:jobId', (req, res) => {
+  try {
+    const data = getData();
+    const house = data.houses.find(h => h.id === req.params.houseId);
+    
+    if (!house) return res.status(404).json({ error: 'House not found' });
+    
+    if (house.schedule) {
+      house.schedule.jobs = house.schedule.jobs.filter(j => j.id !== req.params.jobId);
+      saveData(data);
+    }
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting job:', err);
+    res.status(500).json({ error: 'Failed to delete job' });
+  }
+});
+
+// View schedule page
+// app.get('/admin/houses/schedule/:houseId', (req, res) => {
+//   try {
+//     const data = getData();
+//     const house = data.houses.find(h => h.id === req.params.houseId);
+    
+//     if (!house) return res.status(404).send('House not found');
+    
+//     // Initialize schedule if it doesn't exist
+//     if (!house.schedule) {
+//       house.schedule = { jobs: [] };
+//       saveData(data);
+//     }
+    
+//     res.render('schedule', { house });
+//   } catch (err) {
+//     console.error('Error loading schedule:', err);
+//     res.status(500).send('Error loading schedule');
+//   }
+// });
+
+app.get('/admin/houses/schedule/:houseId', requireAuth, async (req, res) => {
+  try {
+    const data = getData();
+    const house = data.houses.find(h => h.id === req.params.houseId);
+    if (!house) return res.status(404).send('House not found');
+    if (!house.schedule) {
+      house.schedule = { jobs: [] };
+      saveData(data);
+    }
+
+    // Generate QR code for the public schedule URL
+    const publicUrl = `${req.protocol}://${req.get('host')}/house/schedule/${house.id}`;
+    let qrDataUrl = null;
+    try {
+      qrDataUrl = await QRCode.toDataURL(publicUrl);
+    } catch (err) {
+      console.error('QR generation error:', err);
+    }
+
+    res.render('schedule', { house, qrDataUrl });
+  } catch (err) {
+    console.error('Error loading schedule:', err);
+    res.status(500).send('Error loading schedule');
+  }
+});
+
+// app.get('/house/schedule/:houseId', (req, res) => {
+//   try {
+//     const data = getData();
+//     const house = data.houses.find(h => h.id === req.params.houseId);
+    
+//     if (!house) return res.status(404).send('House not found');
+    
+//     if (!house.schedule) {
+//       house.schedule = { jobs: [] };
+//       saveData(data);
+//     }
+    
+//     res.render('public-schedule', { house });
+//   } catch (err) {
+//     console.error('Error loading public schedule:', err);
+//     res.status(500).send('Error loading schedule');
+//   }
+// });
+
+app.get('/house/schedule/:houseId', async (req, res) => {
+  try {
+    const data = getData();
+    const house = data.houses.find(h => h.id === req.params.houseId);
+    if (!house) return res.status(404).send('House not found');
+    if (!house.schedule) {
+      house.schedule = { jobs: [] };
+      saveData(data);
+    }
+    // Optionally generate QR here as well, but not needed for public view
+    res.render('public-schedule', { house });
+  } catch (err) {
+    console.error('Error loading public schedule:', err);
+    res.status(500).send('Error loading schedule');
+  }
+});
+
 // =====================
 // PUBLIC VIEW ROUTES
 // =====================
@@ -1207,62 +1368,6 @@ app.post('/room/:roomId/comment', upload.array('attachments', 10), async (req, r
 
     // Redirect back with the same trade selected
     res.redirect(`/room/${req.params.roomId}?trade=${activeTrade}`);
-  } catch (err) {
-    console.error('Comment submission error:', err);
-    res.status(500).send('Error adding comment');
-  }
-});
-
-app.post('/room/:id/comment', upload.array('attachments', 10), async (req, res) => {
-  try {
-    const data = getData();
-    const { room, house } = findRoomAndHouseById(data, req.params.id);
-
-    if (!room) return res.status(404).send('Room not found');
-
-    const tradeId = req.body.tradeId;
-    if (!tradeId) return res.status(400).send('Trade ID is required');
-
-    // Find the specific trade
-    const trade = room.trades.find(t => t.id === tradeId);
-    if (!trade) return res.status(404).send('Trade not found');
-
-    const houseFolder = house ? house.id : 'unassigned';
-    const attachments = [];
-
-    // Process uploaded attachments (if any)
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        const saved = await saveUploadedFile(file, houseFolder, room.id);
-        const filePath = path.join(__dirname, 'public', 'uploads', houseFolder, room.id, saved.filename);
-
-        attachments.push({
-          url: `/uploads/${houseFolder}/${room.id}/${saved.filename}`,
-          originalName: file.originalname,
-          filename: saved.filename,
-          type: saved.mimetype,
-          size: fs.statSync(filePath).size
-        });
-      }
-    }
-
-    const newComment = {
-      id: Date.now().toString(),
-      author: req.body.author || 'Anonymous Trade',
-      text: req.body.text,
-      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
-      attachments: attachments
-    };
-
-    // Initialize comments array for the trade if it doesn't exist
-    if (!trade.comments) trade.comments = [];
-    trade.comments.unshift(newComment);
-
-    saveData(data);
-
-    // Redirect back with the same trade selected
-    const activeTrade = req.body.activeTrade || tradeId;
-    res.redirect(`/room/${req.params.id}?trade=${activeTrade}`);
   } catch (err) {
     console.error('Comment submission error:', err);
     res.status(500).send('Error adding comment');

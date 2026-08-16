@@ -1,0 +1,455 @@
+<%- include('partials/admin-edit-header') %>
+
+<div class="flex-1 space-y-6 mb-6">
+    <!-- Add Job Form -->
+    <div class="bg-white border border-slate-300 p-4 mt-2 mr-2 ml-2">
+        <h2 class="text-sm font-bold mb-3">Add New Job</h2>
+        <form id="addJobForm" class="flex flex-col sm:flex-row flex-wrap gap-3">
+            <input type="text" id="jobName" placeholder="Job name (e.g. Plumbing)" required
+                class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 flex-1 min-w-[150px]">
+            <input type="date" id="startDate" required
+                class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto"
+                value="<%= new Date().toISOString().split('T')[0] %>">
+            <input type="date" id="endDate" required
+                class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto"
+                value="<%= new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0] %>">
+            <button type="submit"
+                class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
+                + Add Job
+            </button>
+            <button type="button" onclick="window.open('/house/schedule/<%= house.id %>', '_blank')"
+                class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
+                View
+            </button>
+            <button type="button" onclick="openQRModal()"
+                class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">QR</button>
+        </form>
+
+        <!-- QR Modal -->
+        <!-- QR Modal -->
+        <div id="qrModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+            <div class="bg-white border border-slate-300 shadow-2xl max-w-sm w-full p-6 mx-4 text-center">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-bold text-slate-900">Schedule <%= house.id.charAt(0).toUpperCase() + house.id.slice(1) %></h3>
+                    <button onclick="closeQRModal()"
+                        class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+                </div>
+                <div class="flex justify-center mb-4">
+                    <% if (qrDataUrl) { %>
+                    <img src="<%= qrDataUrl %>" alt="QR Code" class="w-48 h-48 border border-slate-200">
+                    <% } else { %>
+                    <div class="w-48 h-48 bg-slate-100 flex items-center justify-center text-slate-400 text-sm">QR not
+                        available</div>
+                    <% } %>
+                </div>
+                <div class="flex justify-center gap-3">
+                    <% if (qrDataUrl) { %>
+                    <a href="<%= qrDataUrl %>" download="schedule-<%= house.id %>.png"
+                        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 transition rounded">Download</a>
+                    <% } %>
+                    <button onclick="closeQRModal()"
+                        class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold px-4 py-2 transition rounded">Close</button>
+                </div>
+            </div>
+        </div>
+        <div id="addStatus" class="mt-2 text-xs hidden"></div>
+    </div>
+
+    <!-- Gantt Chart -->
+    <div class="bg-white border border-slate-300 overflow-hidden mr-2 ml-2">
+        <div
+            class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <h2 class="text-sm font-bold">Project Timeline</h2>
+            <span id="jobCount" class="text-xs text-slate-500 bg-slate-100 px-3 py-1"></span>
+        </div>
+        <div id="ganttContainer" class="p-2 sm:p-4 overflow-x-auto">
+            <div id="ganttChart" class="relative">
+                <!-- Rendered by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const houseId = '<%= house.id %>';
+    // FIXED
+    let jobs = <%- JSON.stringify(house.schedule?.jobs || []) %>;
+
+    // Format date
+    function formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Get month name
+    function getMonthName(dateStr) {
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+
+    // Render Gantt Chart with month labels
+    function renderGantt() {
+        const container = document.getElementById('ganttChart');
+        const countEl = document.getElementById('jobCount');
+
+        countEl.textContent = `${jobs.length} job${jobs.length !== 1 ? 's' : ''}`;
+
+        if (jobs.length === 0) {
+            container.innerHTML = '<div class="text-center py-12 text-slate-500 text-sm">No jobs scheduled yet. Add a job above to see the timeline.</div>';
+            return;
+        }
+
+        const today = new Date();
+        const startDates = jobs.map(j => new Date(j.startDate + 'T00:00:00'));
+        const endDates = jobs.map(j => new Date(j.endDate + 'T00:00:00'));
+
+        const minDate = new Date(Math.min(...startDates));
+        minDate.setDate(minDate.getDate() - 2);
+
+        const maxDate = new Date(Math.max(...endDates));
+        maxDate.setDate(maxDate.getDate() + 2);
+
+        const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
+
+        // Responsive day width
+        let dayWidth;
+        if (window.innerWidth < 640) {
+            dayWidth = Math.max(20, Math.min(35, 400 / totalDays));
+        } else if (window.innerWidth < 1024) {
+            dayWidth = Math.max(25, Math.min(45, 600 / totalDays));
+        } else {
+            dayWidth = Math.max(30, Math.min(60, 800 / totalDays));
+        }
+
+        const totalWidth = totalDays * dayWidth;
+
+        let html = `<div class="flex">`;
+
+        // Fixed Job Name Column
+        html += `<div class="flex-shrink-0" style="width: 150px;">`;
+
+        // Header
+        html += `<div class="border-b border-slate-300 bg-white sticky top-0 z-20" style="height: 50px;">`;
+        html += `<div class="p-2 font-bold text-xs text-slate-600">Job</div>`;
+        html += `</div>`;
+
+        // Job rows
+        jobs.forEach(job => {
+            html += `<div class="border-b border-slate-100 hover:bg-slate-50 group" style="height: 44px;">`;
+            html += `<div class="p-2 text-xs sm:text-sm font-medium text-slate-700 flex items-center gap-1">`;
+            html += `<span class="truncate cursor-pointer hover:text-amber-600 transition" onclick="openEditModal('${job.id}')" title="Click to edit">${job.name}</span>`;
+            html += `<button onclick="deleteJob('${job.id}')" class="text-red-500 hover:text-red-700 text-xs ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 transition" title="Delete job">✕</button>`;
+            html += `</div>`;
+            html += `</div>`;
+        });
+
+        html += `</div>`;
+
+        // Scrollable Timeline Column
+        html += `<div class="overflow-x-auto flex-1">`;
+        html += `<div style="width: ${totalWidth}px;">`;
+
+        // Header with month labels
+        html += `<div class="border-b border-slate-300 bg-white sticky top-0 z-10" style="height: 50px;">`;
+        html += `<div class="relative w-full" style="height: 50px;">`;
+
+        // Month labels
+        let currentMonth = '';
+        let monthStartDay = 0;
+        for (let i = 0; i <= totalDays; i++) {
+            const date = new Date(minDate);
+            date.setDate(date.getDate() + i);
+            const monthKey = date.getFullYear() + '-' + date.getMonth();
+
+            if (monthKey !== currentMonth) {
+                if (currentMonth !== '') {
+                    const monthWidth = (i - monthStartDay) * dayWidth;
+                    html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 bg-slate-50 px-1 sm:px-2 py-0.5 rounded" 
+                    style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
+                    html += `${getMonthName(date.toISOString().split('T')[0])}`;
+                    html += `</div>`;
+                }
+                currentMonth = monthKey;
+                monthStartDay = i;
+            }
+        }
+        // Last month
+        if (currentMonth !== '') {
+            const monthWidth = (totalDays - monthStartDay + 1) * dayWidth;
+            html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 bg-slate-50 px-1 sm:px-2 py-0.5 rounded" 
+                style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
+            html += `${getMonthName(maxDate.toISOString().split('T')[0])}`;
+            html += `</div>`;
+        }
+
+        // Day markers
+        html += `<div class="absolute bottom-0 flex w-full">`;
+        for (let i = 0; i <= totalDays; i++) {
+            const date = new Date(minDate);
+            date.setDate(date.getDate() + i);
+            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+            const isToday = date.toDateString() === today.toDateString();
+
+            html += `<div class="text-[6px] sm:text-[8px] text-slate-400 ${isToday ? 'font-bold text-amber-600' : ''}" 
+                style="width: ${dayWidth}px; text-align: center; ${isWeekend ? 'color: #94a3b8;' : ''}">`;
+            html += `${date.getDate()}`;
+            html += `</div>`;
+        }
+        html += `</div>`;
+
+        html += `</div></div>`;
+
+        // Job rows in timeline
+        jobs.forEach(job => {
+            const start = new Date(job.startDate + 'T00:00:00');
+            const end = new Date(job.endDate + 'T00:00:00');
+
+            const startOffset = Math.max(0, (start - minDate) / (1000 * 60 * 60 * 24));
+            const duration = Math.max(1, (end - start) / (1000 * 60 * 60 * 24) + 1);
+
+            // Solid colors
+            let hash = 0;
+            for (let i = 0; i < job.id.length; i++) {
+                hash = job.id.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const colorIndex = Math.abs(hash) % 7;
+            const colors = [
+                { bg: '#f59e0b', border: '#d97706' },
+                { bg: '#3b82f6', border: '#2563eb' },
+                { bg: '#10b981', border: '#059669' },
+                { bg: '#8b5cf6', border: '#7c3aed' },
+                { bg: '#ef4444', border: '#dc2626' },
+                { bg: '#ec4899', border: '#db2777' },
+                { bg: '#14b8a6', border: '#0d9488' }
+            ];
+            const color = colors[colorIndex];
+
+            html += `<div class="border-b border-slate-100 hover:bg-slate-50" style="height: 44px; position: relative;">`;
+
+            // Job bar - clickable
+            html += `<div class="absolute top-1 rounded-sm cursor-pointer hover:opacity-90 transition" 
+                style="left: ${startOffset * dayWidth}px; 
+                       width: ${duration * dayWidth - 4}px; 
+                       height: 32px; 
+                       background: ${color.bg}; 
+                       border: 2px solid ${color.border};
+                       min-width: 12px;"
+                onclick="openEditModal('${job.id}')"
+                title="${job.name}: ${formatDate(job.startDate)} → ${formatDate(job.endDate)}">`;
+
+            if (duration * dayWidth > 60) {
+                html += `<span class="text-white text-[8px] sm:text-[10px] font-semibold px-2 leading-[28px] block truncate">${job.name}</span>`;
+            } else {
+                html += `<span class="text-white text-[10px] leading-[28px] block text-center">●</span>`;
+            }
+
+            html += `</div>`;
+
+            html += `</div>`;
+        });
+
+        html += `</div>`;
+        html += `</div>`;
+        html += `</div>`;
+
+        container.innerHTML = html;
+    }
+
+    // Edit Modal
+    function openEditModal(jobId) {
+        const job = jobs.find(j => j.id === jobId);
+        if (!job) return;
+
+        const modal = document.createElement('div');
+        modal.id = 'editModal';
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm';
+        modal.innerHTML = `
+      <div class="bg-white border border-slate-300 shadow-2xl max-w-md w-full p-6 mx-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold text-slate-900">Edit Job</h3>
+          <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+        </div>
+        <form id="editJobForm" class="space-y-4">
+          <input type="hidden" id="editJobId" value="${job.id}">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Job Name</label>
+            <input type="text" id="editJobName" value="${job.name}" required
+                   class="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Start Date</label>
+            <input type="date" id="editStartDate" value="${job.startDate}" required
+                   class="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">End Date</label>
+            <input type="date" id="editEndDate" value="${job.endDate}" required
+                   class="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+          </div>
+          <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+            <button type="button" onclick="closeEditModal()"
+                    class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition">
+              Cancel
+            </button>
+            <button type="submit"
+                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition">
+              Update Job
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+        document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';
+
+        document.getElementById('editJobForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editJobId').value;
+            const name = document.getElementById('editJobName').value.trim();
+            const startDate = document.getElementById('editStartDate').value;
+            const endDate = document.getElementById('editEndDate').value;
+
+            if (!name || !startDate || !endDate) return;
+
+            try {
+                const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, startDate, endDate })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    const jobToUpdate = jobs.find(j => j.id === id);
+                    if (jobToUpdate) Object.assign(jobToUpdate, data.job);
+                    closeEditModal();
+                    renderGantt();
+                } else {
+                    alert('Failed to update job: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Error updating job:', err);
+                alert('Failed to update job');
+            }
+        });
+    }
+
+    function closeEditModal() {
+        const modal = document.getElementById('editModal');
+        if (modal) {
+            modal.remove();
+            document.body.style.overflow = '';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeEditModal();
+    });
+
+    // Add new job
+    document.getElementById('addJobForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const statusEl = document.getElementById('addStatus');
+
+        const name = document.getElementById('jobName').value.trim();
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        if (!name || !startDate || !endDate) {
+            statusEl.textContent = 'All fields are required';
+            statusEl.className = 'mt-2 text-xs text-red-600';
+            statusEl.classList.remove('hidden');
+            return;
+        }
+
+        statusEl.className = 'mt-2 text-xs text-amber-600';
+        statusEl.textContent = 'Adding job...';
+        statusEl.classList.remove('hidden');
+
+        try {
+            const response = await fetch(`/admin/houses/schedule/${houseId}/jobs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, startDate, endDate })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                jobs.push(data.job);
+                renderGantt();
+                document.getElementById('addJobForm').reset();
+                statusEl.textContent = '✓ Job added successfully!';
+                statusEl.className = 'mt-2 text-xs text-green-600';
+                setTimeout(() => statusEl.classList.add('hidden'), 3000);
+            } else {
+                statusEl.textContent = 'Failed: ' + (data.error || 'Unknown error');
+                statusEl.className = 'mt-2 text-xs text-red-600';
+            }
+        } catch (err) {
+            console.error('Error adding job:', err);
+            statusEl.textContent = 'Error: ' + err.message;
+            statusEl.className = 'mt-2 text-xs text-red-600';
+        }
+    });
+
+    // Delete job
+    async function deleteJob(jobId) {
+        const job = jobs.find(j => j.id === jobId);
+        if (!job) return;
+
+        if (!confirm(`Delete "${job.name}"?`)) return;
+
+        try {
+            const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${jobId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                jobs = jobs.filter(j => j.id !== jobId);
+                renderGantt();
+            }
+        } catch (err) {
+            console.error('Error deleting job:', err);
+            alert('Failed to delete job');
+        }
+    }
+
+    // Handle resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(renderGantt, 250);
+    });
+
+    // Initial render
+    renderGantt();
+
+
+    function openQRModal() {
+        document.getElementById('qrModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeQRModal() {
+        document.getElementById('qrModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeQRModal();
+    });
+</script>
+
+</main>
+<footer class="bg-slate-900 border-t border-slate-600 flex-shrink-0">
+    <div class="max-w-7xl mx-auto px-4 py-6 text-center text-xs text-white">
+        &copy; 2026. Manu Romero Construction.
+    </div>
+</footer>
+</body>
+
+</html>
