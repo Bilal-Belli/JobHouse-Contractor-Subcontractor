@@ -1087,13 +1087,34 @@ app.get('/admin/houses/schedule/:houseId', requireAuth, async (req, res) => {
       saveData(data);
     }
 
-    // Generate QR code for the public schedule URL
+    // Generate QR code with house name overlay
     const publicUrl = `${req.protocol}://${req.get('host')}/house/schedule/${house.id}`;
     let qrDataUrl = null;
     try {
-      qrDataUrl = await QRCode.toDataURL(publicUrl);
+        // Create a canvas with extra height for text
+        const canvas = createCanvas(200, 230);
+        const ctx = canvas.getContext('2d');
+        
+        // Draw QR code to canvas
+        await QRCode.toCanvas(canvas, publicUrl, { width: 200, margin: 2 });
+        
+        // Shift QR down to make room for text
+        const imageData = ctx.getImageData(0, 0, 200, 200);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 200, 230);
+        
+        // Add house name text
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Schedule - ${house.id.charAt(0).toUpperCase() + house.id.slice(1)}`, 100, 20);
+        
+        // Draw QR code below text
+        ctx.putImageData(imageData, 0, 30);
+        
+        qrDataUrl = canvas.toDataURL();
     } catch (err) {
-      console.error('QR generation error:', err);
+        console.error('QR generation error:', err);
     }
 
     res.render('admin-schedule', { house, qrDataUrl });
