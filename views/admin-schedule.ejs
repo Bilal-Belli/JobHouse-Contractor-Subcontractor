@@ -4,7 +4,7 @@
     <!-- Add Job Form -->
     <div class="bg-white border border-slate-300 p-4 mt-6 mr-2 ml-2">
         <form id="addJobForm" class="flex flex-col sm:flex-row flex-wrap gap-3">
-            <input type="text" id="jobName" placeholder="Job name (e.g. Plumbing)" required
+            <input type="text" id="jobName" placeholder="Trade name (e.g. Plumbing)" required
                 class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 flex-1 min-w-[150px]">
             <input type="date" id="startDate" required
                 class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto"
@@ -15,14 +15,14 @@
             <input type="color" id="jobColor" value="#f59e0b" class="h-9 w-9 border border-slate-300 p-1 cursor-pointer" title="Color">
             <button type="submit"
                 class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
-                + Add Job
+                + Add Trade
             </button>
             <button type="button" onclick="window.open('/house/schedule/<%= house.id %>', '_blank')"
-                class="bg-slate-300 hover:bg-slate-200 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
+                class="bg-white text-black border border-black text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
                 View
             </button>
             <button type="button" onclick="openQRModal()"
-                class="bg-slate-300 hover:bg-slate-200 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">QR</button>
+                class="bg-white text-black border border-black text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">QR</button>
         </form>
 
         <!-- QR Modal -->
@@ -136,13 +136,13 @@
         const countEl = document.getElementById('jobCount');
 
         if (countEl) {
-            countEl.textContent = `${jobs.length} job${jobs.length !== 1 ? 's' : ''}`;
+            countEl.textContent = `${jobs.length} trade${jobs.length !== 1 ? 's' : ''}`;
         }
 
         if (!container) return;
 
         if (jobs.length === 0) {
-            container.innerHTML = '<div class="text-center py-12 text-slate-500 text-sm">No jobs scheduled yet. Add a job above to see the timeline.</div>';
+            container.innerHTML = '<div class="text-center py-12 text-slate-500 text-sm">No jobs scheduled yet. Add a trade above to see the timeline.</div>';
             return;
         }
 
@@ -175,7 +175,7 @@
 
         html += `<div class="flex-shrink-0" style="width: 150px;">`;
         html += `<div class="border-b border-slate-300 bg-white sticky top-0 z-20" style="height: 50px;">`;
-        html += `<div class="p-2 font-bold text-xs text-slate-600">Job</div>`;
+        html += `<div class="p-2 font-bold text-xs text-slate-600">Trade</div>`;
         html += `</div>`;
 
         jobs.forEach(job => {
@@ -396,11 +396,11 @@
                         if (data.success) {
                             Object.assign(job, data.job);
                         } else {
-                            alert('Failed to update job dates: ' + (data.error || 'Unknown error'));
+                            alert('Failed to update trade dates: ' + (data.error || 'Unknown error'));
                         }
                     } catch (err) {
-                        console.error('Error updating job dates:', err);
-                        alert('Failed to update job dates');
+                        console.error('Error updating tred dates:', err);
+                        alert('Failed to update trade dates');
                     }
                 }
             }
@@ -423,13 +423,13 @@
         modal.innerHTML = `
       <div class="bg-white border border-slate-300 shadow-2xl max-w-md w-full p-6 mx-4">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-base font-bold text-slate-900">Edit Job</h3>
+          <h3 class="text-base font-bold text-slate-900">Edit Trade</h3>
           <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
         </div>
         <form id="editJobForm" class="space-y-4">
           <input type="hidden" id="editJobId" value="${job.id}">
           <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">Job Name</label>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Trade Name</label>
             <input type="text" id="editJobName" value="${job.name}" required
                    class="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
           </div>
@@ -455,7 +455,7 @@
             </button>
             <button type="submit"
                     class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition">
-              Update Job
+              Update Trade
             </button>
           </div>
         </form>
@@ -552,7 +552,7 @@
                     const jobColorInput = document.getElementById('jobColor');
                     if (jobColorInput) jobColorInput.value = '#f59e0b';
                     if (statusEl) {
-                        statusEl.textContent = '✓ Job added successfully!';
+                        statusEl.textContent = '✓ Trade added successfully!';
                         statusEl.className = 'mt-2 text-xs text-green-600';
                         setTimeout(() => statusEl.classList.add('hidden'), 3000);
                     }
