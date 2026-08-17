@@ -2,116 +2,124 @@
 
 <div class="flex-1 space-y-6 mb-6">
     <!-- Add Job Form -->
-    <div class="bg-white border border-slate-300 p-4 mt-6 mr-2 ml-2">
+    <div class="bg-white border border-slate-300 p-4 mt-6 mr-2 ml-2 shadow-sm rounded-sm">
         <form id="addJobForm" class="flex flex-col sm:flex-row flex-wrap gap-3">
             <input type="text" id="jobName" placeholder="Trade name (e.g. Plumbing)" required
-                class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 flex-1 min-w-[150px]">
+                class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 flex-1 min-w-[150px] rounded-sm">
             <input type="date" id="startDate" required
-                class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto"
+                class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto rounded-sm"
                 value="<%= new Date().toISOString().split('T')[0] %>">
             <input type="date" id="endDate" required
-                class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto"
+                class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto rounded-sm"
                 value="<%= new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0] %>">
-            <input type="color" id="jobColor" value="#f59e0b" class="h-9 w-9 border border-slate-300 p-1 cursor-pointer" title="Color">
+            <input type="color" id="jobColor" value="#f59e0b" class="h-[38px] w-[38px] border border-slate-300 p-1 cursor-pointer rounded-sm" title="Color">
+            
             <button type="submit"
-                class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
+                class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto rounded-sm shadow-sm">
                 + Add Trade
             </button>
             <button type="button" onclick="window.open('/house/schedule/<%= house.id %>', '_blank')"
-                class="bg-white text-black border border-black text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
+                class="bg-white text-black border border-slate-300 hover:bg-slate-50 text-sm font-semibold px-6 py-2 transition w-full sm:w-auto rounded-sm shadow-sm">
                 View
             </button>
             <button type="button" onclick="openQRModal()"
-                class="bg-white text-black border border-black text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">QR</button>
+                class="bg-white text-black border border-slate-300 hover:bg-slate-50 text-sm font-semibold px-6 py-2 transition w-full sm:w-auto rounded-sm shadow-sm">QR</button>
         </form>
 
         <!-- QR Modal -->
-        <div id="qrModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
-            <div class="bg-white border border-slate-300 shadow-2xl max-w-sm w-full p-6 mx-4 text-center">
+        <div id="qrModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+            <div class="bg-white border border-slate-300 shadow-2xl max-w-sm w-full p-6 mx-4 text-center rounded-sm">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-base font-bold text-slate-900">Schedule <%= house.id.charAt(0).toUpperCase() + house.id.slice(1) %></h3>
-                    <button onclick="closeQRModal()"
-                        class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+                    <button onclick="closeQRModal()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
                 </div>
                 <div class="flex justify-center mb-4">
-                    <% if (qrDataUrl) { %>
-                    <img src="<%= qrDataUrl %>" alt="QR Code" class="w-48 h-48 border border-slate-200">
+                    <% if (typeof qrDataUrl !== 'undefined' && qrDataUrl) { %>
+                        <img src="<%= qrDataUrl %>" alt="QR Code" class="w-48 h-48 border border-slate-200 rounded-sm">
                     <% } else { %>
-                    <div class="w-48 h-48 bg-slate-100 flex items-center justify-center text-slate-400 text-sm">QR not available</div>
+                        <div class="w-48 h-48 bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 text-sm rounded-sm">QR not available</div>
                     <% } %>
                 </div>
                 <div class="flex justify-center gap-3">
-                    <% if (qrDataUrl) { %>
-                    <a href="<%= qrDataUrl %>" download="schedule-<%= house.id %>.png"
-                        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 transition rounded">Download</a>
+                    <% if (typeof qrDataUrl !== 'undefined' && qrDataUrl) { %>
+                        <a href="<%= qrDataUrl %>" download="schedule-<%= house.id %>.png"
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm">Download</a>
                     <% } %>
                     <button onclick="closeQRModal()"
-                        class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold px-4 py-2 transition rounded">Close</button>
+                        class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold px-4 py-2 transition rounded-sm">Close</button>
                 </div>
             </div>
         </div>
-        <div id="addStatus" class="mt-2 text-xs hidden"></div>
+        <div id="addStatus" class="mt-2 text-xs font-medium hidden"></div>
     </div>
 
-    <!-- Gantt Chart -->
-    <div class="bg-white border border-slate-300 overflow-hidden mr-2 ml-2">
-        <div
-            class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <h2 class="text-sm font-bold">Project Timeline</h2>
-            <span id="jobCount" class="text-xs text-slate-500 bg-slate-100 px-3 py-1"></span>
+    <!-- Gantt Chart Area -->
+    <div class="bg-white border border-slate-300 overflow-hidden mr-2 ml-2 shadow-sm rounded-sm">
+        <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50">
+            <h2 class="text-sm font-bold text-slate-800">Project Timeline</h2>
+            <span id="jobCount" class="text-xs font-medium text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-sm"></span>
         </div>
-        <div id="ganttContainer" class="p-2 sm:p-4 overflow-x-auto">
-            <div id="ganttChart" class="relative">
-                <!-- Rendered by JavaScript -->
+        <div id="ganttContainer" class="w-full relative">
+            <div id="ganttChart" class="relative overflow-auto custom-scrollbar" style="max-height: 65vh;">
+                <!-- Rendered flawlessly by JavaScript -->
             </div>
         </div>
     </div>
 </div>
 
 <!-- DELETE CONFIRMATION MODAL -->
-<div id="deleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
-  <div class="bg-white border border-slate-300 shadow-2xl max-w-md w-full p-6 space-y-4 rounded-none mx-4">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-      </div>
-      <div>
-        <h3 id="deleteModalTitle" class="text-base font-bold text-slate-900">Confirm Deletion</h3>
-        <p class="text-xs text-slate-500 mt-0.5">This action cannot be undone.</p>
-      </div>
+<div id="deleteModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white border border-slate-300 shadow-2xl max-w-md w-full p-6 space-y-4 rounded-sm mx-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-slate-900">Confirm Deletion</h3>
+                <p class="text-xs text-slate-500 mt-0.5">This action cannot be undone.</p>
+            </div>
+        </div>
+        <p id="deleteModalBody" class="text-sm text-slate-600 font-medium">Are you sure you want to delete this item?</p>
+        <div class="flex justify-end gap-2 pt-4 border-t border-slate-200 mt-4">
+            <button type="button" onclick="closeDeleteModal()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold px-4 py-2 transition rounded-sm">Cancel</button>
+            <button type="button" id="confirmDeleteBtn" onclick="confirmDeleteJob()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 transition rounded-sm shadow-sm">Delete Permanently</button>
+        </div>
     </div>
-
-    <p id="deleteModalBody" class="text-sm text-slate-600">
-      Are you sure you want to delete this item?
-    </p>
-
-    <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
-      <button type="button" onclick="closeDeleteModal()"
-        class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold px-4 py-2 transition">
-        Cancel
-      </button>
-      <button type="button" id="confirmDeleteBtn" onclick="confirmDeleteJob()"
-        class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 transition">
-        Delete Permanently
-      </button>
-    </div>
-  </div>
 </div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+</style>
 
 <script>
     const houseId = '<%= house.id %>';
     let jobs = <%- JSON.stringify(house.schedule?.jobs || []) %>;
 
+    // State Variables
     let globalMinDate = null;
     let globalDayWidth = 0;
     let draggedJobId = null;
     let dragStartX = 0;
     let dragStartOffsetDays = 0;
     let isDragging = false;
+
+    // --- ROCK SOLID DATE UTILITIES (DST SAFE) ---
+    function getDaysDiff(d1, d2) {
+        const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+        const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+        return Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
+    }
+
+    function addDays(date, days) {
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    }
 
     function formatDate(dateStr) {
         if (!dateStr) return 'N/A';
@@ -131,86 +139,94 @@
         return `${y}-${m}-${d}`;
     }
 
+    function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return String(unsafe).replace(/[&<"'>]/g, function (match) {
+            const escape = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+            return escape[match];
+        });
+    }
+
     function renderGantt() {
         const container = document.getElementById('ganttChart');
         const countEl = document.getElementById('jobCount');
 
-        if (countEl) {
-            countEl.textContent = `${jobs.length} task${jobs.length !== 1 ? 's' : ''}`;
-        }
-
+        if (countEl) countEl.textContent = `${jobs.length} task${jobs.length !== 1 ? 's' : ''}`;
         if (!container) return;
 
         if (jobs.length === 0) {
-            container.innerHTML = '<div class="text-center py-12 text-slate-500 text-sm">No tasks scheduled yet. Add a trade above to see the timeline.</div>';
+            container.innerHTML = '<div class="text-center py-12 text-slate-500 text-sm font-medium">No tasks scheduled yet. Add a trade above to see the timeline.</div>';
             return;
         }
 
         const today = new Date();
+        today.setHours(0,0,0,0);
+
         const startDates = jobs.map(j => new Date(j.startDate + 'T00:00:00'));
         const endDates = jobs.map(j => new Date(j.endDate + 'T00:00:00'));
 
         const minDate = new Date(Math.min(...startDates));
-        minDate.setDate(minDate.getDate() - 2);
+        minDate.setDate(minDate.getDate() - 3); // Padding left
         globalMinDate = new Date(minDate);
 
         const maxDate = new Date(Math.max(...endDates));
-        maxDate.setDate(maxDate.getDate() + 2);
+        maxDate.setDate(maxDate.getDate() + 4); // Padding right
 
-        const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
+        const totalDays = getDaysDiff(minDate, maxDate);
 
-        let dayWidth;
-        if (window.innerWidth < 640) {
-            dayWidth = Math.max(20, Math.min(35, 400 / totalDays));
-        } else if (window.innerWidth < 1024) {
-            dayWidth = Math.max(25, Math.min(45, 600 / totalDays));
-        } else {
-            dayWidth = Math.max(30, Math.min(60, 800 / totalDays));
-        }
-        globalDayWidth = dayWidth;
+        // Responsive day widths
+        if (window.innerWidth < 640) globalDayWidth = 25;
+        else if (window.innerWidth < 1024) globalDayWidth = 35;
+        else globalDayWidth = Math.max(30, Math.min(60, 800 / totalDays));
 
-        const totalWidth = totalDays * dayWidth;
+        const totalWidth = totalDays * globalDayWidth;
 
-        let html = `<div class="flex">`;
+        // FLAWLESS LAYOUT STRUCTURE
+        let html = `<div class="flex w-max min-w-full">`;
 
-        html += `<div class="flex-shrink-0" style="width: 150px;">`;
-        html += `<div class="border-b border-slate-300 bg-white sticky top-0 z-20" style="height: 50px;">`;
-        html += `<div class="p-2 font-bold text-xs text-slate-600">Trade</div>`;
+        // 1. FIXED LEFT COLUMN (Sticky X, Headers Sticky Y)
+        html += `<div class="flex-shrink-0 sticky left-0 z-40 bg-white border-r border-slate-300 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style="width: 160px;">`;
+        html += `<div class="bg-slate-100 sticky top-0 z-50 border-b border-slate-300 flex items-center px-3" style="height: 54px;">`;
+        html += `<span class="font-bold text-xs text-slate-700 uppercase tracking-wider">Trade</span>`;
         html += `</div>`;
 
         jobs.forEach(job => {
-            html += `<div class="border-b border-slate-100 hover:bg-slate-50 group" style="height: 44px;">`;
-            html += `<div class="p-2 text-xs sm:text-sm font-medium text-slate-700 flex items-center gap-1">`;
-            html += `<span class="truncate cursor-pointer hover:text-amber-600 transition" onclick="openEditModal('${job.id}')" title="Click to edit">${job.name}</span>`;
-            html += `<button onclick="deleteJob('${job.id}')" class="text-red-500 hover:text-red-700 text-xs ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 transition" title="Delete job">✕</button>`;
-            html += `</div>`;
+            html += `<div class="border-b border-slate-200 hover:bg-slate-50 group flex items-center justify-between px-3 transition-colors" style="height: 48px;">`;
+            html += `<span class="text-xs sm:text-sm font-semibold text-slate-700 truncate cursor-pointer hover:text-amber-600 transition-colors" onclick="openEditModal('${job.id}')" title="Edit ${escapeHtml(job.name)}">${escapeHtml(job.name)}</span>`;
+            html += `<button onclick="deleteJob('${job.id}')" class="text-slate-400 hover:text-red-600 text-sm flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete">✕</button>`;
             html += `</div>`;
         });
-
         html += `</div>`;
 
-        html += `<div class="flex-1">`;
-        html += `<div style="width: ${totalWidth}px;">`;
+        // 2. TIMELINE AREA (Scrolls naturally)
+        html += `<div class="relative flex-shrink-0 bg-white" style="width: ${totalWidth}px;">`;
 
-        html += `<div class="border-b border-slate-300 bg-white sticky top-0 z-10" style="height: 50px;">`;
-        html += `<div class="relative w-full" style="height: 50px;">`;
+        // Timeline Headers (Sticky Y)
+        html += `<div class="bg-white sticky top-0 z-30 border-b border-slate-300 shadow-sm" style="height: 54px;">`;
+        html += `<div class="relative w-full h-full">`;
 
+        // --- Render Months ---
         let currentMonth = '';
         let monthStartDay = 0;
         let monthIndex = 0;
         let lastMonthDateStr = '';
 
-        for (let i = 0; i < totalDays; i++) {
-            const date = new Date(minDate.getTime() + i * 24 * 60 * 60 * 1000);
-            const dateStr = formatDateISO(date);
-            const monthKey = dateStr.substring(0, 7);
+        for (let i = 0; i <= totalDays; i++) {
+            let dateStr, monthKey;
+            if (i < totalDays) {
+                const date = addDays(minDate, i);
+                dateStr = formatDateISO(date);
+                monthKey = dateStr.substring(0, 7);
+            } else {
+                monthKey = 'END'; // Force render of last block
+            }
 
             if (monthKey !== currentMonth) {
                 if (currentMonth !== '') {
-                    const monthWidth = (i - monthStartDay) * dayWidth;
-                    const bgClass = (monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100';
-                    html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 ${bgClass} px-1 sm:px-2 py-0.5 rounded" 
-                    style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
+                    const monthWidth = (i - monthStartDay) * globalDayWidth;
+                    const bgClass = (monthIndex % 2 === 0) ? 'bg-slate-50' : 'bg-slate-100/50';
+                    html += `<div class="absolute top-0 text-[10px] font-bold text-slate-600 ${bgClass} px-2 py-1 border-r border-slate-200 flex items-center justify-center overflow-hidden" 
+                    style="left: ${monthStartDay * globalDayWidth}px; width: ${monthWidth}px; height: 26px;">`;
                     html += `${getMonthName(lastMonthDateStr)}`;
                     html += `</div>`;
                     monthIndex++;
@@ -218,114 +234,75 @@
                 currentMonth = monthKey;
                 monthStartDay = i;
             }
-            lastMonthDateStr = dateStr;
+            if (i < totalDays) lastMonthDateStr = dateStr;
         }
 
-        if (currentMonth !== '') {
-            const monthWidth = (totalDays - monthStartDay) * dayWidth;
-            const bgClass = (monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100';
-            html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 ${bgClass} px-1 sm:px-2 py-0.5 rounded" 
-                style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
-            html += `${getMonthName(lastMonthDateStr)}`;
-            html += `</div>`;
-        }
-
-        html += `<div class="absolute bottom-0 flex w-full">`;
+        // --- Render Days ---
+        html += `<div class="absolute bottom-0 flex w-full h-[28px]">`;
         for (let i = 0; i < totalDays; i++) {
-            const date = new Date(minDate.getTime() + i * 24 * 60 * 60 * 1000);
+            const date = addDays(minDate, i);
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             const isToday = date.toDateString() === today.toDateString();
-
-            html += `<div class="text-[6px] sm:text-[8px] text-slate-400 border-r border-slate-200 ${isToday ? 'font-bold text-amber-600' : ''}" 
-            style="width: ${dayWidth}px; text-align: center; ${isWeekend ? 'color: #94a3b8;' : ''}">`;
+            
+            const txtColor = isToday ? 'text-white bg-amber-500 font-bold' : (isWeekend ? 'text-slate-400 bg-slate-50/50' : 'text-slate-600 bg-white');
+            html += `<div class="text-[10px] border-r border-slate-200 flex items-center justify-center ${txtColor}" 
+            style="width: ${globalDayWidth}px; height: 100%;">`;
             html += `${date.getDate()}`;
             html += `</div>`;
         }
         html += `</div>`;
+        html += `</div></div>`; // Close Headers
 
-        html += `</div></div>`;
-
+        // --- Render Task Rows ---
         jobs.forEach(job => {
             const start = new Date(job.startDate + 'T00:00:00');
             const end = new Date(job.endDate + 'T00:00:00');
 
-            const startOffset = Math.max(0, (start - minDate) / (1000 * 60 * 60 * 24));
-            const duration = Math.max(1, (end - start) / (1000 * 60 * 60 * 24) + 1);
-
+            const startOffset = Math.max(0, getDaysDiff(minDate, start));
+            const duration = Math.max(1, getDaysDiff(start, end) + 1);
             const bgColor = job.color || '#f59e0b';
 
-            html += `<div class="border-b border-slate-300 hover:bg-slate-50" style="height: 44px; position: relative;">`;
+            html += `<div class="border-b border-slate-200 hover:bg-slate-50 relative group" style="height: 48px;">`;
 
+            // Background vertical guides
             html += `<div class="absolute inset-0 flex pointer-events-none">`;
-            let rowMonth = '';
-            let rowStartDay = 0;
-            let rowMonthIndex = 0;
             for (let i = 0; i < totalDays; i++) {
-                const date = new Date(minDate.getTime() + i * 24 * 60 * 60 * 1000);
-                const dateStr = formatDateISO(date);
-                const monthKey = dateStr.substring(0, 7);
-
-                if (monthKey !== rowMonth) {
-                    if (rowMonth !== '') {
-                        const monthWidth = (i - rowStartDay) * dayWidth;
-                        const bgClass = (rowMonthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/60';
-                        html += `<div class="${bgClass} h-full" style="width: ${monthWidth}px;"></div>`;
-                        rowMonthIndex++;
-                    }
-                    rowMonth = monthKey;
-                    rowStartDay = i;
-                }
-            }
-            if (rowMonth !== '') {
-                const monthWidth = (totalDays - rowStartDay) * dayWidth;
-                const bgClass = (rowMonthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/60';
-                html += `<div class="${bgClass} h-full" style="width: ${monthWidth}px;"></div>`;
+                const date = addDays(minDate, i);
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                html += `<div class="border-r border-slate-100/70 h-full ${isWeekend ? 'bg-slate-50/40' : ''}" style="width: ${globalDayWidth}px;"></div>`;
             }
             html += `</div>`;
 
-            html += `<div class="absolute inset-0 flex pointer-events-none">`;
-            for (let i = 0; i < totalDays; i++) {
-                html += `<div class="border-r border-slate-300 h-full" style="width: ${dayWidth}px;"></div>`;
-            }
-            html += `</div>`;
-
-            html += `<div class="absolute top-1 rounded-sm cursor-grab active:cursor-grabbing hover:opacity-80 transition-opacity flex items-center select-none" 
+            // The Draggable Bar
+            html += `<div class="absolute top-[8px] rounded-sm shadow-sm cursor-grab active:cursor-grabbing hover:opacity-90 hover:shadow-md transition-shadow flex items-center select-none overflow-hidden" 
                 id="job-bar-${job.id}"
-                style="left: ${startOffset * dayWidth}px; 
-                       width: ${duration * dayWidth - 4}px; 
-                       height: 32px; 
-                       background: ${bgColor};
-                       min-width: 12px;"
+                style="left: ${startOffset * globalDayWidth}px; width: ${duration * globalDayWidth}px; height: 32px; background: ${bgColor}; z-index: 10; min-width: ${globalDayWidth}px;"
                 onmousedown="startDrag(event, '${job.id}')"
                 onclick="handleJobClick(event, '${job.id}')"
-                title="${job.name}: ${formatDate(job.startDate)} → ${formatDate(job.endDate)}">`;
+                title="${escapeHtml(job.name)}: ${formatDate(job.startDate)} to ${formatDate(job.endDate)}">`;
 
-            if (duration * dayWidth > 60) {
-                html += `<span class="text-white text-[8px] sm:text-[10px] font-semibold px-2 truncate pointer-events-none">${job.name}</span>`;
-            } else {
-                html += `<span class="text-white text-[10px] w-full text-center pointer-events-none">●</span>`;
+            if (duration * globalDayWidth > 50) {
+                html += `<span class="text-white text-[10px] font-bold px-2 truncate pointer-events-none drop-shadow-sm">${escapeHtml(job.name)}</span>`;
             }
-
             html += `</div>`;
             html += `</div>`;
         });
 
-        html += `</div>`;
-        html += `</div>`;
-        html += `</div>`;
-
+        html += `</div>`; // End Timeline Area
+        html += `</div>`; // End Wrapper
         container.innerHTML = html;
-        container.style.maxHeight = '70vh';
-        container.style.overflowY = 'auto';
     }
 
+    // --- DRAG & DROP LOGIC ---
     function handleJobClick(e, jobId) {
         if (isDragging) return;
         openEditModal(jobId);
     }
 
     function startDrag(e, jobId) {
-        if (e.button !== 0) return;
+        if (e.button !== 0) return; // Only left click
+        e.preventDefault(); // CRITICAL: Stops native text selection ghosting
+        
         draggedJobId = jobId;
         dragStartX = e.clientX;
         isDragging = false;
@@ -334,7 +311,7 @@
         if (!job) return;
 
         const start = new Date(job.startDate + 'T00:00:00');
-        dragStartOffsetDays = Math.round((start - globalMinDate) / (1000 * 60 * 60 * 24));
+        dragStartOffsetDays = getDaysDiff(globalMinDate, start);
 
         window.addEventListener('mousemove', onDrag);
         window.addEventListener('mouseup', stopDrag);
@@ -343,19 +320,15 @@
     function onDrag(e) {
         if (!draggedJobId) return;
         const deltaX = e.clientX - dragStartX;
-        if (Math.abs(deltaX) > 3) {
-            isDragging = true;
-        }
-
+        
+        if (Math.abs(deltaX) > 4) isDragging = true;
         if (!isDragging) return;
 
         const daysShift = Math.round(deltaX / globalDayWidth);
         const newOffsetDays = dragStartOffsetDays + daysShift;
 
         const jobBar = document.getElementById(`job-bar-${draggedJobId}`);
-        if (jobBar) {
-            jobBar.style.left = `${newOffsetDays * globalDayWidth}px`;
-        }
+        if (jobBar) jobBar.style.left = `${newOffsetDays * globalDayWidth}px`;
     }
 
     async function stopDrag(e) {
@@ -374,11 +347,9 @@
                     const start = new Date(job.startDate + 'T00:00:00');
                     const end = new Date(job.endDate + 'T00:00:00');
 
-                    start.setDate(start.getDate() + daysShift);
-                    end.setDate(end.getDate() + daysShift);
-
-                    const newStartDate = formatDateISO(start);
-                    const newEndDate = formatDateISO(end);
+                    // Math is strictly day-based, immune to DST
+                    const newStart = addDays(start, daysShift);
+                    const newEnd = addDays(end, daysShift);
 
                     try {
                         const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${job.id}`, {
@@ -386,25 +357,27 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 name: job.name,
-                                startDate: newStartDate,
-                                endDate: newEndDate,
+                                startDate: formatDateISO(newStart),
+                                endDate: formatDateISO(newEnd),
                                 color: job.color
                             })
                         });
 
                         const data = await response.json();
                         if (data.success) {
-                            Object.assign(job, data.job);
+                            Object.assign(job, data.job || {
+                                startDate: formatDateISO(newStart),
+                                endDate: formatDateISO(newEnd)
+                            });
                         } else {
-                            alert('Failed to update trade dates: ' + (data.error || 'Unknown error'));
+                            alert('Failed to update dates: ' + (data.error || 'Unknown error'));
                         }
                     } catch (err) {
-                        console.error('Error updating tred dates:', err);
-                        alert('Failed to update trade dates');
+                        alert('Network Error updating dates');
                     }
                 }
             }
-            renderGantt();
+            renderGantt(); // Reset bar to true server position
         }
 
         setTimeout(() => {
@@ -413,54 +386,50 @@
         }, 50);
     }
 
+    // --- MODAL CONTROLS ---
     function openEditModal(jobId) {
         const job = jobs.find(j => j.id === jobId);
         if (!job) return;
 
         const modal = document.createElement('div');
         modal.id = 'editModal';
-        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm';
+        modal.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm';
         modal.innerHTML = `
-      <div class="bg-white border border-slate-300 shadow-2xl max-w-md w-full p-6 mx-4">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-base font-bold text-slate-900">Edit Trade</h3>
-          <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
-        </div>
-        <form id="editJobForm" class="space-y-4">
-          <input type="hidden" id="editJobId" value="${job.id}">
-          <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">Trade Name</label>
-            <input type="text" id="editJobName" value="${job.name}" required
-                   class="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">Start Date</label>
-            <input type="date" id="editStartDate" value="${job.startDate}" required
-                   class="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">End Date</label>
-            <input type="date" id="editEndDate" value="${job.endDate}" required
-                   class="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">Color</label>
-            <input type="color" id="editJobColor" value="${job.color || '#f59e0b'}" required
-                   class="h-9 w-full border border-slate-300 p-1 cursor-pointer">
-          </div>
-          <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
-            <button type="button" onclick="closeEditModal()"
-                    class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition">
-              Cancel
-            </button>
-            <button type="submit"
-                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition">
-              Update Trade
-            </button>
-          </div>
-        </form>
-      </div>
-    `;
+        <div class="bg-white border border-slate-300 shadow-2xl max-w-md w-full p-6 mx-4 rounded-sm">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-base font-bold text-slate-900">Edit Trade</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+            </div>
+            <form id="editJobForm" class="space-y-4">
+                <input type="hidden" id="editJobId" value="${job.id}">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Trade Name</label>
+                    <input type="text" id="editJobName" value="${escapeHtml(job.name)}" required
+                        class="w-full px-3 py-2 border border-slate-300 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Start Date</label>
+                        <input type="date" id="editStartDate" value="${job.startDate}" required
+                            class="w-full px-3 py-2 border border-slate-300 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">End Date</label>
+                        <input type="date" id="editEndDate" value="${job.endDate}" required
+                            class="w-full px-3 py-2 border border-slate-300 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Color Marker</label>
+                    <input type="color" id="editJobColor" value="${job.color || '#f59e0b'}" required
+                        class="h-10 w-full border border-slate-300 rounded-sm p-1 cursor-pointer">
+                </div>
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-200 mt-2">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition rounded-sm shadow-sm">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 transition rounded-sm shadow-sm">Save Changes</button>
+                </div>
+            </form>
+        </div>`;
 
         document.body.appendChild(modal);
         document.body.style.overflow = 'hidden';
@@ -473,8 +442,6 @@
             const endDate = document.getElementById('editEndDate').value;
             const color = document.getElementById('editJobColor').value;
 
-            if (!name || !startDate || !endDate) return;
-
             try {
                 const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${id}`, {
                     method: 'PUT',
@@ -484,58 +451,44 @@
 
                 const data = await response.json();
                 if (data.success) {
-    const jobToUpdate = jobs.find(j => j.id === id);
-    if (jobToUpdate) {
-        jobToUpdate.name = name;
-        jobToUpdate.startDate = startDate;
-        jobToUpdate.endDate = endDate;
-        jobToUpdate.color = color;      // explicitly set from form
-    }
-    closeEditModal();
-    renderGantt();
-} else {
+                    const jobToUpdate = jobs.find(j => j.id === id);
+                    if (jobToUpdate) {
+                        jobToUpdate.name = name;
+                        jobToUpdate.startDate = startDate;
+                        jobToUpdate.endDate = endDate;
+                        jobToUpdate.color = color;
+                    }
+                    closeEditModal();
+                    renderGantt();
+                } else {
                     alert('Failed to update job: ' + (data.error || 'Unknown error'));
                 }
             } catch (err) {
-                console.error('Error updating job:', err);
-                alert('Failed to update job');
+                alert('Network error updating job');
             }
         });
     }
 
     function closeEditModal() {
         const modal = document.getElementById('editModal');
-        if (modal) {
-            modal.remove();
-            document.body.style.overflow = '';
-        }
+        if (modal) modal.remove();
+        document.body.style.overflow = '';
     }
 
+    // --- ADD / DELETE CONTROLS ---
     const addJobForm = document.getElementById('addJobForm');
     if (addJobForm) {
         addJobForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const statusEl = document.getElementById('addStatus');
-
             const name = document.getElementById('jobName').value.trim();
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
             const color = document.getElementById('jobColor').value;
 
-            if (!name || !startDate || !endDate) {
-                if (statusEl) {
-                    statusEl.textContent = 'All fields are required';
-                    statusEl.className = 'mt-2 text-xs text-red-600';
-                    statusEl.classList.remove('hidden');
-                }
-                return;
-            }
-
-            if (statusEl) {
-                statusEl.className = 'mt-2 text-xs text-amber-600';
-                statusEl.textContent = 'Adding job...';
-                statusEl.classList.remove('hidden');
-            }
+            statusEl.className = 'mt-2 text-xs text-amber-600 font-medium';
+            statusEl.textContent = 'Adding schedule...';
+            statusEl.classList.remove('hidden');
 
             try {
                 const response = await fetch(`/admin/houses/schedule/${houseId}/jobs`, {
@@ -549,25 +502,17 @@
                     jobs.push(data.job);
                     renderGantt();
                     addJobForm.reset();
-                    const jobColorInput = document.getElementById('jobColor');
-                    if (jobColorInput) jobColorInput.value = '#f59e0b';
-                    if (statusEl) {
-                        statusEl.textContent = '✓ Trade added successfully!';
-                        statusEl.className = 'mt-2 text-xs text-green-600';
-                        setTimeout(() => statusEl.classList.add('hidden'), 3000);
-                    }
+                    document.getElementById('jobColor').value = '#f59e0b';
+                    statusEl.textContent = '✓ Trade added successfully!';
+                    statusEl.className = 'mt-2 text-xs text-green-600 font-bold';
+                    setTimeout(() => statusEl.classList.add('hidden'), 3000);
                 } else {
-                    if (statusEl) {
-                        statusEl.textContent = 'Failed: ' + (data.error || 'Unknown error');
-                        statusEl.className = 'mt-2 text-xs text-red-600';
-                    }
+                    statusEl.textContent = 'Failed: ' + (data.error || 'Unknown error');
+                    statusEl.className = 'mt-2 text-xs text-red-600 font-bold';
                 }
             } catch (err) {
-                console.error('Error adding job:', err);
-                if (statusEl) {
-                    statusEl.textContent = 'Error: ' + err.message;
-                    statusEl.className = 'mt-2 text-xs text-red-600';
-                }
+                statusEl.textContent = 'Error connecting to server';
+                statusEl.className = 'mt-2 text-xs text-red-600 font-bold';
             }
         });
     }
@@ -577,75 +522,53 @@
     function deleteJob(jobId) {
         const job = jobs.find(j => j.id === jobId);
         if (!job) return;
-
         pendingDeleteJobId = jobId;
-        const deleteModalBody = document.getElementById('deleteModalBody');
-        const deleteModal = document.getElementById('deleteModal');
-        if (deleteModalBody) deleteModalBody.textContent = `Are you sure you want to delete "${job.name}"?`;
-        if (deleteModal) deleteModal.classList.remove('hidden');
+        document.getElementById('deleteModalBody').innerHTML = `Are you sure you want to delete <strong>${escapeHtml(job.name)}</strong>?`;
+        document.getElementById('deleteModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
 
     function closeDeleteModal() {
         pendingDeleteJobId = null;
-        const deleteModal = document.getElementById('deleteModal');
-        if (deleteModal) deleteModal.classList.add('hidden');
+        document.getElementById('deleteModal').classList.add('hidden');
         document.body.style.overflow = '';
     }
 
     async function confirmDeleteJob() {
         if (!pendingDeleteJobId) return;
-
-        const jobId = pendingDeleteJobId;
         const confirmBtn = document.getElementById('confirmDeleteBtn');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Deleting...';
 
         try {
-            if (confirmBtn) {
-                confirmBtn.disabled = true;
-                confirmBtn.textContent = 'Deleting...';
-            }
-
-            const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${jobId}`, {
+            const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${pendingDeleteJobId}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
             });
-
             const data = await response.json();
             if (data.success) {
-                jobs = jobs.filter(j => j.id !== jobId);
+                jobs = jobs.filter(j => j.id !== pendingDeleteJobId);
                 renderGantt();
                 closeDeleteModal();
             } else {
-                alert('Failed to delete job: ' + (data.error || 'Unknown error'));
+                alert('Failed to delete: ' + (data.error || 'Unknown error'));
             }
         } catch (err) {
-            console.error('Error deleting job:', err);
-            alert('Failed to delete job');
+            alert('Network error deleting job');
         } finally {
-            if (confirmBtn) {
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = 'Delete Permanently';
-            }
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Delete Permanently';
         }
     }
 
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(renderGantt, 250);
-    });
-
-    renderGantt();
-
+    // --- OTHER UI UTILS ---
     function openQRModal() {
-        const qrModal = document.getElementById('qrModal');
-        if (qrModal) qrModal.classList.remove('hidden');
+        document.getElementById('qrModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
 
     function closeQRModal() {
-        const qrModal = document.getElementById('qrModal');
-        if (qrModal) qrModal.classList.add('hidden');
+        document.getElementById('qrModal').classList.add('hidden');
         document.body.style.overflow = '';
     }
 
@@ -656,14 +579,22 @@
             closeDeleteModal();
         }
     });
+
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(renderGantt, 150);
+    });
+
+    // Boot Gantt Chart
+    renderGantt();
 </script>
 
 </main>
-<footer class="bg-slate-900 border-t border-slate-600 flex-shrink-0">
+<footer class="bg-slate-900 border-t border-slate-600 flex-shrink-0 mt-auto">
     <div class="max-w-7xl mx-auto px-4 py-6 text-center text-xs text-white">
         &copy; 2026. Manu Romero Construction.
     </div>
 </footer>
 </body>
-
 </html>
