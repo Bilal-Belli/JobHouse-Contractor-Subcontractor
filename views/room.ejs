@@ -463,11 +463,6 @@
                         </select>
                     </div>
                 </div>
-                <div class="px-4 py-3 border-b border-slate-600 bg-slate-900 mt-8 md:mt-0">
-                    <a href="/house/schedule/<%= house.id %>" class="bg-ameber-600 hover:bg-ameber-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
-                        Schedule
-                    </a>
-                </div>
 
                 <!-- TRADE TABS -->
                 <nav class="flex-1 overflow-y-auto sidebar-scroll py-2 space-y-0.5 px-2">
@@ -526,6 +521,12 @@
                             <span class="text-black">- <%= room.name %></span>
                         </div>
                     </div>
+                </div>
+
+                <div class="bg-white pro-card p-4 md:p-5 mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+                        <span class="w-1 h-4 bg-slate-400 block"></span> <a href="/house/schedule/<%= house.id %>" >Schedule</a>
+                    </h3>
                 </div>
 
                 <!-- ===== TRADE CONTENT ===== -->
