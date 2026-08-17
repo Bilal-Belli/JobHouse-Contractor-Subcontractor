@@ -166,7 +166,7 @@
         const endDates = jobs.map(j => new Date(j.endDate + 'T00:00:00'));
 
         const minDate = new Date(Math.min(...startDates));
-        minDate.setDate(minDate.getDate() - 3);
+        minDate.setDate(minDate.getDate() - 7);
         globalMinDate = new Date(minDate);
 
         const maxDate = new Date(Math.max(...endDates));
