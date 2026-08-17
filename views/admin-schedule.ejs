@@ -136,13 +136,13 @@
         const countEl = document.getElementById('jobCount');
 
         if (countEl) {
-            countEl.textContent = `${jobs.length} trade${jobs.length !== 1 ? 's' : ''}`;
+            countEl.textContent = `${jobs.length} task${jobs.length !== 1 ? 's' : ''}`;
         }
 
         if (!container) return;
 
         if (jobs.length === 0) {
-            container.innerHTML = '<div class="text-center py-12 text-slate-500 text-sm">No jobs scheduled yet. Add a trade above to see the timeline.</div>';
+            container.innerHTML = '<div class="text-center py-12 text-slate-500 text-sm">No tasks scheduled yet. Add a trade above to see the timeline.</div>';
             return;
         }
 
