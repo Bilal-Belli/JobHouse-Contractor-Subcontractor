@@ -984,7 +984,7 @@ app.post('/admin/edit/:roomId/delete-comment/:tradeId/:commentId', (req, res) =>
 
 app.post('/admin/houses/schedule/:houseId/jobs', (req, res) => {
     const { houseId } = req.params;
-    const { name, startDate, endDate } = req.body;
+    const { name, startDate, endDate, color } = req.body;
 
     if (!name || !startDate || !endDate) {
         return res.status(400).json({
@@ -1016,7 +1016,8 @@ app.post('/admin/houses/schedule/:houseId/jobs', (req, res) => {
         id: Date.now().toString(),
         name,
         startDate,
-        endDate
+        endDate,
+        color: color || '#f59e0b'
     };
 
     house.schedule.jobs.push(job);
@@ -1042,10 +1043,11 @@ app.put('/admin/houses/schedule/:houseId/jobs/:jobId', (req, res) => {
     const job = house.schedule.jobs.find(j => j.id === req.params.jobId);
     if (!job) return res.status(404).json({ error: 'Job not found' });
     
-    const { name, startDate, endDate } = req.body;
+    const { name, startDate, endDate, color } = req.body;
     if (name) job.name = name.trim();
     if (startDate) job.startDate = startDate;
     if (endDate) job.endDate = endDate;
+    if (color) job.color = color;
     
     saveData(data);
     res.json({ success: true, job });

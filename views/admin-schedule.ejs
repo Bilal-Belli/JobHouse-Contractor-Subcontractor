@@ -12,6 +12,7 @@
             <input type="date" id="endDate" required
                 class="px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-auto"
                 value="<%= new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0] %>">
+            <input type="color" id="jobColor" value="#f59e0b" class="h-9 w-9 border border-slate-300 p-1 cursor-pointer" title="Color">
             <button type="submit"
                 class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
                 + Add Job
@@ -37,8 +38,7 @@
                     <% if (qrDataUrl) { %>
                     <img src="<%= qrDataUrl %>" alt="QR Code" class="w-48 h-48 border border-slate-200">
                     <% } else { %>
-                    <div class="w-48 h-48 bg-slate-100 flex items-center justify-center text-slate-400 text-sm">QR not
-                        available</div>
+                    <div class="w-48 h-48 bg-slate-100 flex items-center justify-center text-slate-400 text-sm">QR not available</div>
                     <% } %>
                 </div>
                 <div class="flex justify-center gap-3">
@@ -104,29 +104,42 @@
 
 <script>
     const houseId = '<%= house.id %>';
-    // FIXED
     let jobs = <%- JSON.stringify(house.schedule?.jobs || []) %>;
 
-    // Format date
+    let globalMinDate = null;
+    let globalDayWidth = 0;
+    let draggedJobId = null;
+    let dragStartX = 0;
+    let dragStartOffsetDays = 0;
+    let isDragging = false;
+
     function formatDate(dateStr) {
         if (!dateStr) return 'N/A';
         const d = new Date(dateStr + 'T00:00:00');
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
-    // Get month name
     function getMonthName(dateStr) {
         const d = new Date(dateStr + 'T00:00:00');
         return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     }
 
-    // Render Gantt Chart with month labels
-    // Render Gantt Chart with month labels
+    function formatDateISO(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
     function renderGantt() {
         const container = document.getElementById('ganttChart');
         const countEl = document.getElementById('jobCount');
 
-        countEl.textContent = `${jobs.length} job${jobs.length !== 1 ? 's' : ''}`;
+        if (countEl) {
+            countEl.textContent = `${jobs.length} job${jobs.length !== 1 ? 's' : ''}`;
+        }
+
+        if (!container) return;
 
         if (jobs.length === 0) {
             container.innerHTML = '<div class="text-center py-12 text-slate-500 text-sm">No jobs scheduled yet. Add a job above to see the timeline.</div>';
@@ -139,6 +152,7 @@
 
         const minDate = new Date(Math.min(...startDates));
         minDate.setDate(minDate.getDate() - 2);
+        globalMinDate = new Date(minDate);
 
         const maxDate = new Date(Math.max(...endDates));
         maxDate.setDate(maxDate.getDate() + 2);
@@ -153,6 +167,7 @@
         } else {
             dayWidth = Math.max(30, Math.min(60, 800 / totalDays));
         }
+        globalDayWidth = dayWidth;
 
         const totalWidth = totalDays * dayWidth;
 
@@ -185,9 +200,9 @@
         let monthIndex = 0;
         let lastMonthDateStr = '';
 
-        for (let i = 0; i <= totalDays; i++) {
+        for (let i = 0; i < totalDays; i++) {
             const date = new Date(minDate.getTime() + i * 24 * 60 * 60 * 1000);
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = formatDateISO(date);
             const monthKey = dateStr.substring(0, 7);
 
             if (monthKey !== currentMonth) {
@@ -207,7 +222,7 @@
         }
 
         if (currentMonth !== '') {
-            const monthWidth = (totalDays - monthStartDay + 1) * dayWidth;
+            const monthWidth = (totalDays - monthStartDay) * dayWidth;
             const bgClass = (monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100';
             html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 ${bgClass} px-1 sm:px-2 py-0.5 rounded" 
                 style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
@@ -216,7 +231,7 @@
         }
 
         html += `<div class="absolute bottom-0 flex w-full">`;
-        for (let i = 0; i <= totalDays; i++) {
+        for (let i = 0; i < totalDays; i++) {
             const date = new Date(minDate.getTime() + i * 24 * 60 * 60 * 1000);
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             const isToday = date.toDateString() === today.toDateString();
@@ -237,21 +252,7 @@
             const startOffset = Math.max(0, (start - minDate) / (1000 * 60 * 60 * 24));
             const duration = Math.max(1, (end - start) / (1000 * 60 * 60 * 24) + 1);
 
-            let hash = 0;
-            for (let i = 0; i < job.id.length; i++) {
-                hash = job.id.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            const colorIndex = Math.abs(hash) % 7;
-            const colors = [
-                { bg: '#f59e0b' },
-                { bg: '#3b82f6' },
-                { bg: '#10b981' },
-                { bg: '#8b5cf6' },
-                { bg: '#ef4444' },
-                { bg: '#ec4899' },
-                { bg: '#14b8a6' }
-            ];
-            const color = colors[colorIndex];
+            const bgColor = job.color || '#f59e0b';
 
             html += `<div class="border-b border-slate-300 hover:bg-slate-50" style="height: 44px; position: relative;">`;
 
@@ -259,9 +260,9 @@
             let rowMonth = '';
             let rowStartDay = 0;
             let rowMonthIndex = 0;
-            for (let i = 0; i <= totalDays; i++) {
+            for (let i = 0; i < totalDays; i++) {
                 const date = new Date(minDate.getTime() + i * 24 * 60 * 60 * 1000);
-                const dateStr = date.toISOString().split('T')[0];
+                const dateStr = formatDateISO(date);
                 const monthKey = dateStr.substring(0, 7);
 
                 if (monthKey !== rowMonth) {
@@ -276,31 +277,33 @@
                 }
             }
             if (rowMonth !== '') {
-                const monthWidth = (totalDays - rowStartDay + 1) * dayWidth;
+                const monthWidth = (totalDays - rowStartDay) * dayWidth;
                 const bgClass = (rowMonthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/60';
                 html += `<div class="${bgClass} h-full" style="width: ${monthWidth}px;"></div>`;
             }
             html += `</div>`;
 
             html += `<div class="absolute inset-0 flex pointer-events-none">`;
-            for (let i = 0; i <= totalDays; i++) {
+            for (let i = 0; i < totalDays; i++) {
                 html += `<div class="border-r border-slate-300 h-full" style="width: ${dayWidth}px;"></div>`;
             }
             html += `</div>`;
 
-            html += `<div class="absolute top-1 rounded-sm cursor-pointer hover:opacity-70 transition" 
+            html += `<div class="absolute top-1 rounded-sm cursor-grab active:cursor-grabbing hover:opacity-80 transition-opacity flex items-center select-none" 
+                id="job-bar-${job.id}"
                 style="left: ${startOffset * dayWidth}px; 
                        width: ${duration * dayWidth - 4}px; 
                        height: 32px; 
-                       background: ${color.bg};
+                       background: ${bgColor};
                        min-width: 12px;"
-                onclick="openEditModal('${job.id}')"
+                onmousedown="startDrag(event, '${job.id}')"
+                onclick="handleJobClick(event, '${job.id}')"
                 title="${job.name}: ${formatDate(job.startDate)} → ${formatDate(job.endDate)}">`;
 
             if (duration * dayWidth > 60) {
-                html += `<span class="text-white text-[8px] sm:text-[10px] font-semibold px-2 leading-[28px] block truncate">${job.name}</span>`;
+                html += `<span class="text-white text-[8px] sm:text-[10px] font-semibold px-2 truncate pointer-events-none">${job.name}</span>`;
             } else {
-                html += `<span class="text-white text-[10px] leading-[28px] block text-center">●</span>`;
+                html += `<span class="text-white text-[10px] w-full text-center pointer-events-none">●</span>`;
             }
 
             html += `</div>`;
@@ -314,7 +317,100 @@
         container.innerHTML = html;
     }
 
-    // Edit Modal
+    function handleJobClick(e, jobId) {
+        if (isDragging) return;
+        openEditModal(jobId);
+    }
+
+    function startDrag(e, jobId) {
+        if (e.button !== 0) return;
+        draggedJobId = jobId;
+        dragStartX = e.clientX;
+        isDragging = false;
+
+        const job = jobs.find(j => j.id === jobId);
+        if (!job) return;
+
+        const start = new Date(job.startDate + 'T00:00:00');
+        dragStartOffsetDays = Math.round((start - globalMinDate) / (1000 * 60 * 60 * 24));
+
+        window.addEventListener('mousemove', onDrag);
+        window.addEventListener('mouseup', stopDrag);
+    }
+
+    function onDrag(e) {
+        if (!draggedJobId) return;
+        const deltaX = e.clientX - dragStartX;
+        if (Math.abs(deltaX) > 3) {
+            isDragging = true;
+        }
+
+        if (!isDragging) return;
+
+        const daysShift = Math.round(deltaX / globalDayWidth);
+        const newOffsetDays = dragStartOffsetDays + daysShift;
+
+        const jobBar = document.getElementById(`job-bar-${draggedJobId}`);
+        if (jobBar) {
+            jobBar.style.left = `${newOffsetDays * globalDayWidth}px`;
+        }
+    }
+
+    async function stopDrag(e) {
+        window.removeEventListener('mousemove', onDrag);
+        window.removeEventListener('mouseup', stopDrag);
+
+        if (!draggedJobId) return;
+
+        if (isDragging) {
+            const deltaX = e.clientX - dragStartX;
+            const daysShift = Math.round(deltaX / globalDayWidth);
+
+            if (daysShift !== 0) {
+                const job = jobs.find(j => j.id === draggedJobId);
+                if (job) {
+                    const start = new Date(job.startDate + 'T00:00:00');
+                    const end = new Date(job.endDate + 'T00:00:00');
+
+                    start.setDate(start.getDate() + daysShift);
+                    end.setDate(end.getDate() + daysShift);
+
+                    const newStartDate = formatDateISO(start);
+                    const newEndDate = formatDateISO(end);
+
+                    try {
+                        const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${job.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: job.name,
+                                startDate: newStartDate,
+                                endDate: newEndDate,
+                                color: job.color
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            Object.assign(job, data.job);
+                        } else {
+                            alert('Failed to update job dates: ' + (data.error || 'Unknown error'));
+                        }
+                    } catch (err) {
+                        console.error('Error updating job dates:', err);
+                        alert('Failed to update job dates');
+                    }
+                }
+            }
+            renderGantt();
+        }
+
+        setTimeout(() => {
+            isDragging = false;
+            draggedJobId = null;
+        }, 50);
+    }
+
     function openEditModal(jobId) {
         const job = jobs.find(j => j.id === jobId);
         if (!job) return;
@@ -345,6 +441,11 @@
             <input type="date" id="editEndDate" value="${job.endDate}" required
                    class="w-full px-3 py-2 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
           </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Color</label>
+            <input type="color" id="editJobColor" value="${job.color || '#f59e0b'}" required
+                   class="h-9 w-full border border-slate-300 p-1 cursor-pointer">
+          </div>
           <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
             <button type="button" onclick="closeEditModal()"
                     class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition">
@@ -368,6 +469,7 @@
             const name = document.getElementById('editJobName').value.trim();
             const startDate = document.getElementById('editStartDate').value;
             const endDate = document.getElementById('editEndDate').value;
+            const color = document.getElementById('editJobColor').value;
 
             if (!name || !startDate || !endDate) return;
 
@@ -375,16 +477,21 @@
                 const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, startDate, endDate })
+                    body: JSON.stringify({ name, startDate, endDate, color })
                 });
 
                 const data = await response.json();
                 if (data.success) {
-                    const jobToUpdate = jobs.find(j => j.id === id);
-                    if (jobToUpdate) Object.assign(jobToUpdate, data.job);
-                    closeEditModal();
-                    renderGantt();
-                } else {
+    const jobToUpdate = jobs.find(j => j.id === id);
+    if (jobToUpdate) {
+        jobToUpdate.name = name;
+        jobToUpdate.startDate = startDate;
+        jobToUpdate.endDate = endDate;
+        jobToUpdate.color = color;      // explicitly set from form
+    }
+    closeEditModal();
+    renderGantt();
+} else {
                     alert('Failed to update job: ' + (data.error || 'Unknown error'));
                 }
             } catch (err) {
@@ -402,86 +509,99 @@
         }
     }
 
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeEditModal();
-    });
+    const addJobForm = document.getElementById('addJobForm');
+    if (addJobForm) {
+        addJobForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusEl = document.getElementById('addStatus');
 
-    // Add new job
-    document.getElementById('addJobForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const statusEl = document.getElementById('addStatus');
+            const name = document.getElementById('jobName').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const color = document.getElementById('jobColor').value;
 
-        const name = document.getElementById('jobName').value.trim();
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
-
-        if (!name || !startDate || !endDate) {
-            statusEl.textContent = 'All fields are required';
-            statusEl.className = 'mt-2 text-xs text-red-600';
-            statusEl.classList.remove('hidden');
-            return;
-        }
-
-        statusEl.className = 'mt-2 text-xs text-amber-600';
-        statusEl.textContent = 'Adding job...';
-        statusEl.classList.remove('hidden');
-
-        try {
-            const response = await fetch(`/admin/houses/schedule/${houseId}/jobs`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, startDate, endDate })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                jobs.push(data.job);
-                renderGantt();
-                document.getElementById('addJobForm').reset();
-                statusEl.textContent = '✓ Job added successfully!';
-                statusEl.className = 'mt-2 text-xs text-green-600';
-                setTimeout(() => statusEl.classList.add('hidden'), 3000);
-            } else {
-                statusEl.textContent = 'Failed: ' + (data.error || 'Unknown error');
-                statusEl.className = 'mt-2 text-xs text-red-600';
+            if (!name || !startDate || !endDate) {
+                if (statusEl) {
+                    statusEl.textContent = 'All fields are required';
+                    statusEl.className = 'mt-2 text-xs text-red-600';
+                    statusEl.classList.remove('hidden');
+                }
+                return;
             }
-        } catch (err) {
-            console.error('Error adding job:', err);
-            statusEl.textContent = 'Error: ' + err.message;
-            statusEl.className = 'mt-2 text-xs text-red-600';
-        }
-    });
+
+            if (statusEl) {
+                statusEl.className = 'mt-2 text-xs text-amber-600';
+                statusEl.textContent = 'Adding job...';
+                statusEl.classList.remove('hidden');
+            }
+
+            try {
+                const response = await fetch(`/admin/houses/schedule/${houseId}/jobs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, startDate, endDate, color })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    jobs.push(data.job);
+                    renderGantt();
+                    addJobForm.reset();
+                    const jobColorInput = document.getElementById('jobColor');
+                    if (jobColorInput) jobColorInput.value = '#f59e0b';
+                    if (statusEl) {
+                        statusEl.textContent = '✓ Job added successfully!';
+                        statusEl.className = 'mt-2 text-xs text-green-600';
+                        setTimeout(() => statusEl.classList.add('hidden'), 3000);
+                    }
+                } else {
+                    if (statusEl) {
+                        statusEl.textContent = 'Failed: ' + (data.error || 'Unknown error');
+                        statusEl.className = 'mt-2 text-xs text-red-600';
+                    }
+                }
+            } catch (err) {
+                console.error('Error adding job:', err);
+                if (statusEl) {
+                    statusEl.textContent = 'Error: ' + err.message;
+                    statusEl.className = 'mt-2 text-xs text-red-600';
+                }
+            }
+        });
+    }
 
     let pendingDeleteJobId = null;
 
-    // Delete job
     function deleteJob(jobId) {
         const job = jobs.find(j => j.id === jobId);
         if (!job) return;
 
         pendingDeleteJobId = jobId;
-        document.getElementById('deleteModalBody').textContent = `Are you sure you want to delete "${job.name}"?`;
-        document.getElementById('deleteModal').classList.remove('hidden');
+        const deleteModalBody = document.getElementById('deleteModalBody');
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModalBody) deleteModalBody.textContent = `Are you sure you want to delete "${job.name}"?`;
+        if (deleteModal) deleteModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
 
-    // Closes the delete modal
     function closeDeleteModal() {
         pendingDeleteJobId = null;
-        document.getElementById('deleteModal').classList.add('hidden');
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal) deleteModal.classList.add('hidden');
         document.body.style.overflow = '';
     }
 
-    // Executes actual HTTP deletion when clicking "Delete Permanently"
     async function confirmDeleteJob() {
         if (!pendingDeleteJobId) return;
 
         const jobId = pendingDeleteJobId;
         const confirmBtn = document.getElementById('confirmDeleteBtn');
-        
+
         try {
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Deleting...';
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Deleting...';
+            }
 
             const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${jobId}`, {
                 method: 'DELETE',
@@ -500,31 +620,33 @@
             console.error('Error deleting job:', err);
             alert('Failed to delete job');
         } finally {
-            confirmBtn.disabled = false;
-            confirmBtn.textContent = 'Delete Permanently';
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Delete Permanently';
+            }
         }
     }
-    
-    // Handle resize
+
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(renderGantt, 250);
     });
 
-    // Initial render
     renderGantt();
 
-
     function openQRModal() {
-        document.getElementById('qrModal').classList.remove('hidden');
+        const qrModal = document.getElementById('qrModal');
+        if (qrModal) qrModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
+
     function closeQRModal() {
-        document.getElementById('qrModal').classList.add('hidden');
+        const qrModal = document.getElementById('qrModal');
+        if (qrModal) qrModal.classList.add('hidden');
         document.body.style.overflow = '';
     }
-    // Close modal on Escape key
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeEditModal();
