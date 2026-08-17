@@ -245,21 +245,7 @@
                     const duration = Math.max(1, (end - start) / (1000 * 60 * 60 * 24) + 1);
 
                     // Solid colors generator
-                    let hash = 0;
-                    for (let i = 0; i < job.id.length; i++) {
-                        hash = job.id.charCodeAt(i) + ((hash << 5) - hash);
-                    }
-                    const colorIndex = Math.abs(hash) % 7;
-                    const colors = [
-                        { bg: '#f59e0b', border: '#d97706' },
-                        { bg: '#3b82f6', border: '#2563eb' },
-                        { bg: '#10b981', border: '#059669' },
-                        { bg: '#8b5cf6', border: '#7c3aed' },
-                        { bg: '#ef4444', border: '#dc2626' },
-                        { bg: '#ec4899', border: '#db2777' },
-                        { bg: '#14b8a6', border: '#0d9488' }
-                    ];
-                    const color = colors[colorIndex];
+                    const bgColor = job.color || '#f59e0b';
 
                     html += `<div class="relative flex-1 bg-white group-hover:bg-slate-50 transition-colors overflow-hidden" style="width: ${totalWidth}px; height: 44px;">`;
 
@@ -290,11 +276,11 @@
                     // Job bar
                     html += `<div class="absolute top-1 rounded-sm cursor-pointer hover:opacity-80 transition shadow-sm z-10" 
                     style="left: ${startOffset * dayWidth}px; 
-                            width: ${duration * dayWidth - 4}px; 
-                            height: 32px; 
-                            background: ${color.bg}; 
-                            border: 2px solid ${color.border};
-                            min-width: 12px;"
+                        width: ${duration * dayWidth - 4}px; 
+                        height: 32px; 
+                        background: ${bgColor}; 
+                        border: 2px solid ${bgColor};
+                        min-width: 12px;"
                     onclick="showJobDetails('${job.id}')"
                     title="Click for details: ${job.name}">`;
 
