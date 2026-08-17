@@ -26,7 +26,6 @@
                 class="bg-white text-black border border-slate-300 hover:bg-slate-50 text-sm font-semibold px-6 py-2 transition w-full sm:w-auto rounded-sm shadow-sm">QR</button>
             <button type="button" id="statusToggleBtn" onclick="togglePublishStatus()"
             class="text-xs sm:text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm flex items-center justify-center gap-2 border w-full sm:w-auto">
-                <span id="statusIndicator" class="w-2 h-2 rounded-full"></span>
                 <span id="statusText">Draft</span>
             </button>
         </form>
@@ -676,17 +675,14 @@ let currentStatus = '<%= house.schedule?.status || "draft" %>';
 // Update Button Styling based on State
 function updateStatusUI() {
     const btn = document.getElementById('statusToggleBtn');
-    const indicator = document.getElementById('statusIndicator');
     const text = document.getElementById('statusText');
     if (!btn) return;
 
     if (currentStatus === 'published') {
         btn.className = 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100 text-xs sm:text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm flex items-center justify-center gap-2 border w-full sm:w-auto';
-        indicator.className = 'w-2 h-2 rounded-full bg-emerald-500';
         text.textContent = 'Published';
     } else {
         btn.className = 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100 text-xs sm:text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm flex items-center justify-center gap-2 border w-full sm:w-auto';
-        indicator.className = 'w-2 h-2 rounded-full bg-amber-500';
         text.textContent = 'Draft';
     }
 }
