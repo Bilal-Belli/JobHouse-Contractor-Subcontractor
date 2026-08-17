@@ -16,7 +16,7 @@
             
             <button type="submit"
                 class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto rounded-sm shadow-sm">
-                + Add Trade
+                + Add Task
             </button>
             <button type="button" onclick="window.open('/house/schedule/<%= house.id %>', '_blank')"
                 class="bg-white text-black border border-slate-300 hover:bg-slate-50 text-sm font-semibold px-6 py-2 transition w-full sm:w-auto rounded-sm shadow-sm">
@@ -155,7 +155,7 @@
         if (!container) return;
 
         if (jobs.length === 0) {
-            container.innerHTML = '<div class="text-center py-12 text-slate-500 text-sm font-medium">No tasks scheduled yet. Add a trade above to see the timeline.</div>';
+            container.innerHTML = '<div class="text-center py-12 text-slate-500 text-sm font-medium">No tasks scheduled yet. Add a task above to see the timeline.</div>';
             return;
         }
 
