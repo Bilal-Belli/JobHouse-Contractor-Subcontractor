@@ -505,24 +505,19 @@ app.post('/admin/rooms/:roomId/delete', (req, res) => {
 });
 
 // Edit Room
-app.get('/admin/edit/:roomId', (req, res) => {
-  const { roomId } = req.params;
-  const data = getData();
-  const { room } = findRoomAndHouseById(data, roomId);
+app.get('/admin/edit/:id', (req, res) => {
+  try {
+    const data = getData();
+    const room = findRoomById(data, req.params.id);
 
-  if (!room) return res.status(404).send('Room not found');
+    if (!room) return res.status(404).send('Room not found');
+    const selectedTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : '');
 
-  room.trades.forEach(t => {
-    if (!t.comments) t.comments = [];
-    if (!t.files) t.files = [];
-  });
-
-  const selectedTrade = req.query.trade || (room.trades[0] ? room.trades[0].id : null);
-
-  res.render('admin-edit-room', {
-    room,
-    selectedTrade
-  });
+    res.render('admin-edit', { room, selectedTrade });
+  } catch (err) {
+    console.error('Error loading edit page:', err);
+    res.status(500).send('Error loading edit page');
+  }
 });
 
 // Add Trade Tab
@@ -1080,27 +1075,6 @@ app.delete('/admin/houses/schedule/:houseId/jobs/:jobId', (req, res) => {
   }
 });
 
-// View schedule page
-// app.get('/admin/houses/schedule/:houseId', (req, res) => {
-//   try {
-//     const data = getData();
-//     const house = data.houses.find(h => h.id === req.params.houseId);
-    
-//     if (!house) return res.status(404).send('House not found');
-    
-//     // Initialize schedule if it doesn't exist
-//     if (!house.schedule) {
-//       house.schedule = { jobs: [] };
-//       saveData(data);
-//     }
-    
-//     res.render('schedule', { house });
-//   } catch (err) {
-//     console.error('Error loading schedule:', err);
-//     res.status(500).send('Error loading schedule');
-//   }
-// });
-
 app.get('/admin/houses/schedule/:houseId', requireAuth, async (req, res) => {
   try {
     const data = getData();
@@ -1120,31 +1094,12 @@ app.get('/admin/houses/schedule/:houseId', requireAuth, async (req, res) => {
       console.error('QR generation error:', err);
     }
 
-    res.render('schedule', { house, qrDataUrl });
+    res.render('admin-schedule', { house, qrDataUrl });
   } catch (err) {
     console.error('Error loading schedule:', err);
     res.status(500).send('Error loading schedule');
   }
 });
-
-// app.get('/house/schedule/:houseId', (req, res) => {
-//   try {
-//     const data = getData();
-//     const house = data.houses.find(h => h.id === req.params.houseId);
-    
-//     if (!house) return res.status(404).send('House not found');
-    
-//     if (!house.schedule) {
-//       house.schedule = { jobs: [] };
-//       saveData(data);
-//     }
-    
-//     res.render('public-schedule', { house });
-//   } catch (err) {
-//     console.error('Error loading public schedule:', err);
-//     res.status(500).send('Error loading schedule');
-//   }
-// });
 
 app.get('/house/schedule/:houseId', async (req, res) => {
   try {
