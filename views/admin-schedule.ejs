@@ -28,14 +28,10 @@
 
         <!-- QR Modal -->
         <div id="qrModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
-            <div class="bg-white border border-slate-300 shadow-2xl max-w-sm w-full p-6 mx-4 text-center rounded-sm">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-base font-bold text-slate-900">Schedule <%= house.id.charAt(0).toUpperCase() + house.id.slice(1) %></h3>
-                    <button onclick="closeQRModal()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
-                </div>
+            <div class="bg-white border border-slate-300 shadow-2xl max-w-lg w-full p-6 mx-4 text-center rounded-sm">
                 <div class="flex justify-center mb-4">
                     <% if (typeof qrDataUrl !== 'undefined' && qrDataUrl) { %>
-                        <img src="<%= qrDataUrl %>" alt="QR Code" class="w-48 h-48 border border-slate-200 rounded-sm">
+                        <img src="<%= qrDataUrl %>" alt="QR Code" style="width: 100%; height: auto; max-width: 400px; display: block; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 4px;">
                     <% } else { %>
                         <div class="w-48 h-48 bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 text-sm rounded-sm">QR not available</div>
                     <% } %>

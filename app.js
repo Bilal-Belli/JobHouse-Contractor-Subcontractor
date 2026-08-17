@@ -1091,28 +1091,28 @@ app.get('/admin/houses/schedule/:houseId', requireAuth, async (req, res) => {
     const publicUrl = `${req.protocol}://${req.get('host')}/house/schedule/${house.id}`;
     let qrDataUrl = null;
     try {
-        // Create a canvas with extra height for text
-        const canvas = createCanvas(200, 230);
+        // Create a canvas with proper dimensions
+        const canvas = createCanvas(400, 430); // Larger canvas
         const ctx = canvas.getContext('2d');
         
-        // Draw QR code to canvas
-        await QRCode.toCanvas(canvas, publicUrl, { width: 200, margin: 2 });
-        
-        // Shift QR down to make room for text
-        const imageData = ctx.getImageData(0, 0, 200, 200);
+        // White background
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, 200, 230);
+        ctx.fillRect(0, 0, 400, 430);
         
-        // Add house name text
+        // Add house name text at top
         ctx.fillStyle = '#000000';
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`Schedule - ${house.id.charAt(0).toUpperCase() + house.id.slice(1)}`, 100, 20);
+        ctx.fillText(`Schedule - ${house.id.charAt(0).toUpperCase() + house.id.slice(1)}`, 200, 30);
+        
+        // Generate QR code separately
+        const qrCanvas = createCanvas(400, 400);
+        await QRCode.toCanvas(qrCanvas, publicUrl, { width: 400, margin: 2 });
         
         // Draw QR code below text
-        ctx.putImageData(imageData, 0, 30);
+        ctx.drawImage(qrCanvas, 0, 40);
         
-        qrDataUrl = canvas.toDataURL();
+        qrDataUrl = canvas.toDataURL('image/png');
     } catch (err) {
         console.error('QR generation error:', err);
     }
