@@ -17,11 +17,11 @@
                 + Add Job
             </button>
             <button type="button" onclick="window.open('/house/schedule/<%= house.id %>', '_blank')"
-                class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
+                class="bg-slate-300 hover:bg-slate-200 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">
                 View
             </button>
             <button type="button" onclick="openQRModal()"
-                class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">QR</button>
+                class="bg-slate-300 hover:bg-slate-200 text-white text-sm font-semibold px-6 py-2 transition w-full sm:w-auto">QR</button>
         </form>
 
         <!-- QR Modal -->
@@ -223,8 +223,8 @@
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             const isToday = date.toDateString() === today.toDateString();
 
-            html += `<div class="text-[6px] sm:text-[8px] text-slate-400 ${isToday ? 'font-bold text-amber-600' : ''}" 
-                style="width: ${dayWidth}px; text-align: center; ${isWeekend ? 'color: #94a3b8;' : ''}">`;
+            html += `<div class="text-[6px] sm:text-[8px] text-slate-400 border-r border-slate-200 ${isToday ? 'font-bold text-amber-600' : ''}" 
+            style="width: ${dayWidth}px; text-align: center; ${isWeekend ? 'color: #94a3b8;' : ''}">`;
             html += `${date.getDate()}`;
             html += `</div>`;
         }
@@ -257,7 +257,15 @@
             ];
             const color = colors[colorIndex];
 
-            html += `<div class="border-b border-slate-100 hover:bg-slate-50" style="height: 44px; position: relative;">`;
+
+            html += `<div class="border-b border-slate-300 hover:bg-slate-50" style="height: 44px; position: relative;">`;
+
+    // Grille verticale pour tous les jours
+    html += `<div class="absolute inset-0 flex pointer-events-none">`;
+    for (let i = 0; i <= totalDays; i++) {
+        html += `<div class="border-r border-slate-300 h-full" style="width: ${dayWidth}px;"></div>`;
+    }
+    html += `</div>`;
 
             // Job bar - clickable
             html += `<div class="absolute top-1 rounded-sm cursor-pointer hover:opacity-70 transition" 
