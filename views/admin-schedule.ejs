@@ -189,6 +189,7 @@
         // Month labels
         let currentMonth = '';
         let monthStartDay = 0;
+        let monthIndex = 0;
         for (let i = 0; i <= totalDays; i++) {
             const date = new Date(minDate);
             date.setDate(date.getDate() + i);
@@ -197,10 +198,12 @@
             if (monthKey !== currentMonth) {
                 if (currentMonth !== '') {
                     const monthWidth = (i - monthStartDay) * dayWidth;
-                    html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 bg-slate-50 px-1 sm:px-2 py-0.5 rounded" 
+                    const bgClass = (monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100';
+                    html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 ${bgClass} px-1 sm:px-2 py-0.5 rounded" 
                     style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
                     html += `${getMonthName(date.toISOString().split('T')[0])}`;
                     html += `</div>`;
+                    monthIndex++;
                 }
                 currentMonth = monthKey;
                 monthStartDay = i;
@@ -209,7 +212,8 @@
         // Last month
         if (currentMonth !== '') {
             const monthWidth = (totalDays - monthStartDay + 1) * dayWidth;
-            html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 bg-slate-50 px-1 sm:px-2 py-0.5 rounded" 
+            const bgClass = (monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100';
+            html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 ${bgClass} px-1 sm:px-2 py-0.5 rounded" 
                 style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
             html += `${getMonthName(maxDate.toISOString().split('T')[0])}`;
             html += `</div>`;
@@ -260,7 +264,35 @@
 
             html += `<div class="border-b border-slate-300 hover:bg-slate-50" style="height: 44px; position: relative;">`;
 
-    // Grille verticale pour tous les jours
+    // Alternating month background overlay for row content
+    html += `<div class="absolute inset-0 flex pointer-events-none">`;
+    let rowMonth = '';
+    let rowStartDay = 0;
+    let rowMonthIndex = 0;
+    for (let i = 0; i <= totalDays; i++) {
+        const date = new Date(minDate);
+        date.setDate(date.getDate() + i);
+        const monthKey = date.getFullYear() + '-' + date.getMonth();
+
+        if (monthKey !== rowMonth) {
+            if (rowMonth !== '') {
+                const monthWidth = (i - rowStartDay) * dayWidth;
+                const bgClass = (rowMonthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/60';
+                html += `<div class="${bgClass} h-full" style="width: ${monthWidth}px;"></div>`;
+                rowMonthIndex++;
+            }
+            rowMonth = monthKey;
+            rowStartDay = i;
+        }
+    }
+    if (rowMonth !== '') {
+        const monthWidth = (totalDays - rowStartDay + 1) * dayWidth;
+        const bgClass = (rowMonthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/60';
+        html += `<div class="${bgClass} h-full" style="width: ${monthWidth}px;"></div>`;
+    }
+    html += `</div>`;
+
+    // Vertical grid lines
     html += `<div class="absolute inset-0 flex pointer-events-none">`;
     for (let i = 0; i <= totalDays; i++) {
         html += `<div class="border-r border-slate-300 h-full" style="width: ${dayWidth}px;"></div>`;
