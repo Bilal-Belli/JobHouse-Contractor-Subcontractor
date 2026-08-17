@@ -224,8 +224,8 @@
             if (monthKey !== currentMonth) {
                 if (currentMonth !== '') {
                     const monthWidth = (i - monthStartDay) * globalDayWidth;
-                    const bgClass = (monthIndex % 2 === 0) ? 'bg-slate-50' : 'bg-slate-100/50';
-                    html += `<div class="absolute top-0 text-[10px] font-bold text-slate-600 ${bgClass} px-2 py-1 border-r border-slate-200 flex items-center justify-center overflow-hidden" 
+                    const bgClass = (monthIndex % 2 === 0) ? 'bg-slate-100/80' : 'bg-slate-50/50';
+                    html += `<div class="absolute top-0 text-[10px] font-bold text-slate-700 ${bgClass} px-2 py-1 border-r-2 border-slate-300 flex items-center justify-center overflow-hidden" 
                     style="left: ${monthStartDay * globalDayWidth}px; width: ${monthWidth}px; height: 26px;">`;
                     html += `${getMonthName(lastMonthDateStr)}`;
                     html += `</div>`;
@@ -244,8 +244,13 @@
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             const isToday = date.toDateString() === today.toDateString();
             
-            const txtColor = isToday ? 'text-white bg-amber-500 font-bold' : (isWeekend ? 'text-slate-400 bg-slate-50/50' : 'text-slate-600 bg-white');
-            html += `<div class="text-[10px] border-r border-slate-200 flex items-center justify-center ${txtColor}" 
+            const nextDate = addDays(minDate, i + 1);
+            const isMonthEnd = (i === totalDays - 1) || (nextDate.getMonth() !== date.getMonth());
+            const borderClass = isMonthEnd ? 'border-r-2 border-slate-300' : 'border-r border-slate-200';
+            const isEvenMonth = date.getMonth() % 2 === 0;
+
+            let txtColor = isToday ? 'text-white bg-amber-500 font-bold' : (isWeekend ? 'text-slate-400 bg-slate-50/50' : (isEvenMonth ? 'text-slate-600 bg-slate-100/30' : 'text-slate-600 bg-white'));
+            html += `<div class="text-[10px] ${borderClass} flex items-center justify-center ${txtColor}" 
             style="width: ${globalDayWidth}px; height: 100%;">`;
             html += `${date.getDate()}`;
             html += `</div>`;
@@ -262,14 +267,23 @@
             const duration = Math.max(1, getDaysDiff(start, end) + 1);
             const bgColor = job.color || '#f59e0b';
 
-            html += `<div class="border-b border-slate-200 hover:bg-slate-50 relative group" style="height: 48px;">`;
+            html += `<div class="border-b border-slate-300 hover:bg-slate-200/50 relative group" style="height: 48px;">`;
 
-            // Background vertical guides
+            // Background vertical guides with alternating month opacity & boundary lines
             html += `<div class="absolute inset-0 flex pointer-events-none">`;
             for (let i = 0; i < totalDays; i++) {
                 const date = addDays(minDate, i);
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-                html += `<div class="border-r border-slate-100/70 h-full ${isWeekend ? 'bg-slate-50/40' : ''}" style="width: ${globalDayWidth}px;"></div>`;
+                const nextDate = addDays(minDate, i + 1);
+                
+                const isEvenMonth = date.getMonth() % 2 === 0;
+                const isMonthEnd = (i === totalDays - 1) || (nextDate.getMonth() !== date.getMonth());
+                
+                const monthBg = isEvenMonth ? 'bg-slate-200/40' : 'bg-transparent';
+                const weekendBg = isWeekend ? 'bg-slate-300/20' : '';
+                const borderClass = isMonthEnd ? 'border-r-2 border-slate-300' : 'border-r border-slate-300/70';
+
+                html += `<div class="${borderClass} h-full ${monthBg} ${weekendBg}" style="width: ${globalDayWidth}px;"></div>`;
             }
             html += `</div>`;
 
@@ -300,8 +314,8 @@
     }
 
     function startDrag(e, jobId) {
-        if (e.button !== 0) return; // Only left click
-        e.preventDefault(); // CRITICAL: Stops native text selection ghosting
+        if (e.button !== 0) return;
+        e.preventDefault();
         
         draggedJobId = jobId;
         dragStartX = e.clientX;
@@ -347,7 +361,6 @@
                     const start = new Date(job.startDate + 'T00:00:00');
                     const end = new Date(job.endDate + 'T00:00:00');
 
-                    // Math is strictly day-based, immune to DST
                     const newStart = addDays(start, daysShift);
                     const newEnd = addDays(end, daysShift);
 
@@ -377,7 +390,7 @@
                     }
                 }
             }
-            renderGantt(); // Reset bar to true server position
+            renderGantt();
         }
 
         setTimeout(() => {
@@ -420,8 +433,8 @@
                     </div>
                 </div>
                 <div id="editTotalDays" class="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-sm inline-block">
-    Total: <span id="editDayCount">0</span> days
-</div>
+                    Total: <span id="editDayCount">0</span> days
+                </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Color Marker</label>
                     <input type="color" id="editJobColor" value="${job.color || '#f59e0b'}" required
