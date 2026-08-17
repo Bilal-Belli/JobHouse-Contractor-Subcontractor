@@ -212,8 +212,9 @@
                     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                     const isToday = date.toDateString() === today.toDateString();
 
-                    html += `<div class="text-[6px] sm:text-[8px] text-slate-400 border-r border-slate-100 ${isToday ? 'font-bold text-amber-600' : ''}" 
-                      style="width: ${dayWidth}px; text-align: center; ${isWeekend ? 'color: #94a3b8; background-color: #f8fafc;' : ''}">`;
+                    const headerBg = isWeekend ? 'bg-slate-200/60 text-slate-600 font-semibold' : '';
+html += `<div class="text-[6px] sm:text-[8px] text-slate-400 border-r border-slate-100 ${headerBg} ${isToday ? 'font-bold text-amber-600' : ''}" 
+  style="width: ${dayWidth}px; text-align: center;">`;
                     html += `${date.getDate()}`;
                     html += `</div>`;
                 }
@@ -262,7 +263,9 @@
                         }
                         
                         const isMonthEnd = (i === totalDays - 1) || (nextDate.getMonth() !== date.getMonth());
-                        const bgClass = (monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-200/60';
+                        
+                        const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+const bgClass = isWeekend ? 'bg-slate-200/60' : ((monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/50');
                         const borderClass = isMonthEnd ? 'border-r-2 border-slate-400' : 'border-r border-slate-300';
 
                         html += `<div class="${bgClass} ${borderClass} h-full flex-shrink-0" style="width: ${dayWidth}px;"></div>`;
