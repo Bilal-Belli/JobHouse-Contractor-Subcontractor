@@ -24,6 +24,11 @@
             </button>
             <button type="button" onclick="openQRModal()"
                 class="bg-white text-black border border-slate-300 hover:bg-slate-50 text-sm font-semibold px-6 py-2 transition w-full sm:w-auto rounded-sm shadow-sm">QR</button>
+            <button type="button" id="statusToggleBtn" onclick="togglePublishStatus()"
+            class="text-xs sm:text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm flex items-center justify-center gap-2 border w-full sm:w-auto">
+                <span id="statusIndicator" class="w-2 h-2 rounded-full"></span>
+                <span id="statusText">Draft</span>
+            </button>
         </form>
 
         <!-- QR Modal -->
@@ -663,6 +668,54 @@ function updateDayCount() {
 document.getElementById('editStartDate').addEventListener('change', updateDayCount);
 document.getElementById('editEndDate').addEventListener('change', updateDayCount);
 updateDayCount();
+</script>
+<script>
+    // State Variable (Reads status from server, defaults to 'draft')
+let currentStatus = '<%= house.schedule?.status || "draft" %>';
+
+// Update Button Styling based on State
+function updateStatusUI() {
+    const btn = document.getElementById('statusToggleBtn');
+    const indicator = document.getElementById('statusIndicator');
+    const text = document.getElementById('statusText');
+    if (!btn) return;
+
+    if (currentStatus === 'published') {
+        btn.className = 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100 text-xs sm:text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm flex items-center justify-center gap-2 border w-full sm:w-auto';
+        indicator.className = 'w-2 h-2 rounded-full bg-emerald-500';
+        text.textContent = 'Published';
+    } else {
+        btn.className = 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100 text-xs sm:text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm flex items-center justify-center gap-2 border w-full sm:w-auto';
+        indicator.className = 'w-2 h-2 rounded-full bg-amber-500';
+        text.textContent = 'Draft';
+    }
+}
+
+// Toggle Handler Function
+async function togglePublishStatus() {
+    const nextStatus = currentStatus === 'published' ? 'draft' : 'published';
+
+    try {
+        const response = await fetch(`/admin/houses/schedule/status/${houseId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: nextStatus })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            currentStatus = nextStatus;
+            updateStatusUI();
+        } else {
+            alert('Failed to update status: ' + (data.error || 'Unknown error'));
+        }
+    } catch (err) {
+        alert('Network error updating status');
+    }
+}
+
+// Initial UI paint on boot (place at bottom of script)
+updateStatusUI();
 </script>
 </main>
 <footer class="bg-slate-900 border-t border-slate-600 flex-shrink-0 mt-auto">

@@ -1164,6 +1164,32 @@ app.post('/admin/houses/schedule/reorder/:houseId', (req, res) => {
     }
 });
 
+app.put('/admin/houses/schedule/status/:houseId', (req, res) => {
+    try {
+        const { houseId } = req.params;
+        const { status } = req.body;
+
+        const data = getData();
+        const house = data.houses.find(h => h.id === houseId);
+
+        if (!house) {
+            return res.status(404).json({ success: false, error: 'House not found' });
+        }
+
+        if (!house.schedule) {
+            house.schedule = { jobs: [] };
+        }
+
+        house.schedule.status = status;
+        saveData(data);
+
+        res.json({ success: true, status });
+    } catch (err) {
+        console.error('Error updating status:', err);
+        res.status(500).json({ success: false, error: 'Failed to update status' });
+    }
+});
+
 // =====================
 // PUBLIC VIEW ROUTES
 // =====================

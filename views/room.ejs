@@ -523,11 +523,14 @@
                     </div>
                 </div>
 
-                <div class="bg-white pro-card p-4 md:p-5 mb-6">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                        <span class="w-1 h-4 bg-slate-400 block"></span> <a href="/house/schedule/<%= house.id %>" >Schedule</a>
-                    </h3>
-                </div>
+                <% if (house.schedule && house.schedule.status === 'published') { %>
+                    <div class="bg-white pro-card p-4 md:p-5 mb-6">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+                            <span class="w-1 h-4 bg-slate-400 block"></span> 
+                            <a href="/house/schedule/<%= house.id %>">Schedule</a>
+                        </h3>
+                    </div>
+                <% } %>
 
                 <!-- ===== TRADE CONTENT ===== -->
                 <% const currentTrade = room.trades.find(t => t.id === activeTrade) || room.trades[0]; %>
