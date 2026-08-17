@@ -121,6 +121,7 @@
     }
 
     // Render Gantt Chart with month labels
+    // Render Gantt Chart with month labels
     function renderGantt() {
         const container = document.getElementById('ganttChart');
         const countEl = document.getElementById('jobCount');
@@ -144,7 +145,6 @@
 
         const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
 
-        // Responsive day width
         let dayWidth;
         if (window.innerWidth < 640) {
             dayWidth = Math.max(20, Math.min(35, 400 / totalDays));
@@ -158,15 +158,11 @@
 
         let html = `<div class="flex">`;
 
-        // Fixed Job Name Column
         html += `<div class="flex-shrink-0" style="width: 150px;">`;
-
-        // Header
         html += `<div class="border-b border-slate-300 bg-white sticky top-0 z-20" style="height: 50px;">`;
         html += `<div class="p-2 font-bold text-xs text-slate-600">Job</div>`;
         html += `</div>`;
 
-        // Job rows
         jobs.forEach(job => {
             html += `<div class="border-b border-slate-100 hover:bg-slate-50 group" style="height: 44px;">`;
             html += `<div class="p-2 text-xs sm:text-sm font-medium text-slate-700 flex items-center gap-1">`;
@@ -178,22 +174,21 @@
 
         html += `</div>`;
 
-        // Scrollable Timeline Column
         html += `<div class="overflow-x-auto flex-1">`;
         html += `<div style="width: ${totalWidth}px;">`;
 
-        // Header with month labels
         html += `<div class="border-b border-slate-300 bg-white sticky top-0 z-10" style="height: 50px;">`;
         html += `<div class="relative w-full" style="height: 50px;">`;
 
-        // Month labels
         let currentMonth = '';
         let monthStartDay = 0;
         let monthIndex = 0;
+        let lastMonthDateStr = '';
+
         for (let i = 0; i <= totalDays; i++) {
-            const date = new Date(minDate);
-            date.setDate(date.getDate() + i);
-            const monthKey = date.getFullYear() + '-' + date.getMonth();
+            const date = new Date(minDate.getTime() + i * 24 * 60 * 60 * 1000);
+            const dateStr = date.toISOString().split('T')[0];
+            const monthKey = dateStr.substring(0, 7);
 
             if (monthKey !== currentMonth) {
                 if (currentMonth !== '') {
@@ -201,29 +196,28 @@
                     const bgClass = (monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100';
                     html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 ${bgClass} px-1 sm:px-2 py-0.5 rounded" 
                     style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
-                    html += `${getMonthName(date.toISOString().split('T')[0])}`;
+                    html += `${getMonthName(lastMonthDateStr)}`;
                     html += `</div>`;
                     monthIndex++;
                 }
                 currentMonth = monthKey;
                 monthStartDay = i;
             }
+            lastMonthDateStr = dateStr;
         }
-        // Last month
+
         if (currentMonth !== '') {
             const monthWidth = (totalDays - monthStartDay + 1) * dayWidth;
             const bgClass = (monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100';
             html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 ${bgClass} px-1 sm:px-2 py-0.5 rounded" 
                 style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 2px solid #e2e8f0;">`;
-            html += `${getMonthName(maxDate.toISOString().split('T')[0])}`;
+            html += `${getMonthName(lastMonthDateStr)}`;
             html += `</div>`;
         }
 
-        // Day markers
         html += `<div class="absolute bottom-0 flex w-full">`;
         for (let i = 0; i <= totalDays; i++) {
-            const date = new Date(minDate);
-            date.setDate(date.getDate() + i);
+            const date = new Date(minDate.getTime() + i * 24 * 60 * 60 * 1000);
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             const isToday = date.toDateString() === today.toDateString();
 
@@ -236,7 +230,6 @@
 
         html += `</div></div>`;
 
-        // Job rows in timeline
         jobs.forEach(job => {
             const start = new Date(job.startDate + 'T00:00:00');
             const end = new Date(job.endDate + 'T00:00:00');
@@ -244,7 +237,6 @@
             const startOffset = Math.max(0, (start - minDate) / (1000 * 60 * 60 * 24));
             const duration = Math.max(1, (end - start) / (1000 * 60 * 60 * 24) + 1);
 
-            // Solid colors
             let hash = 0;
             for (let i = 0; i < job.id.length; i++) {
                 hash = job.id.charCodeAt(i) + ((hash << 5) - hash);
@@ -261,45 +253,41 @@
             ];
             const color = colors[colorIndex];
 
-
             html += `<div class="border-b border-slate-300 hover:bg-slate-50" style="height: 44px; position: relative;">`;
 
-    // Alternating month background overlay for row content
-    html += `<div class="absolute inset-0 flex pointer-events-none">`;
-    let rowMonth = '';
-    let rowStartDay = 0;
-    let rowMonthIndex = 0;
-    for (let i = 0; i <= totalDays; i++) {
-        const date = new Date(minDate);
-        date.setDate(date.getDate() + i);
-        const monthKey = date.getFullYear() + '-' + date.getMonth();
+            html += `<div class="absolute inset-0 flex pointer-events-none">`;
+            let rowMonth = '';
+            let rowStartDay = 0;
+            let rowMonthIndex = 0;
+            for (let i = 0; i <= totalDays; i++) {
+                const date = new Date(minDate.getTime() + i * 24 * 60 * 60 * 1000);
+                const dateStr = date.toISOString().split('T')[0];
+                const monthKey = dateStr.substring(0, 7);
 
-        if (monthKey !== rowMonth) {
+                if (monthKey !== rowMonth) {
+                    if (rowMonth !== '') {
+                        const monthWidth = (i - rowStartDay) * dayWidth;
+                        const bgClass = (rowMonthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/60';
+                        html += `<div class="${bgClass} h-full" style="width: ${monthWidth}px;"></div>`;
+                        rowMonthIndex++;
+                    }
+                    rowMonth = monthKey;
+                    rowStartDay = i;
+                }
+            }
             if (rowMonth !== '') {
-                const monthWidth = (i - rowStartDay) * dayWidth;
+                const monthWidth = (totalDays - rowStartDay + 1) * dayWidth;
                 const bgClass = (rowMonthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/60';
                 html += `<div class="${bgClass} h-full" style="width: ${monthWidth}px;"></div>`;
-                rowMonthIndex++;
             }
-            rowMonth = monthKey;
-            rowStartDay = i;
-        }
-    }
-    if (rowMonth !== '') {
-        const monthWidth = (totalDays - rowStartDay + 1) * dayWidth;
-        const bgClass = (rowMonthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/60';
-        html += `<div class="${bgClass} h-full" style="width: ${monthWidth}px;"></div>`;
-    }
-    html += `</div>`;
+            html += `</div>`;
 
-    // Vertical grid lines
-    html += `<div class="absolute inset-0 flex pointer-events-none">`;
-    for (let i = 0; i <= totalDays; i++) {
-        html += `<div class="border-r border-slate-300 h-full" style="width: ${dayWidth}px;"></div>`;
-    }
-    html += `</div>`;
+            html += `<div class="absolute inset-0 flex pointer-events-none">`;
+            for (let i = 0; i <= totalDays; i++) {
+                html += `<div class="border-r border-slate-300 h-full" style="width: ${dayWidth}px;"></div>`;
+            }
+            html += `</div>`;
 
-            // Job bar - clickable
             html += `<div class="absolute top-1 rounded-sm cursor-pointer hover:opacity-70 transition" 
                 style="left: ${startOffset * dayWidth}px; 
                        width: ${duration * dayWidth - 4}px; 
@@ -316,7 +304,6 @@
             }
 
             html += `</div>`;
-
             html += `</div>`;
         });
 
