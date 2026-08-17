@@ -189,7 +189,7 @@
 
         html += `</div>`;
 
-        html += `<div class="overflow-x-auto flex-1">`;
+        html += `<div class="flex-1">`;
         html += `<div style="width: ${totalWidth}px;">`;
 
         html += `<div class="border-b border-slate-300 bg-white sticky top-0 z-10" style="height: 50px;">`;
@@ -315,6 +315,8 @@
         html += `</div>`;
 
         container.innerHTML = html;
+        container.style.maxHeight = '70vh';
+        container.style.overflowY = 'auto';
     }
 
     function handleJobClick(e, jobId) {
