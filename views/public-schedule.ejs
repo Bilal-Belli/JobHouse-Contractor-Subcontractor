@@ -9,79 +9,70 @@
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
 
-    <body class="min-h-screen font-sans text-black bg-[#f4f1ec]">
-        <div class="min-h-screen">
-            <!-- Header -->
-            <header class="bg-slate-900 text-white sticky top-0 z-30">
-                <div class="max-w-7xl mx-auto px-4 py-4">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                        <div>
-                            <h1 class="text-xl font-bold">Construction Schedule - <%= house.id.charAt(0).toUpperCase() + house.id.slice(1) %></h1>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span id="jobCount" class="text-xs bg-slate-800 px-3 py-1 rounded">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Main Content -->
-            <main class="max-w-7xl mx-auto px-4 py-6">
-                <!-- Gantt Chart -->
-                <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                    <div class="p-4 border-b border-slate-200">
-                        <h2 class="text-sm font-bold text-slate-800">Project Timeline</h2>
-                    </div>
-                    <div id="ganttContainer" class="p-2 sm:p-4 overflow-x-auto">
-                        <div id="ganttChart" class="relative min-h-[300px]">
-                            <!-- Rendered by JavaScript -->
-                        </div>
-                    </div>
+    <body class="font-sans text-black bg-[#f4f1ec] pb-16">
+        <header class="bg-slate-900 text-white shadow-md flex-shrink-0 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 text-white hover:text-amber-400 transition-colors shrink-0">
+                    <img src="<%= baseUrl %>/logo.png" alt="Logo" class="w-32 h-10 object-contain">
                 </div>
 
-                <!-- Job Details Modal -->
-                <div id="detailModal"
-                    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
-                    <div class="bg-white border border-slate-200 shadow-xl max-w-md w-full p-6 mx-4 rounded-lg">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 id="detailJobName" class="text-lg font-bold text-slate-900">Job Details</h3>
-                            <button onclick="closeDetailModal()"
-                                class="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
-                        </div>
-                        <div class="space-y-3">
-                            <div>
-                                <p class="text-xs text-slate-500">Duration</p>
-                                <p id="detailDuration" class="text-sm font-medium text-slate-700"></p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-slate-500">Start Date</p>
-                                <p id="detailStart" class="text-sm font-medium text-slate-700"></p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-slate-500">End Date</p>
-                                <p id="detailEnd" class="text-sm font-medium text-slate-700"></p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-slate-500">Total Days</p>
-                                <p id="detailDays" class="text-sm font-medium text-slate-700"></p>
-                            </div>
-                        </div>
+                <div class="flex-1 max-w-md mx-auto">
+                    <h2>Schedule - <%= house.id.charAt(0).toUpperCase() + house.id.slice(1) %></h2>
+                </div>
+            </div>
+        </header>
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 py-6">
+            <!-- Gantt Chart -->
+            <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                <div id="ganttContainer" class="p-2 sm:p-4 overflow-x-auto">
+                    <div id="ganttChart" class="relative min-h-[300px]">
+                        <!-- Rendered by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Details Modal -->
+            <div id="detailModal"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+                <div class="bg-white border border-slate-200 shadow-xl max-w-md w-full p-6 mx-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 id="detailJobName" class="text-lg font-bold text-slate-900">Job Details</h3>
                         <button onclick="closeDetailModal()"
-                            class="mt-4 w-full px-4 py-2 text-sm font-medium text-white bg-slate-700 hover:bg-slate-800 transition rounded">
-                            Close
-                        </button>
+                            class="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
                     </div>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-xs text-slate-500">Duration</p>
+                            <p id="detailDuration" class="text-sm font-medium text-slate-700"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500">Start Date</p>
+                            <p id="detailStart" class="text-sm font-medium text-slate-700"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500">End Date</p>
+                            <p id="detailEnd" class="text-sm font-medium text-slate-700"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500">Total Days</p>
+                            <p id="detailDays" class="text-sm font-medium text-slate-700"></p>
+                        </div>
+                    </div>
+                    <button onclick="closeDetailModal()"
+                        class="mt-4 w-full px-4 py-2 text-sm font-medium text-white bg-slate-700 hover:bg-slate-800 transition rounded">
+                        Close
+                    </button>
                 </div>
-            </main>
+            </div>
+        </main>
 
-            <!-- Footer -->
-            <footer class="bg-slate-900 border-t border-slate-600 flex-shrink-0">
-                <div class="max-w-7xl mx-auto px-4 py-6 text-center text-xs text-white">
-                    &copy; 2026. Manu Romero Construction.
-                </div>
-            </footer>
-        </div>
-
+        <!-- Footer -->
+        <footer class="bg-slate-900 border-t border-slate-600 flex-shrink-0 fixed bottom-0 left-0 right-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 py-6 text-center text-xs text-white">
+                &copy; 2026. Manu Romero Construction.
+            </div>
+        </footer>
         <script>
             const houseId = '<%= house.id %>';
             let jobs = <%- JSON.stringify(house.schedule?.jobs || []) %>;
@@ -109,9 +100,6 @@
             // Render Gantt Chart
             function renderGantt() {
                 const container = document.getElementById('ganttChart');
-                const countEl = document.getElementById('jobCount');
-
-                countEl.textContent = `${jobs.length} job${jobs.length !== 1 ? 's' : ''}`;
 
                 if (jobs.length === 0) {
                     container.innerHTML = `
@@ -155,7 +143,6 @@
 
                 // Header
                 html += `<div class="border-b border-slate-200 bg-white sticky top-0 z-20" style="height: 50px;">`;
-                html += `<div class="p-2 font-bold text-xs text-slate-600">Job</div>`;
                 html += `</div>`;
 
                 // Job rows
