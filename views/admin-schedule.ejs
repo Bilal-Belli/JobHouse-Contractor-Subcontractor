@@ -247,7 +247,7 @@
             const borderClass = isMonthEnd ? 'border-r-2 border-slate-300' : 'border-r border-slate-200';
             const isEvenMonth = date.getMonth() % 2 === 0;
 
-            let txtColor = isToday ? 'text-white bg-amber-500 font-bold' : (isWeekend ? 'text-slate-400 bg-slate-50/50' : (isEvenMonth ? 'text-slate-600 bg-slate-100/30' : 'text-slate-600 bg-white'));
+            let txtColor = isToday ? 'text-white bg-amber-500 font-bold' : (isWeekend ? 'text-slate-600 bg-slate-200/60' : (isEvenMonth ? 'text-slate-600 bg-slate-100/50' : 'text-slate-600 bg-white'));
             html += `<div class="text-[10px] ${borderClass} flex items-center justify-center ${txtColor}" 
             style="width: ${globalDayWidth}px; height: 100%;">`;
             html += `${date.getDate()}`;
@@ -277,11 +277,10 @@
                 const isEvenMonth = date.getMonth() % 2 === 0;
                 const isMonthEnd = (i === totalDays - 1) || (nextDate.getMonth() !== date.getMonth());
                 
-                const monthBg = isEvenMonth ? 'bg-slate-200/40' : 'bg-transparent';
-                const weekendBg = isWeekend ? 'bg-slate-300/20' : '';
-                const borderClass = isMonthEnd ? 'border-r-2 border-slate-300' : 'border-r border-slate-300/70';
+                const colBg = isWeekend ? 'bg-slate-200/60' : (isEvenMonth ? 'bg-slate-100/50' : 'bg-transparent');
+const borderClass = isMonthEnd ? 'border-r-2 border-slate-300' : 'border-r border-slate-300/70';
 
-                html += `<div class="${borderClass} h-full ${monthBg} ${weekendBg}" style="width: ${globalDayWidth}px;"></div>`;
+html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWidth}px;"></div>`;
             }
             html += `</div>`;
 
