@@ -95,7 +95,7 @@
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 </style>
-
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
     const houseId = '<%= house.id %>';
     let jobs = <%- JSON.stringify(house.schedule?.jobs || []) %>;
@@ -166,46 +166,49 @@
         const endDates = jobs.map(j => new Date(j.endDate + 'T00:00:00'));
 
         const minDate = new Date(Math.min(...startDates));
-        minDate.setDate(minDate.getDate() - 3); // Padding left
+        minDate.setDate(minDate.getDate() - 3);
         globalMinDate = new Date(minDate);
 
         const maxDate = new Date(Math.max(...endDates));
-        maxDate.setDate(maxDate.getDate() + 4); // Padding right
+        maxDate.setDate(maxDate.getDate() + 4);
 
         const totalDays = getDaysDiff(minDate, maxDate);
 
-        // Responsive day widths
         if (window.innerWidth < 640) globalDayWidth = 25;
         else if (window.innerWidth < 1024) globalDayWidth = 35;
         else globalDayWidth = Math.max(30, Math.min(60, 800 / totalDays));
 
         const totalWidth = totalDays * globalDayWidth;
 
-        // FLAWLESS LAYOUT STRUCTURE
         let html = `<div class="flex w-max min-w-full">`;
 
-        // 1. FIXED LEFT COLUMN (Sticky X, Headers Sticky Y)
+        // 1. FIXED LEFT COLUMN
         html += `<div class="flex-shrink-0 sticky left-0 z-40 bg-white border-r border-slate-300 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style="width: 160px;">`;
         html += `<div class="bg-slate-100 sticky top-0 z-50 border-b border-slate-300 flex items-center px-3" style="height: 54px;">`;
         html += `<span class="font-bold text-xs text-slate-700 uppercase tracking-wider">Task</span>`;
         html += `</div>`;
 
-        jobs.forEach(job => {
-            html += `<div class="border-b border-slate-200 hover:bg-slate-50 group flex items-center justify-between px-3 transition-colors" style="height: 48px;">`;
+        // Task rows container for drag-and-drop
+        html += `<div id="taskRowsContainer" class="flex flex-col">`;
+
+        jobs.forEach((job, index) => {
+            html += `<div class="border-b border-slate-200 hover:bg-slate-50 group flex items-center justify-between px-3 transition-colors cursor-grab" data-job-id="${job.id}" data-index="${index}" style="height: 48px;">`;
             html += `<span class="text-xs sm:text-sm font-semibold text-slate-700 truncate cursor-pointer hover:text-amber-600 transition-colors" onclick="openEditModal('${job.id}')" title="Edit ${escapeHtml(job.name)}">${escapeHtml(job.name)}</span>`;
             html += `<button onclick="deleteJob('${job.id}')" class="text-slate-400 hover:text-red-600 text-sm flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete">✕</button>`;
             html += `</div>`;
         });
-        html += `</div>`;
 
-        // 2. TIMELINE AREA (Scrolls naturally)
+        html += `</div>`; // End taskRowsContainer
+        html += `</div>`; // End left column
+
+        // 2. TIMELINE AREA
         html += `<div class="relative flex-shrink-0 bg-white" style="width: ${totalWidth}px;">`;
 
-        // Timeline Headers (Sticky Y)
+        // Timeline Headers
         html += `<div class="bg-white sticky top-0 z-30 border-b border-slate-300 shadow-sm" style="height: 54px;">`;
         html += `<div class="relative w-full h-full">`;
 
-        // --- Render Months ---
+        // Render Months
         let currentMonth = '';
         let monthStartDay = 0;
         let monthIndex = 0;
@@ -218,7 +221,7 @@
                 dateStr = formatDateISO(date);
                 monthKey = dateStr.substring(0, 7);
             } else {
-                monthKey = 'END'; // Force render of last block
+                monthKey = 'END';
             }
 
             if (monthKey !== currentMonth) {
@@ -237,7 +240,7 @@
             if (i < totalDays) lastMonthDateStr = dateStr;
         }
 
-        // --- Render Days ---
+        // Render Days
         html += `<div class="absolute bottom-0 flex w-full h-[28px]">`;
         for (let i = 0; i < totalDays; i++) {
             const date = addDays(minDate, i);
@@ -256,9 +259,9 @@
             html += `</div>`;
         }
         html += `</div>`;
-        html += `</div></div>`; // Close Headers
+        html += `</div></div>`;
 
-        // --- Render Task Rows ---
+        // Render Task Rows
         jobs.forEach(job => {
             const start = new Date(job.startDate + 'T00:00:00');
             const end = new Date(job.endDate + 'T00:00:00');
@@ -269,7 +272,7 @@
 
             html += `<div class="border-b border-slate-300 hover:bg-slate-200/50 relative group" style="height: 48px;">`;
 
-            // Background vertical guides with alternating month opacity & boundary lines
+            // Background vertical guides
             html += `<div class="absolute inset-0 flex pointer-events-none">`;
             for (let i = 0; i < totalDays; i++) {
                 const date = addDays(minDate, i);
@@ -302,9 +305,37 @@
             html += `</div>`;
         });
 
-        html += `</div>`; // End Timeline Area
-        html += `</div>`; // End Wrapper
+        html += `</div>`;
+        html += `</div>`;
         container.innerHTML = html;
+
+        // Initialize Sortable for task reordering
+        const containerEl = document.getElementById('taskRowsContainer');
+        if (containerEl) {
+            Sortable.create(containerEl, {
+                handle: '.cursor-grab',
+                animation: 150,
+                onEnd: function(evt) {
+                    const fromIndex = evt.oldIndex;
+                    const toIndex = evt.newIndex;
+                    if (fromIndex === toIndex) return;
+                    
+                    // Reorder the jobs array
+                    const [movedJob] = jobs.splice(fromIndex, 1);
+                    jobs.splice(toIndex, 0, movedJob);
+                    
+                    // Save order to server
+                    const order = jobs.map(j => j.id);
+                    fetch(`/admin/houses/schedule/reorder/${houseId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order })
+                    }).catch(err => console.error('Failed to save order:', err));
+                    
+                    renderGantt();
+                }
+            });
+        }
     }
 
     // --- DRAG & DROP LOGIC ---
@@ -449,6 +480,22 @@
 
         document.body.appendChild(modal);
         document.body.style.overflow = 'hidden';
+
+        // Update days counter
+        function updateDayCount() {
+            const start = document.getElementById('editStartDate').value;
+            const end = document.getElementById('editEndDate').value;
+            if (start && end) {
+                const startDate = new Date(start + 'T00:00:00');
+                const endDate = new Date(end + 'T00:00:00');
+                const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+                document.getElementById('editDayCount').textContent = days >= 0 ? days : 0;
+            }
+        }
+
+        document.getElementById('editStartDate').addEventListener('change', updateDayCount);
+        document.getElementById('editEndDate').addEventListener('change', updateDayCount);
+        updateDayCount();
 
         document.getElementById('editJobForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -605,6 +652,7 @@
     // Boot Gantt Chart
     renderGantt();
 </script>
+
 <script>
     // Update days counter
 function updateDayCount() {

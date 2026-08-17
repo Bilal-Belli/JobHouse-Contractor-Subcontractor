@@ -1120,6 +1120,29 @@ app.get('/house/schedule/:houseId', async (req, res) => {
   }
 });
 
+app.post('/admin/houses/schedule/reorder/:houseId', (req, res) => {
+    try {
+        const data = getData();
+        const house = data.houses.find(h => h.id === req.params.houseId);
+        if (!house) return res.status(404).json({ error: 'House not found' });
+        
+        const { order } = req.body;
+        if (!order || !Array.isArray(order)) {
+            return res.status(400).json({ error: 'Invalid order' });
+        }
+        
+        // Reorder jobs by the order array
+        const jobsMap = {};
+        house.schedule.jobs.forEach(j => { jobsMap[j.id] = j; });
+        house.schedule.jobs = order.map(id => jobsMap[id]).filter(Boolean);
+        
+        saveData(data);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to reorder' });
+    }
+});
+
 // =====================
 // PUBLIC VIEW ROUTES
 // =====================
