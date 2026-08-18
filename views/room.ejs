@@ -516,7 +516,7 @@
                     <div>
                         <div class="flex items-center gap-2 text-xs text-black uppercase tracking-wider flex-wrap">
                             <span
-                                class="bg-emerald-100 text-emerald-800 px-2 py-0.5 font-bold"><%= <%= room.id.split('-')[0].slice(0, 12) %> %>
+                                class="bg-emerald-100 text-emerald-800 px-2 py-0.5 font-bold"><%= room.id.split('-')[0].slice(0, 12) %>
                                 Active Specs</span>
                             <span class="text-black">- <%= room.name %></span>
                         </div>
@@ -889,7 +889,7 @@
                 document.getElementById('nextBtn').classList.add('hidden');
 
                 const qrSrc = '<%= qrCodeUrl %>';
-                const qrTitle = '<%= room.id.slice(0, 6).charAt(0).toUpperCase() + room.id.slice(0, 6).slice(1) %> - <%= room.name %>';
+                const qrTitle = '<%= room.id.split('-')[0].slice(0, 12).charAt(0).toUpperCase() + room.id.split('-')[0].slice(0, 12).slice(1) %> - <%= room.name %>';
 
                 // Clear all other preview items
                 previewItems = [];
