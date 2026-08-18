@@ -8,7 +8,7 @@
     <div
       class="w-full sm:w-64 flex-shrink-0 bg-slate-900 border-b sm:border-b-0 sm:border-r border-slate-500 flex flex-col h-auto sm:h-[calc(100vh-64px)] max-h-[300px] sm:max-h-none overflow-hidden">
       <div class="flex items-center justify-between px-4 pt-3 pb-2 sm:pt-4">
-        <h2 class="text-xs text-white uppercase tracking-wider"><%= room.id.slice(0,6) %></h2>
+        <h2 class="text-xs text-white uppercase tracking-wider"><%= room.id.split('-')[0].slice(0, 12) %></h2>
       </div>
       <div class="flex items-center justify-between px-4 pt-3 pb-2 sm:pt-4">
         <h2 class="text-xs text-white uppercase tracking-wider">Trade Tabs</h2>
