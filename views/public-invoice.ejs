@@ -53,56 +53,72 @@
             class="paper-card max-w-3xl mx-auto bg-white border border-slate-200 shadow-xl p-8 sm:p-12 space-y-8 w-full">
 
             <!-- Header & Branding -->
-            <!-- Header & Branding -->
-            <div
-                class="avoid-break flex flex-col sm:flex-row justify-between items-start border-b border-slate-200 pb-6 gap-6">
-                <div class="space-y-2">
-                    <% if (company && company.logoUrl) { %>
-                    <img src="<%= company.logoUrl %>" alt="<%= company.name %> Logo" class="h-24 object-contain mb-3">
-                    <% } %>
-                    <h1 class="text-lg font-black text-slate-900 uppercase tracking-tight">
-                        <%= company && company.name ? company.name : 'Contractor Invoice' %>
-                    </h1>
-                    <div class="text-xs text-slate-500 space-y-0.5">
-                        <% if (company && company.license) { %><p><span
-                                class="font-semibold text-slate-700">License:</span> <%= company.license %></p><% } %>
-                        <% if (company && company.address) { %><p><span
-                                class="font-semibold text-slate-700">Address:</span> <%= company.address %></p><% } %>
-                        <% if (company && company.phone) { %><p><span class="font-semibold text-slate-700">Phone:</span>
-                            <%= company.phone %></p><% } %>
-                        <% if (company && company.email) { %><p><span class="font-semibold text-slate-700">Email:</span>
-                            <%= company.email %></p><% } %>
-                    </div>
-                </div>
+            <!-- Header & Branding with Side-by-Side Aligned Details -->
+            <div class="avoid-break border-b border-slate-200 pb-6 space-y-4">
 
-                <div class="text-left sm:text-right shrink-0 space-y-3">
+                <!-- Top Row: Logo & Invoice Metadata -->
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div>
-                        <span class="text-xs font-bold uppercase tracking-widest text-blue-600 block">Official
-                            Invoice</span>
-                        <h2 class="text-2xl font-black font-mono text-slate-900">
-                            #<%= estimate.invoiceNumber || 'INV-001' %>
-                        </h2>
-                        <h3 class="text-sm font-bold text-slate-700"><%= estimate.projectName %></h3>
+                        <% if (company && company.logoUrl) { %>
+                        <img src="<%= company.logoUrl %>" alt="<%= company.name %> Logo"
+                            class="h-20 object-contain mb-2">
+                        <% } %>
+                        <h1 class="text-lg font-black text-slate-900 uppercase tracking-tight">
+                            <%= company && company.name ? company.name : 'Contractor Document' %>
+                        </h1>
+                    </div>
+
+                    <div class="text-left sm:text-right shrink-0">
+                        <span class="text-xs font-bold uppercase tracking-widest text-amber-600 block">
+                            <%= estimate.status === 'invoiced' ? 'Official Invoice' : 'Official Proposal' %>
+                        </span>
+                        <% if (estimate.invoiceNumber) { %>
+                        <h2 class="text-xl font-black font-mono text-slate-900">#<%= estimate.invoiceNumber %></h2>
+                        <% } %>
+                        <h3 class="text-sm font-bold text-slate-800"><%= estimate.projectName %></h3>
                         <p class="text-xs text-slate-500 mt-0.5">
-                            Date Issued:
-                            <%= new Date(estimate.invoicedAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+                            Date:
+                            <%= new Date(estimate.invoicedAt || estimate.publishedAt || estimate.updatedAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
                         </p>
                     </div>
-
-                    <!-- NEW: Billed To Client Information -->
-                    <% if (typeof client !== 'undefined' && client) { %>
-                    <div class="pt-2 border-t border-slate-100">
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-0.5">Billed
-                            To</span>
-                        <p class="text-xs font-bold text-slate-900"><%= client.name %></p>
-                        <div class="text-xs text-slate-500 space-y-0.5">
-                            <% if (client.phone) { %><p><%= client.phone %></p><% } %>
-                            <% if (client.email) { %><p><%= client.email %></p><% } %>
-                            <% if (client.address) { %><p><%= client.address %></p><% } %>
-                        </div>
-                    </div>
-                    <% } %>
                 </div>
+
+                <!-- Aligned Details Grid -->
+                <div
+                    class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 text-xs text-slate-500 pt-2 border-t border-slate-100">
+
+                    <!-- Column 1: Company Info -->
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Company
+                            Details</span>
+                        <p class="h-4"><span class="font-semibold text-slate-700">License:</span>
+                            <%= (company && company.license) ? company.license : 'N/A' %></p>
+                        <p class="h-4"><span class="font-semibold text-slate-700">Address:</span>
+                            <%= (company && company.address) ? company.address : 'N/A' %></p>
+                        <p class="h-4"><span class="font-semibold text-slate-700">Phone:</span>
+                            <%= (company && company.phone) ? company.phone : 'N/A' %></p>
+                        <p class="h-4"><span class="font-semibold text-slate-700">Email:</span>
+                            <%= (company && company.email) ? company.email : 'N/A' %></p>
+                    </div>
+
+                    <!-- Column 2: Client Info (Strictly Aligned Line-by-Line) -->
+                    <div class="space-y-1 sm:text-right">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">
+                            <%= estimate.status === 'invoiced' ? 'Billed To' : 'Prepared For' %>
+                        </span>
+                        <p class="h-4 font-bold text-slate-900">
+                            <%= (typeof client !== 'undefined' && client && client.name) ? client.name : 'N/A' %></p>
+                        <p class="h-4">
+                            <%= (typeof client !== 'undefined' && client && client.address) ? client.address : 'N/A' %>
+                        </p>
+                        <p class="h-4">
+                            <%= (typeof client !== 'undefined' && client && client.phone) ? client.phone : 'N/A' %></p>
+                        <p class="h-4">
+                            <%= (typeof client !== 'undefined' && client && client.email) ? client.email : 'N/A' %></p>
+                    </div>
+
+                </div>
+
             </div>
 
             <!-- Scope of Work Summary -->
