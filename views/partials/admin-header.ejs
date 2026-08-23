@@ -75,43 +75,43 @@
 
     <body class="bg-[#F4F1EC] text-slate-900 antialiased flex flex-col min-h-screen">
         <header class="bg-slate-900 text-white shadow-md flex-shrink-0 sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 sm:gap-4">
 
-                <!-- LEFT: Logo & App Title -->
-                <a href="/admin"
-                    class="flex items-center space-x-3 text-white hover:text-amber-400 transition-colors shrink-0">
-                    <img src="<%= baseUrl %>/logo.png" alt="Logo" class="w-32 h-10 object-contain">
+                <!-- LEFT: Logo -->
+                <a href="/admin" class="flex items-center space-x-2 text-white hover:text-amber-400 transition-colors shrink-0">
+                    <img src="<%= baseUrl %>/logo.png" alt="Logo" class="w-24 sm:w-32 h-8 sm:h-10 object-contain">
                 </a>
 
                 <!-- CENTER: Live House Search Bar -->
-                <div class="flex-1 max-w-md mx-auto">
+                <div class="flex-1 max-w-xs sm:max-w-md">
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        <div class="absolute inset-y-0 left-0 pl-2.5 sm:pl-3 flex items-center pointer-events-none">
+                            <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </div>
                         <input type="text" id="houseSearchInput" onkeyup="filterHouses()"
-                            placeholder="Search houses or rooms..."
-                            class="w-full pl-9 pr-4 py-2 text-sm bg-slate-800 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all">
+                            placeholder="Search..."
+                            class="w-full pl-8 sm:pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-slate-800 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all rounded-sm">
                     </div>
                 </div>
 
-                <!-- RIGHT: Logout Action -->
-                <div class="flex items-center space-x-3 shrink-0">
-                    <a href="/admin/estimates" title="Sign out of Admin Portal"
-                        class="inline-flex items-center space-x-2 bg-slate-800 hover:bg-amber-600/80 text-slate-300 hover:text-white px-3 py-2 text-sm font-medium transition-all shadow-sm">
+                <!-- RIGHT: Navigation Actions -->
+                <div class="flex items-center space-x-1 sm:space-x-2 shrink-0">
+                    <!-- Estimates Link -->
+                    <a href="/admin/estimates" title="Estimates"
+                        class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-amber-600/80 text-slate-300 hover:text-white px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium transition-all shadow-sm">
+                        <svg class="w-4 h-4 sm:hidden shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
                         <span class="hidden sm:inline">Estimates</span>
                     </a>
-                </div>
-                <div class="flex items-center space-x-3 shrink-0">
-                    <a href="/admin/logout" title="Sign out of Admin Portal"
-                        class="inline-flex items-center space-x-2 bg-slate-800 hover:bg-red-600/80 text-slate-300 hover:text-white px-3 py-2 text-sm font-medium transition-all shadow-sm">
+
+                    <!-- Logout Link -->
+                    <a href="javascript:void(0)" onclick="logoutAdmin()" title="Sign out"
+                        class="inline-flex items-center bg-slate-800 hover:bg-red-600/80 text-slate-300 hover:text-white p-2 text-xs sm:text-sm transition-all shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                         </svg>
                     </a>
                 </div>
