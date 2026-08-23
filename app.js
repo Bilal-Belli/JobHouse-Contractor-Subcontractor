@@ -983,51 +983,51 @@ app.post('/admin/edit/:roomId/delete-comment/:tradeId/:commentId', (req, res) =>
 // =================
 
 app.post('/admin/houses/schedule/:houseId/jobs', (req, res) => {
-    const { houseId } = req.params;
-    const { name, startDate, endDate, color } = req.body;
+  const { houseId } = req.params;
+  const { name, startDate, endDate, color } = req.body;
 
-    if (!name || !startDate || !endDate) {
-        return res.status(400).json({
-            success: false,
-            error: 'All fields are required'
-        });
-    }
-
-    const data = getData();
-
-    const house = data.houses.find(h => h.id === houseId);
-
-    if (!house) {
-        return res.status(404).json({
-            success: false,
-            error: 'House not found'
-        });
-    }
-
-    if (!house.schedule) {
-        house.schedule = { jobs: [] };
-    }
-
-    if (!house.schedule.jobs) {
-        house.schedule.jobs = [];
-    }
-
-    const job = {
-        id: Date.now().toString(),
-        name,
-        startDate,
-        endDate,
-        color: color || '#f59e0b'
-    };
-
-    house.schedule.jobs.push(job);
-
-    saveData(data);
-
-    res.json({
-        success: true,
-        job
+  if (!name || !startDate || !endDate) {
+    return res.status(400).json({
+      success: false,
+      error: 'All fields are required'
     });
+  }
+
+  const data = getData();
+
+  const house = data.houses.find(h => h.id === houseId);
+
+  if (!house) {
+    return res.status(404).json({
+      success: false,
+      error: 'House not found'
+    });
+  }
+
+  if (!house.schedule) {
+    house.schedule = { jobs: [] };
+  }
+
+  if (!house.schedule.jobs) {
+    house.schedule.jobs = [];
+  }
+
+  const job = {
+    id: Date.now().toString(),
+    name,
+    startDate,
+    endDate,
+    color: color || '#f59e0b'
+  };
+
+  house.schedule.jobs.push(job);
+
+  saveData(data);
+
+  res.json({
+    success: true,
+    job
+  });
 });
 
 // Update job
@@ -1035,20 +1035,20 @@ app.put('/admin/houses/schedule/:houseId/jobs/:jobId', (req, res) => {
   try {
     const data = getData();
     const house = data.houses.find(h => h.id === req.params.houseId);
-    
+
     if (!house) return res.status(404).json({ error: 'House not found' });
-    
+
     if (!house.schedule) return res.status(404).json({ error: 'Schedule not found' });
-    
+
     const job = house.schedule.jobs.find(j => j.id === req.params.jobId);
     if (!job) return res.status(404).json({ error: 'Job not found' });
-    
+
     const { name, startDate, endDate, color } = req.body;
     if (name) job.name = name.trim();
     if (startDate) job.startDate = startDate;
     if (endDate) job.endDate = endDate;
     if (color) job.color = color;
-    
+
     saveData(data);
     res.json({ success: true, job });
   } catch (err) {
@@ -1062,14 +1062,14 @@ app.delete('/admin/houses/schedule/:houseId/jobs/:jobId', (req, res) => {
   try {
     const data = getData();
     const house = data.houses.find(h => h.id === req.params.houseId);
-    
+
     if (!house) return res.status(404).json({ error: 'House not found' });
-    
+
     if (house.schedule) {
       house.schedule.jobs = house.schedule.jobs.filter(j => j.id !== req.params.jobId);
       saveData(data);
     }
-    
+
     res.json({ success: true });
   } catch (err) {
     console.error('Error deleting job:', err);
@@ -1091,30 +1091,30 @@ app.get('/admin/houses/schedule/:houseId', requireAuth, async (req, res) => {
     const publicUrl = `${req.protocol}://${req.get('host')}/house/schedule/${house.id}`;
     let qrDataUrl = null;
     try {
-        // Create a canvas with proper dimensions
-        const canvas = createCanvas(400, 430); // Larger canvas
-        const ctx = canvas.getContext('2d');
-        
-        // White background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, 400, 430);
-        
-        // Add house name text at top
-        ctx.fillStyle = '#000000';
-        ctx.font = 'bold 18px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(`Schedule - ${house.id.charAt(0).toUpperCase() + house.id.slice(1)}`, 200, 30);
-        
-        // Generate QR code separately
-        const qrCanvas = createCanvas(400, 400);
-        await QRCode.toCanvas(qrCanvas, publicUrl, { width: 400, margin: 2 });
-        
-        // Draw QR code below text
-        ctx.drawImage(qrCanvas, 0, 40);
-        
-        qrDataUrl = canvas.toDataURL('image/png');
+      // Create a canvas with proper dimensions
+      const canvas = createCanvas(400, 430); // Larger canvas
+      const ctx = canvas.getContext('2d');
+
+      // White background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 400, 430);
+
+      // Add house name text at top
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 18px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Schedule - ${house.id.charAt(0).toUpperCase() + house.id.slice(1)}`, 200, 30);
+
+      // Generate QR code separately
+      const qrCanvas = createCanvas(400, 400);
+      await QRCode.toCanvas(qrCanvas, publicUrl, { width: 400, margin: 2 });
+
+      // Draw QR code below text
+      ctx.drawImage(qrCanvas, 0, 40);
+
+      qrDataUrl = canvas.toDataURL('image/png');
     } catch (err) {
-        console.error('QR generation error:', err);
+      console.error('QR generation error:', err);
     }
 
     res.render('admin-schedule', { house, qrDataUrl });
@@ -1142,52 +1142,52 @@ app.get('/house/schedule/:houseId', async (req, res) => {
 });
 
 app.post('/admin/houses/schedule/reorder/:houseId', (req, res) => {
-    try {
-        const data = getData();
-        const house = data.houses.find(h => h.id === req.params.houseId);
-        if (!house) return res.status(404).json({ error: 'House not found' });
-        
-        const { order } = req.body;
-        if (!order || !Array.isArray(order)) {
-            return res.status(400).json({ error: 'Invalid order' });
-        }
-        
-        // Reorder jobs by the order array
-        const jobsMap = {};
-        house.schedule.jobs.forEach(j => { jobsMap[j.id] = j; });
-        house.schedule.jobs = order.map(id => jobsMap[id]).filter(Boolean);
-        
-        saveData(data);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to reorder' });
+  try {
+    const data = getData();
+    const house = data.houses.find(h => h.id === req.params.houseId);
+    if (!house) return res.status(404).json({ error: 'House not found' });
+
+    const { order } = req.body;
+    if (!order || !Array.isArray(order)) {
+      return res.status(400).json({ error: 'Invalid order' });
     }
+
+    // Reorder jobs by the order array
+    const jobsMap = {};
+    house.schedule.jobs.forEach(j => { jobsMap[j.id] = j; });
+    house.schedule.jobs = order.map(id => jobsMap[id]).filter(Boolean);
+
+    saveData(data);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to reorder' });
+  }
 });
 
 app.put('/admin/houses/schedule/status/:houseId', (req, res) => {
-    try {
-        const { houseId } = req.params;
-        const { status } = req.body;
+  try {
+    const { houseId } = req.params;
+    const { status } = req.body;
 
-        const data = getData();
-        const house = data.houses.find(h => h.id === houseId);
+    const data = getData();
+    const house = data.houses.find(h => h.id === houseId);
 
-        if (!house) {
-            return res.status(404).json({ success: false, error: 'House not found' });
-        }
-
-        if (!house.schedule) {
-            house.schedule = { jobs: [] };
-        }
-
-        house.schedule.status = status;
-        saveData(data);
-
-        res.json({ success: true, status });
-    } catch (err) {
-        console.error('Error updating status:', err);
-        res.status(500).json({ success: false, error: 'Failed to update status' });
+    if (!house) {
+      return res.status(404).json({ success: false, error: 'House not found' });
     }
+
+    if (!house.schedule) {
+      house.schedule = { jobs: [] };
+    }
+
+    house.schedule.status = status;
+    saveData(data);
+
+    res.json({ success: true, status });
+  } catch (err) {
+    console.error('Error updating status:', err);
+    res.status(500).json({ success: false, error: 'Failed to update status' });
+  }
 });
 
 // =========================================================================
@@ -1273,7 +1273,7 @@ app.post('/admin/company-profiles/reorder', requireAuth, (req, res) => {
 app.get('/est/:publicId', (req, res) => {
   try {
     const data = getEstimatesData();
-    
+
     // 1. Locate the requested published estimate
     const estimate = data.estimates.find(e => e.publicId === req.params.publicId && e.status === 'published');
 
@@ -1445,29 +1445,33 @@ app.get('/admin/estimates/:id/get', requireAuth, (req, res) => {
 app.post('/admin/estimates/save', requireAuth, (req, res) => {
   try {
     const data = getEstimatesData();
-    const { id, projectName, trades, overhead, paymentSchedule, additionalTerms } = req.body;
+    const payload = req.body;
 
-    let estimate = data.estimates.find(e => e.id === id);
+    // 1. Check if the estimate already exists
+    const existingIndex = data.estimates.findIndex(e => e.id === payload.id);
 
-    if (!estimate) {
-      estimate = {
-        id: 'est-' + Date.now(),
-        publicId: 'pub_' + Math.random().toString(36).substring(2, 8),
-        status: 'draft',
-        createdAt: new Date().toISOString()
+    if (existingIndex !== -1) {
+      // 2. OVERWRITE existing estimate properties in-place (prevents duplicate version accumulation)
+      data.estimates[existingIndex] = {
+        ...data.estimates[existingIndex],
+        ...payload,
+        updatedAt: new Date().toISOString()
       };
-      data.estimates.push(estimate);
+    } else {
+      // 3. Create NEW estimate entry ONLY if it doesn't exist yet
+      const newEstimate = {
+        id: payload.id,
+        publicId: 'est_' + Math.random().toString(36).substring(2, 10),
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...payload
+      };
+      data.estimates.push(newEstimate);
     }
 
-    estimate.projectName = projectName || 'Untitled Project';
-    estimate.trades = Array.isArray(trades) ? trades : [];
-    estimate.overhead = overhead || { type: 'percent', value: 0 };
-    estimate.paymentSchedule = paymentSchedule || '';
-    estimate.additionalTerms = additionalTerms || '';
-    estimate.updatedAt = new Date().toISOString();
-
     saveEstimatesData(data);
-    res.json({ success: true, estimate });
+    res.json({ success: true });
   } catch (err) {
     console.error('Error saving estimate:', err);
     res.status(500).json({ error: 'Failed to save estimate' });
@@ -1526,7 +1530,7 @@ app.post('/admin/estimates/:id/publish', requireAuth, (req, res) => {
     estimate.publishedAt = new Date().toISOString();
 
     saveEstimatesData(data);
-    
+
     const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
     const shareableUrl = `${baseUrl}/est/${estimate.publicId}`;
 
@@ -1605,6 +1609,85 @@ app.post('/admin/company-profiles/:id/delete', requireAuth, (req, res) => {
   }
 });
 
+// =========================================================================
+// PUBLIC CLIENT INVOICE ROUTE
+// =========================================================================
+
+app.get('/inv/:publicId', (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const estimate = data.estimates.find(e => e.publicId === req.params.publicId && e.status === 'invoiced');
+
+    if (!estimate) return res.status(404).render('errors/404');
+
+    const company = data.companyProfiles.find(c => c.id === estimate.companyProfileId) || null;
+
+    const clientTrades = (estimate.trades || []).map(trade => {
+      const subCost = parseFloat(trade.subCost) || 0;
+      const markupVal = parseFloat(trade.markup?.value) || 0;
+      const markupType = trade.markup?.type || 'percent';
+      let clientPrice = subCost + (markupType === 'percent' ? subCost * (markupVal / 100) : markupVal);
+      return { name: trade.name, description: trade.description, clientPrice };
+    });
+
+    const subtotal = clientTrades.reduce((acc, item) => acc + item.clientPrice, 0);
+    const overheadVal = parseFloat(estimate.overhead?.value) || 0;
+    const overheadType = estimate.overhead?.type || 'percent';
+    const overheadTotal = overheadType === 'percent' ? subtotal * (overheadVal / 100) : overheadVal;
+    const grandTotal = subtotal + overheadTotal;
+
+    res.render('public-invoice', { estimate, company, clientTrades, subtotal, overheadTotal, grandTotal });
+  } catch (err) {
+    console.error('Error serving invoice:', err);
+    res.status(500).send('Error loading invoice.');
+  }
+});
+
+// Convert Published Estimate to Invoice
+app.post('/admin/estimates/:id/convert-to-invoice', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const estimate = data.estimates.find(e => e.id === req.params.id);
+
+    if (!estimate) return res.status(404).json({ error: 'Estimate not found' });
+
+    const { invoiceNumber } = req.body;
+    estimate.status = 'invoiced';
+    estimate.invoiceNumber = invoiceNumber || 'INV-' + Date.now();
+    estimate.invoicedAt = new Date().toISOString();
+
+    // Set milestones to blank array on initial conversion
+    if (!estimate.paymentMilestones) {
+      estimate.paymentMilestones = [];
+    }
+
+    saveEstimatesData(data);
+    res.json({ success: true, publicId: estimate.publicId });
+  } catch (err) {
+    console.error('Error converting to invoice:', err);
+    res.status(500).json({ error: 'Failed to convert estimate' });
+  }
+});
+
+// Update Invoice Milestones & Payment Statuses
+app.post('/admin/estimates/:id/milestones', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const estimate = data.estimates.find(e => e.id === req.params.id);
+
+    if (!estimate) return res.status(404).json({ error: 'Invoice not found' });
+
+    const { milestones } = req.body;
+    estimate.paymentMilestones = Array.isArray(milestones) ? milestones : [];
+    estimate.updatedAt = new Date().toISOString();
+
+    saveEstimatesData(data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating milestones:', err);
+    res.status(500).json({ error: 'Failed to save milestones' });
+  }
+});
 
 // =====================
 // PUBLIC VIEW ROUTES
@@ -1921,11 +2004,11 @@ app.post('/admin/rooms/:roomId/duplicate', (req, res) => {
 
   try {
     const data = getData();
-    
+
     // Find the original room and its house
     let originalRoom = null;
     let originalHouse = null;
-    
+
     for (const house of data.houses) {
       const foundRoom = house.rooms.find(r => r.id === roomId);
       if (foundRoom) {
@@ -1956,7 +2039,7 @@ app.post('/admin/rooms/:roomId/duplicate', (req, res) => {
     const baseId = `${targetHouse.id}-${newName.toLowerCase().trim().replace(/[^a-z0-9]/g, '-')}`;
     let newRoomId = baseId;
     let counter = 1;
-    
+
     // Check if room ID already exists and add counter if needed
     while (targetHouse.rooms.some(r => r.id === newRoomId)) {
       newRoomId = `${baseId}-${counter}`;
@@ -1982,14 +2065,14 @@ app.post('/admin/rooms/:roomId/duplicate', (req, res) => {
 
     // Add the new room to the target house
     targetHouse.rooms.push(newRoom);
-    
+
     // Save the data
     saveData(data);
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       roomId: newRoom.id,
-      message: 'Room duplicated successfully' 
+      message: 'Room duplicated successfully'
     });
   } catch (error) {
     console.error('Error duplicating room:', error);

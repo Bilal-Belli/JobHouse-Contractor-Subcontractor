@@ -1,0 +1,218 @@
+<%- include('partials/admin-estimates-header') %>
+
+<% 
+  const draftsList = estimates.filter(e => e.status === 'draft');
+  const publishedList = estimates.filter(e => e.status === 'published');
+  const invoicesList = estimates.filter(e => e.status === 'invoiced');
+%>
+
+<main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+    <!-- Top Action & Search Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-300 pb-4">
+        <div class="relative w-full sm:w-72">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <input type="text" id="estimateSearchInput" onkeyup="filterEstimates()"
+                placeholder="Search estimates & invoices..."
+                class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all shadow-sm">
+        </div>
+
+        <div class="shrink-0 flex justify-end">
+            <button onclick="createNewEstimate()"
+                class="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                New Estimate
+            </button>
+        </div>
+    </div>
+
+    <!-- Tab Switcher Header -->
+    <div class="flex border-b border-slate-300">
+        <button id="tabBtnDrafts" onclick="switchTab('drafts')"
+            class="px-6 py-2.5 font-semibold text-sm border-b-2 border-amber-500 text-slate-900 transition-colors flex items-center gap-2">
+            <span>Drafts</span>
+            <span class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold"
+                id="draftsCount"><%= draftsList.length %></span>
+        </button>
+
+        <button id="tabBtnPublished" onclick="switchTab('published')"
+            class="px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2">
+            <span>Published</span>
+            <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-bold"
+                id="publishedCount"><%= publishedList.length %></span>
+        </button>
+
+        <button id="tabBtnInvoices" onclick="switchTab('invoices')"
+            class="px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2">
+            <span>Invoices</span>
+            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full font-bold"
+                id="invoicesCount"><%= invoicesList.length %></span>
+        </button>
+    </div>
+
+    <!-- ================= DRAFTS TAB ================= -->
+    <!-- (Keep your existing draftsTab container unmodified) -->
+
+    <!-- ================= PUBLISHED TAB ================= -->
+    <div id="tabContentPublished" class="hidden space-y-4">
+        <div class="bg-white shadow-sm border border-slate-200">
+            <div id="publishedContainer" class="divide-y divide-slate-200">
+                <% if (publishedList.length === 0) { %>
+                <div class="p-8 text-center text-xs text-slate-400 italic">No published proposals yet.</div>
+                <% } %>
+
+                <% publishedList.forEach(pub => { %>
+                <% const matchingCompany = companyProfiles.find(p => p.id === pub.companyProfileId); %>
+                <div class="estimate-row p-4 hover:bg-slate-50/80 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                    draggable="true" data-id="<%= pub.id %>">
+                    <div class="flex items-center gap-3">
+                        <div class="cursor-grab text-slate-400 hover:text-slate-600 shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 8h16M4 16h16"></path>
+                            </svg>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold text-slate-900 text-sm"><%= pub.projectName %></h3>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                                    <%= matchingCompany ? matchingCompany.name : 'Default Branding' %>
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500">Published:
+                                <%= new Date(pub.publishedAt).toLocaleDateString() %></p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+                        <a href="/est/<%= pub.publicId %>" target="_blank"
+                            class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold transition-all inline-block">View</a>
+                        <button
+                            onclick="openShareModal('<%= baseUrl %>/est/<%= pub.publicId %>', '<%= pub.projectName %>')"
+                            class="bg-white hover:bg-slate-100 text-black border border-slate-300 px-3 py-1.5 text-xs font-semibold transition-all">Share</button>
+                        <button onclick="openConvertModal('<%= pub.id %>', '<%= pub.projectName %>')"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-semibold transition-all shadow-sm">Convert
+                            to Invoice</button>
+                        <button onclick="promptUnpublishEstimate('<%= pub.id %>', '<%= pub.projectName %>')"
+                            class="bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-300 px-3 py-1.5 text-xs font-semibold transition-all">Unpublish</button>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= INVOICES TAB ================= -->
+    <div id="tabContentInvoices" class="hidden space-y-4">
+        <div class="bg-white shadow-sm border border-slate-200">
+            <div id="invoicesContainer" class="divide-y divide-slate-200">
+                <% if (invoicesList.length === 0) { %>
+                <div class="p-8 text-center text-xs text-slate-400 italic">No converted invoices yet.</div>
+                <% } %>
+
+                <% invoicesList.forEach(inv => { %>
+                <% const matchingCompany = companyProfiles.find(p => p.id === inv.companyProfileId); %>
+                <div class="estimate-row p-4 hover:bg-slate-50/80 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                    draggable="true" data-id="<%= inv.id %>">
+                    <div class="flex items-center gap-3">
+                        <div class="cursor-grab text-slate-400 hover:text-slate-600 shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 8h16M4 16h16"></path>
+                            </svg>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold text-slate-900 text-sm"><%= inv.projectName %></h3>
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-bold bg-blue-100 text-blue-900">
+                                    #<%= inv.invoiceNumber || 'INV' %>
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500">Invoiced:
+                                <%= new Date(inv.invoicedAt || inv.updatedAt).toLocaleDateString() %></p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+                        <a href="/inv/<%= inv.publicId %>" target="_blank"
+                            class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold transition-all inline-block">View
+                            Invoice</a>
+                        <button
+                            onclick="openShareModal('<%= baseUrl %>/inv/<%= inv.publicId %>', 'Invoice <%= inv.invoiceNumber %>')"
+                            class="bg-white hover:bg-slate-100 text-black border border-slate-300 px-3 py-1.5 text-xs font-semibold transition-all">Share</button>
+                        <button
+                            onclick='openMilestonesModal("<%= inv.id %>", <%= JSON.stringify(inv.paymentMilestones || []) %>)'
+                            class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 px-3 py-1.5 text-xs font-semibold transition-all">Milestones</button>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- ================= MODAL: CONVERT ESTIMATE TO INVOICE ================= -->
+<div id="convertModal"
+    class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white max-w-md w-full shadow-2xl border border-slate-300 p-6 space-y-4">
+        <h3 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2">Convert Estimate to Invoice</h3>
+        <input type="hidden" id="convertTargetId" value="">
+
+        <p class="text-xs text-slate-600">Assign an invoice number to finalize converting <strong
+                id="convertTargetName"></strong> into a billable invoice.</p>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Invoice Number</label>
+            <input type="text" id="convertInvoiceNumber" placeholder="e.g. INV-1001"
+                class="w-full bg-slate-50 border border-slate-300 p-2 text-xs font-mono font-bold focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+            <button onclick="toggleModal('convertModal')"
+                class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+            <button onclick="executeConvertInvoice()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">Convert
+                Now</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL: MANAGE MILESTONES & PAYMENTS ================= -->
+<div id="milestonesModal"
+    class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white max-w-lg w-full shadow-2xl border border-slate-300 p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+            <h3 class="text-lg font-bold text-slate-900">Manage Payment Milestones</h3>
+            <button onclick="toggleModal('milestonesModal')"
+                class="text-slate-400 hover:text-slate-700 font-bold text-lg">&times;</button>
+        </div>
+
+        <input type="hidden" id="milestoneTargetId" value="">
+
+        <div id="milestonesListContainer" class="space-y-3">
+            <!-- Dynamically filled with milestone rows -->
+        </div>
+
+        <button onclick="addMilestoneRow()"
+            class="w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold border border-slate-300 transition-all">+
+            Add Payment Milestone</button>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-200">
+            <button onclick="toggleModal('milestonesModal')"
+                class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+            <button onclick="saveMilestones()"
+                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">Save
+                Changes</button>
+        </div>
+    </div>
+</div>

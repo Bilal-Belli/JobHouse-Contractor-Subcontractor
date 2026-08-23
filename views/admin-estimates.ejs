@@ -3,6 +3,7 @@
 <% 
   const draftsList = estimates.filter(e => e.status === 'draft');
   const publishedList = estimates.filter(e => e.status === 'published');
+  const invoicesList = estimates.filter(e => e.status === 'invoiced');
 %>
 
 <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
@@ -39,11 +40,19 @@
       <span class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold"
         id="draftsCount"><%= draftsList.length %></span>
     </button>
+
     <button id="tabBtnPublished" onclick="switchTab('published')"
       class="px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2">
       <span>Published</span>
       <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-bold"
         id="publishedCount"><%= publishedList.length %></span>
+    </button>
+
+    <button id="tabBtnInvoices" onclick="switchTab('invoices')"
+      class="px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2">
+      <span>Invoices</span>
+      <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full font-bold"
+        id="invoicesCount"><%= invoicesList.length %></span>
     </button>
   </div>
 
@@ -61,7 +70,6 @@
           class="estimate-row p-4 hover:bg-slate-50/80 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
           draggable="true" data-id="<%= draft.id %>">
           <div class="flex items-center gap-3">
-            <!-- Drag Handle -->
             <div class="cursor-grab text-slate-400 hover:text-slate-600 shrink-0">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
@@ -120,7 +128,6 @@
           class="estimate-row p-4 hover:bg-slate-50/80 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
           draggable="true" data-id="<%= pub.id %>">
           <div class="flex items-center gap-3">
-            <!-- Drag Handle -->
             <div class="cursor-grab text-slate-400 hover:text-slate-600 shrink-0">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
@@ -152,6 +159,10 @@
               class="bg-white hover:bg-slate-100 text-black px-3 py-1.5 border border-slate-300 text-xs font-semibold transition-all">
               Edit
             </a>
+            <button onclick="openConvertModal('<%= pub.id %>', '<%= pub.projectName %>')"
+              class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 border border-blue-300 text-xs font-semibold transition-all shadow-sm">
+              Convert to Invoice
+            </button>
             <button onclick="promptUnpublishEstimate('<%= pub.id %>', '<%= pub.projectName %>')"
               class="bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-300 px-3 py-1.5 text-xs font-semibold transition-all">
               Unpublish
@@ -167,7 +178,114 @@
     </div>
   </div>
 
+  <!-- ================= INVOICES TAB ================= -->
+  <div id="tabContentInvoices" class="hidden space-y-4">
+    <div class="bg-white shadow-sm border border-slate-200">
+      <div id="invoicesContainer" class="divide-y divide-slate-200">
+        <% if (invoicesList.length === 0) { %>
+        <div class="p-8 text-center text-xs text-slate-400 italic">No converted invoices yet.</div>
+        <% } %>
+
+        <% invoicesList.forEach(inv => { %>
+        <div
+          class="estimate-row p-4 hover:bg-slate-50/80 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          draggable="true" data-id="<%= inv.id %>">
+
+          <div class="flex items-center gap-3">
+            <!-- Drag Handle -->
+            <div class="cursor-grab text-slate-400 hover:text-slate-600 shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+              </svg>
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-slate-900 text-sm"><%= inv.projectName %></h3>
+                <span class="text-[10px] bg-blue-100 text-blue-900 px-2 py-0.5 font-mono font-bold">
+                  #<%= inv.invoiceNumber || 'INV-DRAFT' %>
+                </span>
+              </div>
+              <p class="text-xs text-slate-500">Invoiced:
+                <%= new Date(inv.invoicedAt || inv.updatedAt).toLocaleDateString() %></p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <a href="/inv/<%= inv.publicId %>" target="_blank"
+              class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold transition-all inline-block">View</a>
+            <button onclick="openShareModal('<%= baseUrl %>/inv/<%= inv.publicId %>', '<%= inv.projectName %>')"
+              class="bg-white hover:bg-slate-100 text-black border border-slate-300 px-3 py-1.5 text-xs font-semibold transition-all">Share</button>
+            <button onclick='openMilestonesModal("<%= inv.id %>", <%= JSON.stringify(inv.paymentMilestones || []) %>)'
+              class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 px-3 py-1.5 text-xs font-semibold transition-all">Milestones</button>
+            <!-- Delete Button -->
+            <button onclick="promptDeleteEstimate('<%= inv.id %>', '<%= inv.projectName %>')"
+              class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-300 px-3 py-1.5 text-xs font-semibold transition-all">
+              Delete
+            </button>
+          </div>
+        </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+
 </main>
+
+<!-- ================= MODAL: CONVERT ESTIMATE TO INVOICE ================= -->
+<div id="convertModal"
+  class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white max-w-md w-full shadow-2xl border border-slate-300 p-6 space-y-4">
+    <h3 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2">Convert Estimate to Invoice</h3>
+    <input type="hidden" id="convertTargetId" value="">
+
+    <p class="text-xs text-slate-600">Assign an invoice number to finalize converting <strong
+        id="convertTargetName"></strong> into a billable invoice.</p>
+
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Invoice Number</label>
+      <input type="text" id="convertInvoiceNumber" placeholder="e.g. INV-1001"
+        class="w-full bg-slate-50 border border-slate-300 p-2 text-xs font-mono font-bold focus:ring-2 focus:ring-blue-500">
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+      <button onclick="toggleModal('convertModal')"
+        class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+      <button onclick="executeConvertInvoice()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
+        Convert Now
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: MANAGE MILESTONES ================= -->
+<div id="milestonesModal"
+  class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white max-w-lg w-full shadow-2xl border border-slate-300 p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+      <h3 class="text-lg font-bold text-slate-900">Manage Payment Milestones</h3>
+      <button onclick="toggleModal('milestonesModal')"
+        class="text-slate-400 hover:text-slate-700 font-bold text-lg">&times;</button>
+    </div>
+
+    <input type="hidden" id="milestoneTargetId" value="">
+
+    <div id="milestonesListContainer" class="space-y-3"></div>
+
+    <button onclick="addMilestoneRow()"
+      class="w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold border border-slate-300 transition-all">+
+      Add Payment Milestone</button>
+
+    <div class="flex justify-end gap-2 pt-3 border-t border-slate-200">
+      <button onclick="toggleModal('milestonesModal')"
+        class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+      <button onclick="saveMilestones()"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">Save
+        Changes</button>
+    </div>
+  </div>
+</div>
 
 <!-- ================= MODAL: PUBLISH ESTIMATE ================= -->
 <div id="publishModal"
@@ -210,9 +328,7 @@
         class="text-slate-400 hover:text-slate-700 font-bold text-lg">&times;</button>
     </div>
 
-    <div id="previewContent" class="space-y-4">
-      <!-- Dynamically filled via AJAX -->
-    </div>
+    <div id="previewContent" class="space-y-4"></div>
 
     <div class="flex justify-end border-t border-slate-200 pt-4">
       <button onclick="toggleModal('previewModal')"
@@ -248,7 +364,6 @@
   </div>
 </div>
 
-
 <!-- ================= MODAL: SHARE OPTIONS POPUP ================= -->
 <div id="shareModal"
   class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -261,7 +376,6 @@
     <p class="text-xs text-slate-600">Choose how you would like to send this proposal link:</p>
 
     <div class="grid grid-cols-3 gap-2 pt-2">
-      <!-- WhatsApp Button -->
       <a id="shareWhatsappBtn" href="#" target="_blank"
         class="flex flex-col items-center justify-center gap-1.5 p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 transition-all rounded">
         <svg class="w-6 h-6 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
@@ -271,7 +385,6 @@
         <span class="text-[11px] font-bold">WhatsApp</span>
       </a>
 
-      <!-- SMS Button -->
       <a id="shareSmsBtn" href="#" target="_blank"
         class="flex flex-col items-center justify-center gap-1.5 p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 transition-all rounded">
         <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,7 +395,6 @@
         <span class="text-[11px] font-bold">SMS Text</span>
       </a>
 
-      <!-- Email Button -->
       <a id="shareEmailBtn" href="#" target="_blank"
         class="flex flex-col items-center justify-center gap-1.5 p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 transition-all rounded">
         <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -337,6 +449,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     setupListDragAndDrop('draftsContainer');
     setupListDragAndDrop('publishedContainer');
+    setupListDragAndDrop('invoicesContainer');
   });
 
   function toggleModal(id) {
@@ -346,19 +459,110 @@
   function switchTab(tab) {
     const dContent = document.getElementById('tabContentDrafts');
     const pContent = document.getElementById('tabContentPublished');
+    const iContent = document.getElementById('tabContentInvoices');
     const dBtn = document.getElementById('tabBtnDrafts');
     const pBtn = document.getElementById('tabBtnPublished');
+    const iBtn = document.getElementById('tabBtnInvoices');
+
+    dContent.classList.add('hidden');
+    pContent.classList.add('hidden');
+    iContent.classList.add('hidden');
+
+    dBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2";
+    pBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2";
+    iBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2";
 
     if (tab === 'drafts') {
       dContent.classList.remove('hidden');
-      pContent.classList.add('hidden');
       dBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-amber-500 text-slate-900 transition-colors flex items-center gap-2";
-      pBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2";
-    } else {
-      dContent.classList.add('hidden');
+    } else if (tab === 'published') {
       pContent.classList.remove('hidden');
-      pBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-amber-500 text-slate-900 transition-colors flex items-center gap-2";
-      dBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2";
+      pBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-emerald-500 text-slate-900 transition-colors flex items-center gap-2";
+    } else if (tab === 'invoices') {
+      iContent.classList.remove('hidden');
+      iBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-blue-500 text-slate-900 transition-colors flex items-center gap-2";
+    }
+  }
+
+  function openConvertModal(id, name) {
+    document.getElementById('convertTargetId').value = id;
+    document.getElementById('convertTargetName').textContent = name;
+    document.getElementById('convertInvoiceNumber').value = 'INV-' + Math.floor(1000 + Math.random() * 9000);
+    toggleModal('convertModal');
+  }
+
+  async function executeConvertInvoice() {
+    const id = document.getElementById('convertTargetId').value;
+    const invoiceNumber = document.getElementById('convertInvoiceNumber').value;
+
+    const res = await fetch(`/admin/estimates/${id}/convert-to-invoice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoiceNumber })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      window.location.reload();
+    } else {
+      alert(data.error || 'Failed to convert estimate to invoice.');
+    }
+  }
+
+  function openMilestonesModal(id, milestones) {
+    document.getElementById('milestoneTargetId').value = id;
+    const container = document.getElementById('milestonesListContainer');
+    container.innerHTML = '';
+
+    const list = milestones.length > 0 ? milestones : [
+      { title: 'Deposit', percentage: 50, status: 'pending' },
+      { title: 'Final Completion', percentage: 50, status: 'pending' }
+    ];
+
+    list.forEach(m => addMilestoneRow(m));
+    toggleModal('milestonesModal');
+  }
+
+  function addMilestoneRow(data = { title: '', percentage: 0, status: 'pending' }) {
+    const container = document.getElementById('milestonesListContainer');
+    const div = document.createElement('div');
+    div.className = "milestone-row flex items-center gap-2 bg-slate-50 p-2 border border-slate-200";
+
+    div.innerHTML = `
+      <input type="text" value="${data.title}" placeholder="Milestone Title" class="m-title flex-grow border border-slate-300 p-1.5 text-xs font-semibold">
+      <input type="number" value="${data.percentage}" placeholder="%" class="m-percent w-16 border border-slate-300 p-1.5 text-xs text-right font-mono">
+      <select class="m-status border border-slate-300 p-1.5 text-xs font-bold bg-white">
+        <option value="pending" ${data.status === 'pending' ? 'selected' : ''}>Pending</option>
+        <option value="paid" ${data.status === 'paid' ? 'selected' : ''}>Paid</option>
+      </select>
+      <button onclick="this.closest('.milestone-row').remove()" class="text-slate-400 hover:text-red-600 font-bold px-1">&times;</button>
+    `;
+    container.appendChild(div);
+  }
+
+  async function saveMilestones() {
+    const id = document.getElementById('milestoneTargetId').value;
+    const milestones = [];
+
+    document.querySelectorAll('#milestonesListContainer .milestone-row').forEach(row => {
+      milestones.push({
+        title: row.querySelector('.m-title').value,
+        percentage: parseFloat(row.querySelector('.m-percent').value) || 0,
+        status: row.querySelector('.m-status').value
+      });
+    });
+
+    const res = await fetch(`/admin/estimates/${id}/milestones`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ milestones })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      window.location.reload();
+    } else {
+      alert('Failed to update milestones.');
     }
   }
 
@@ -475,19 +679,13 @@
   let currentShareUrl = '';
   let targetUnpublishId = null;
 
-  // Share Modal Trigger
   function openShareModal(url, title) {
     currentShareUrl = url;
-    const message = encodeURIComponent(`Here is the official estimate proposal for ${title}: ${url}`);
+    const message = encodeURIComponent(`Here is the official document for ${title}: ${url}`);
 
-    // Set WhatsApp link
     document.getElementById('shareWhatsappBtn').href = `https://api.whatsapp.com/send?text=${message}`;
-
-    // Set SMS link
     document.getElementById('shareSmsBtn').href = `sms:?body=${message}`;
-
-    // Set Email link
-    document.getElementById('shareEmailBtn').href = `mailto:?subject=${encodeURIComponent('Estimate Proposal - ' + title)}&body=${message}`;
+    document.getElementById('shareEmailBtn').href = `mailto:?subject=${encodeURIComponent('Proposal Document - ' + title)}&body=${message}`;
 
     toggleModal('shareModal');
   }
@@ -498,7 +696,6 @@
     }
   }
 
-  // Prompt Custom Unpublish Modal
   function promptUnpublishEstimate(id, name) {
     targetUnpublishId = id;
     document.getElementById('unpublishTargetName').textContent = name;
@@ -506,7 +703,6 @@
     toggleModal('unpublishConfirmModal');
   }
 
-  // Execute Server Unpublish
   async function executeUnpublishEstimate() {
     if (!targetUnpublishId) return;
 

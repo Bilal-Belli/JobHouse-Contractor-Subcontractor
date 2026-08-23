@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Invoice #<%= estimate.invoiceNumber || 'INV' %> - <%= estimate.projectName %></title>
+        <link rel="icon" type="image/x-icon" href="<%= baseUrl %>/favicon.png">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            @media print {
+                @page {
+                    size: letter portrait;
+                    margin: 0.5in;
+                }
+
+                body {
+                    background-color: #ffffff !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+
+                .no-print,
+                .print\:hidden {
+                    display: none !important;
+                }
+
+                .paper-card {
+                    border: none !important;
+                    box-shadow: none !important;
+                    padding: 0 !important;
+                    width: 100% !important;
+                }
+
+                tr,
+                .avoid-break {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                }
+
+                thead {
+                    display: table-header-group;
+                }
+            }
+        </style>
+    </head>
+
+    <body class="bg-slate-100 text-slate-800 antialiased py-10 px-4 min-h-screen flex flex-col justify-between">
+
+        <div
+            class="paper-card max-w-3xl mx-auto bg-white border border-slate-200 shadow-xl p-8 sm:p-12 space-y-8 w-full">
+
+            <!-- Header & Branding -->
+            <div
+                class="avoid-break flex flex-col sm:flex-row justify-between items-start border-b border-slate-200 pb-6 gap-6">
+                <div class="space-y-2">
+                    <% if (company && company.logoUrl) { %>
+                    <img src="<%= company.logoUrl %>" alt="<%= company.name %> Logo" class="h-24 object-contain mb-3">
+                    <% } %>
+                    <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tight">
+                        <%= company && company.name ? company.name : 'Contractor Invoice' %>
+                    </h1>
+                    <div class="text-xs text-slate-500 space-y-0.5">
+                        <% if (company && company.license) { %><p><span
+                                class="font-semibold text-slate-700">License:</span> <%= company.license %></p><% } %>
+                        <% if (company && company.address) { %><p><span
+                                class="font-semibold text-slate-700">Address:</span> <%= company.address %></p><% } %>
+                        <% if (company && company.phone) { %><p><span class="font-semibold text-slate-700">Phone:</span>
+                            <%= company.phone %></p><% } %>
+                        <% if (company && company.email) { %><p><span class="font-semibold text-slate-700">Email:</span>
+                            <%= company.email %></p><% } %>
+                    </div>
+                </div>
+
+                <div class="text-left sm:text-right shrink-0 space-y-1">
+                    <span class="text-xs font-bold uppercase tracking-widest text-blue-600 block">Official
+                        Invoice</span>
+                    <h2 class="text-2xl font-black font-mono text-slate-900">#<%= estimate.invoiceNumber || 'INV-001' %>
+                    </h2>
+                    <h3 class="text-sm font-bold text-slate-700"><%= estimate.projectName %></h3>
+                    <p class="text-xs text-slate-500">
+                        Date Issued:
+                        <%= new Date(estimate.invoicedAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Scope of Work Summary -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">
+                    Approved Scope of Work</h3>
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200">
+                        <tr>
+                            <th class="p-2.5 w-1/3">Item / Service</th>
+                            <th class="p-2.5 w-2/3">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <% clientTrades.forEach(trade => { %>
+                        <tr>
+                            <td class="p-2.5 font-bold text-slate-900 align-top"><%= trade.name || 'General' %></td>
+                            <td class="p-2.5 text-slate-600 leading-relaxed align-top"><%= trade.description || 'N/A' %>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Total Financial Summary -->
+            <div class="avoid-break bg-slate-50 p-4 border border-slate-200 space-y-2">
+                <div class="flex justify-between items-center text-xs text-slate-600">
+                    <span>Contract Subtotal:</span>
+                    <span
+                        class="font-mono font-medium text-slate-800">$<%= subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                </div>
+                <% if (overheadTotal > 0) { %>
+                <div class="flex justify-between items-center text-xs text-slate-600">
+                    <span>Overhead & Admin Fee:</span>
+                    <span
+                        class="font-mono font-medium text-slate-800">$<%= overheadTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                </div>
+                <% } %>
+                <div class="flex justify-between items-center text-sm font-bold border-t border-slate-300 pt-2">
+                    <span class="uppercase tracking-tight text-slate-900">Total Contract Value:</span>
+                    <span
+                        class="font-mono text-base text-slate-900">$<%= grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                </div>
+            </div>
+
+            <!-- Milestone Payment Schedule & Status Ledger -->
+            <div class="avoid-break space-y-4">
+                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">
+                    Milestone Payment Schedule</h3>
+
+                <div class="border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left text-xs">
+                        <thead
+                            class="bg-slate-100 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Milestone</th>
+                                <th class="p-3 text-center">% Share</th>
+                                <th class="p-3 text-right">Amount</th>
+                                <th class="p-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <% 
+              let totalPaid = 0;
+              const milestones = estimate.paymentMilestones || [];
+              milestones.forEach(m => {
+                const milestoneAmount = (grandTotal * ((parseFloat(m.percentage) || 0) / 100));
+                if (m.status === 'paid') totalPaid += milestoneAmount;
+            %>
+                            <tr class="<%= m.status === 'paid' ? 'bg-emerald-50/40' : '' %>">
+                                <td class="p-3 font-bold text-slate-900"><%= m.title %></td>
+                                <td class="p-3 text-center font-mono text-slate-600"><%= m.percentage %>%</td>
+                                <td class="p-3 text-right font-mono font-semibold text-slate-900">
+                                    $<%= milestoneAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <% if (m.status === 'paid') { %>
+                                    <span
+                                        class="bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded">Paid</span>
+                                    <% } else { %>
+                                    <span
+                                        class="bg-amber-100 text-amber-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded">Pending</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Payment Summary Balance Box -->
+                <% const remainingBalance = Math.max(0, grandTotal - totalPaid); %>
+                <div class="bg-white text-white p-4 space-y-2 font-mono">
+                    <div class="flex justify-between items-center text-xs text-slate-900">
+                        <span>Total Paid to Date:</span>
+                        <span
+                            class="text-slate-900 font-bold">$<%= totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                    </div>
+                    <div
+                        class="flex justify-between items-center text-slate-900 font-bold border-t border-slate-900 pt-2">
+                        <span>Remaining Balance Due:</span>
+                        <span
+                            class="<%= remainingBalance > 0 ? 'text-slate-900' : 'text-slate-900' %>">$<%= remainingBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Print / PDF Button -->
+            <div class="pt-6 border-t border-slate-100 flex justify-end print:hidden">
+                <button onclick="window.print()"
+                    class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2 transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                        </path>
+                    </svg>
+                    Print / Save PDF
+                </button>
+            </div>
+
+        </div>
+
+        <footer class="text-center text-[11px] text-slate-400 mt-8 print:hidden">
+            Powered by MRC
+        </footer>
+
+    </body>
+
+</html>
