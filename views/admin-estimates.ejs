@@ -218,6 +218,11 @@
               class="bg-white hover:bg-slate-100 text-black border border-slate-300 px-3 py-1.5 text-xs font-semibold transition-all">Share</button>
             <button onclick='openMilestonesModal("<%= inv.id %>", <%= JSON.stringify(inv.paymentMilestones || []) %>)'
               class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 px-3 py-1.5 text-xs font-semibold transition-all">Milestones</button>
+
+            <button onclick="promptRevertToDraft('<%= inv.id %>', '<%= inv.projectName %>')"
+              class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 px-3 py-1.5 text-xs font-semibold transition-all">
+              Revert to Draft
+            </button>
             <!-- Delete Button -->
             <button onclick="promptDeleteEstimate('<%= inv.id %>', '<%= inv.projectName %>')"
               class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-300 px-3 py-1.5 text-xs font-semibold transition-all">
@@ -439,6 +444,34 @@
       <button id="confirmUnpublishBtn"
         class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">Unpublish
         Proposal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: REVERT TO DRAFT CONFIRMATION ================= -->
+<div id="revertConfirmModal"
+  class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white max-w-md w-full shadow-2xl border border-slate-300 p-6 space-y-4">
+    <div class="flex items-center gap-3 border-b border-slate-200 pb-3 text-amber-600">
+      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+        </path>
+      </svg>
+      <h3 class="text-lg font-bold text-slate-900">Revert to Draft</h3>
+    </div>
+
+    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+      Are you sure you want to revert <strong id="revertTargetName" class="text-slate-900"></strong> back to a draft?
+    </p>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button onclick="toggleModal('revertConfirmModal')"
+        class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+      <button id="confirmRevertBtn"
+        class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
+        Revert Invoice
+      </button>
     </div>
   </div>
 </div>
@@ -766,4 +799,27 @@
       body: JSON.stringify({ order })
     });
   }
+
+  let targetRevertId = null;
+
+  function promptRevertToDraft(id, name) {
+    targetRevertId = id;
+    document.getElementById('revertTargetName').textContent = name;
+    document.getElementById('confirmRevertBtn').onclick = executeRevertToDraft;
+    toggleModal('revertConfirmModal');
+  }
+
+  async function executeRevertToDraft() {
+    if (!targetRevertId) return;
+
+    const res = await fetch(`/admin/estimates/${targetRevertId}/revert-to-draft`, { method: 'POST' });
+    const data = await res.json();
+
+    if (data.success) {
+      window.location.reload();
+    } else {
+      alert(data.error || 'Failed to revert invoice to draft.');
+    }
+  }
+
 </script>

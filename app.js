@@ -1441,6 +1441,24 @@ app.get('/admin/estimates/:id/get', requireAuth, (req, res) => {
   }
 });
 
+app.post('/admin/estimates/:id/revert-to-draft', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const estimate = data.estimates.find(e => e.id === req.params.id);
+
+    if (!estimate) return res.status(404).json({ error: 'Estimate not found' });
+
+    estimate.status = 'draft';
+    estimate.updatedAt = new Date().toISOString();
+
+    saveEstimatesData(data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error reverting invoice to draft:', err);
+    res.status(500).json({ error: 'Failed to revert invoice to draft' });
+  }
+});
+
 // Create/Update Draft Estimate
 app.post('/admin/estimates/save', requireAuth, (req, res) => {
   try {
