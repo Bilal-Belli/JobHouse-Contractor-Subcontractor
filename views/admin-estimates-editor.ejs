@@ -210,12 +210,15 @@
     </div>
 </main>
 
-<!-- ================= MODAL: PUBLISH SELECTION ================= -->
+<!-- ================= MODAL: PUBLISH ESTIMATE ================= -->
 <div id="publishModal"
     class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white max-w-md w-full shadow-2xl border border-slate-300 p-6 space-y-4">
         <h3 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2">Publish Estimate</h3>
-        <p class="text-xs text-slate-600">Select which company profile and client to assign to this proposal before publishing.</p>
+        <input type="hidden" id="publishTargetId" value="">
+
+        <p class="text-xs text-slate-600">Select which company profile and client to assign to this proposal before
+            publishing.</p>
 
         <!-- Company Profile Select -->
         <div>
@@ -223,30 +226,79 @@
             <select id="companyProfileSelect"
                 class="w-full bg-slate-50 border border-slate-300 p-2 text-xs font-semibold focus:ring-2 focus:ring-amber-500">
                 <% companyProfiles.forEach(prof => { %>
-                <option value="<%= prof.id %>" <%= estimate.companyProfileId === prof.id ? 'selected' : '' %>><%= prof.name %></option>
+                <option value="<%= prof.id %>"><%= prof.name %> (Lic: <%= prof.license || 'N/A' %>)</option>
                 <% }); %>
             </select>
         </div>
 
-        <!-- NEW: Client Profile Select -->
+        <!-- Client Profile Select with Quick Add Button -->
         <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Client Profile</label>
+            <div class="flex justify-between items-center mb-1">
+                <label class="block text-xs font-bold text-slate-700 uppercase">Client Profile</label>
+                <button type="button" onclick="openInlineClientModal()"
+                    class="text-xs text-amber-600 font-bold">Add Client</button>
+            </div>
             <select id="clientProfileSelect"
                 class="w-full bg-slate-50 border border-slate-300 p-2 text-xs font-semibold focus:ring-2 focus:ring-amber-500">
                 <option value="">-- No Client Selected --</option>
                 <% (typeof clientProfiles !== 'undefined' ? clientProfiles : []).forEach(client => { %>
-                <option value="<%= client.id %>" <%= estimate.clientProfileId === client.id ? 'selected' : '' %>><%= client.name %></option>
+                <option value="<%= client.id %>"><%= client.name %>
+                    (<%= client.phone || client.email || 'No contact info' %>)</option>
                 <% }); %>
             </select>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
             <button onclick="toggleModal('publishModal')"
                 class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
             <button onclick="executePublish()"
-                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">Publish
-                Now</button>
+                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
+                Publish Now
+            </button>
         </div>
+    </div>
+</div>
+
+<!-- ================= MODAL: INLINE QUICK ADD CLIENT ================= -->
+<div id="inlineClientModal"
+    class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-white max-w-sm w-full shadow-2xl border border-slate-300 p-5 space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+            <h4 class="text-sm font-bold text-slate-900">Add New Client</h4>
+            <button type="button" onclick="toggleModal('inlineClientModal')"
+                class="text-slate-400 hover:text-slate-700 font-bold text-base">&times;</button>
+        </div>
+
+        <form id="inlineClientForm" onsubmit="saveInlineClient(event)" class="space-y-3 text-xs">
+            <div>
+                <label class="block font-bold text-slate-700 mb-0.5">Full Name *</label>
+                <input type="text" id="inlineClientName" required placeholder="John Doe"
+                    class="w-full border border-slate-300 p-2 focus:ring-1 focus:ring-amber-500">
+            </div>
+            <div>
+                <label class="block font-bold text-slate-700 mb-0.5">Phone Number</label>
+                <input type="text" id="inlineClientPhone" placeholder="(555) 019-2831"
+                    class="w-full border border-slate-300 p-2 focus:ring-1 focus:ring-amber-500">
+            </div>
+            <div>
+                <label class="block font-bold text-slate-700 mb-0.5">Email Address</label>
+                <input type="email" id="inlineClientEmail" placeholder="john@example.com"
+                    class="w-full border border-slate-300 p-2 focus:ring-1 focus:ring-amber-500">
+            </div>
+            <div>
+                <label class="block font-bold text-slate-700 mb-0.5">Address</label>
+                <input type="text" id="inlineClientAddress" placeholder="123 Main St, City, State"
+                    class="w-full border border-slate-300 p-2 focus:ring-1 focus:ring-amber-500">
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="toggleModal('inlineClientModal')"
+                    class="px-3 py-1.5 font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
+                <button type="submit"
+                    class="bg-slate-900 text-white font-bold px-4 py-1.5 shadow-sm hover:bg-slate-800">Save &
+                    Select</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -450,4 +502,39 @@
         else alert(data.error || 'Failed to publish estimate.');
     }
 
+    function openInlineClientModal() {
+        document.getElementById('inlineClientForm').reset();
+        toggleModal('inlineClientModal');
+    }
+
+    async function saveInlineClient(e) {
+        e.preventDefault();
+        const payload = {
+            id: '',
+            name: document.getElementById('inlineClientName').value,
+            phone: document.getElementById('inlineClientPhone').value,
+            email: document.getElementById('inlineClientEmail').value,
+            address: document.getElementById('inlineClientAddress').value
+        };
+
+        const res = await fetch('/admin/client-profiles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        if (result.success && result.profile) {
+            const select = document.getElementById('clientProfileSelect');
+            const option = document.createElement('option');
+            option.value = result.profile.id;
+            option.textContent = `${result.profile.name} (${result.profile.phone || result.profile.email || 'No contact info'})`;
+            option.selected = true;
+            select.appendChild(option);
+
+            toggleModal('inlineClientModal');
+        } else {
+            alert('Failed to create client.');
+        }
+    }
 </script>
