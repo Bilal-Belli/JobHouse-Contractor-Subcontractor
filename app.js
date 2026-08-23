@@ -1190,6 +1190,446 @@ app.put('/admin/houses/schedule/status/:houseId', (req, res) => {
     }
 });
 
+// =========================================================================
+// ESTIMATES & MULTI-COMPANY BACKEND STORAGE MODULE (ISOATED FROM PROJECT/QR DATA)
+// =========================================================================
+
+const ESTIMATES_DATA_FILE = path.join(__dirname, 'data', 'estimates_data.json');
+
+function getEstimatesData() {
+  try {
+    if (!fs.existsSync(ESTIMATES_DATA_FILE)) {
+      const dir = path.dirname(ESTIMATES_DATA_FILE);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      const defaultData = { companyProfiles: [], estimates: [] };
+      fs.writeFileSync(ESTIMATES_DATA_FILE, JSON.stringify(defaultData, null, 2));
+      return defaultData;
+    }
+    const rawData = fs.readFileSync(ESTIMATES_DATA_FILE, 'utf8');
+    const parsed = JSON.parse(rawData);
+    if (!parsed.companyProfiles) parsed.companyProfiles = [];
+    if (!parsed.estimates) parsed.estimates = [];
+    return parsed;
+  } catch (err) {
+    console.error('Error reading estimates data:', err);
+    return { companyProfiles: [], estimates: [] };
+  }
+}
+
+function saveEstimatesData(data) {
+  try {
+    if (!data || typeof data !== 'object') throw new Error('Invalid estimates object');
+    if (!data.companyProfiles) data.companyProfiles = [];
+    if (!data.estimates) data.estimates = [];
+
+    const tempFile = ESTIMATES_DATA_FILE + '.tmp';
+    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf8');
+    fs.renameSync(tempFile, ESTIMATES_DATA_FILE);
+    return true;
+  } catch (err) {
+    console.error('Error saving estimates data:', err);
+    throw err;
+  }
+}
+
+// Render Dedicated Company Profiles Page
+app.get('/admin/company-profiles', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    res.render('admin-profiles', {
+      companyProfiles: data.companyProfiles || []
+    });
+  } catch (err) {
+    console.error('Company profiles page error:', err);
+    res.status(500).send('Error loading company profiles page');
+  }
+});
+
+// Reorder Company Profiles via Drag & Drop
+app.post('/admin/company-profiles/reorder', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const { order } = req.body;
+
+    if (!Array.isArray(order)) return res.status(400).json({ error: 'Invalid order list' });
+
+    // Map profiles into the new position array
+    const profileMap = {};
+    data.companyProfiles.forEach(p => { profileMap[p.id] = p; });
+
+    data.companyProfiles = order.map(id => profileMap[id]).filter(Boolean);
+    saveEstimatesData(data);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error reordering company profiles:', err);
+    res.status(500).json({ error: 'Failed to reorder profiles' });
+  }
+});
+// =========================================================================
+// PUBLIC CLIENT ESTIMATE VIEW ROUTE (STRICTLY ISOLATED & NO AUTH REQUIRED)
+// =========================================================================
+
+app.get('/est/:publicId', (req, res) => {
+  try {
+    const data = getEstimatesData();
+    
+    // 1. Locate the requested published estimate
+    const estimate = data.estimates.find(e => e.publicId === req.params.publicId && e.status === 'published');
+
+    if (!estimate) {
+      return res.status(404).render('errors/404');
+    }
+
+    // 2. Fetch the corresponding operating company profile
+    const company = data.companyProfiles.find(c => c.id === estimate.companyProfileId) || null;
+
+    // 3. Process line items: Calculate client prices and strip sub-costs / markups
+    const clientTrades = (estimate.trades || []).map(trade => {
+      const subCost = parseFloat(trade.subCost) || 0;
+      const markupVal = parseFloat(trade.markup?.value) || 0;
+      const markupType = trade.markup?.type || 'percent';
+
+      let clientPrice = subCost;
+      if (markupType === 'percent') {
+        clientPrice += subCost * (markupVal / 100);
+      } else {
+        clientPrice += markupVal;
+      }
+
+      return {
+        name: trade.name,
+        description: trade.description,
+        clientPrice
+      };
+    });
+
+    // 4. Calculate subtotal and overhead
+    const subtotal = clientTrades.reduce((acc, item) => acc + item.clientPrice, 0);
+    const overheadVal = parseFloat(estimate.overhead?.value) || 0;
+    const overheadType = estimate.overhead?.type || 'percent';
+
+    let overheadTotal = 0;
+    if (overheadType === 'percent') {
+      overheadTotal = subtotal * (overheadVal / 100);
+    } else {
+      overheadTotal = overheadVal;
+    }
+
+    const grandTotal = subtotal + overheadTotal;
+
+    // 5. Render the client-facing proposal
+    res.render('public-estimate', {
+      estimate,
+      company,
+      clientTrades,
+      subtotal,
+      overheadTotal,
+      grandTotal
+    });
+
+  } catch (err) {
+    console.error('Error serving published estimate:', err);
+    res.status(500).send('Error loading estimate proposal.');
+  }
+});
+
+// ==========================================
+// PROTECTED ADMIN ESTIMATES ENDPOINTS
+// ==========================================
+
+// Render Estimates Admin View
+app.get('/admin/estimates', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    res.render('admin-estimates', {
+      estimates: data.estimates || [],
+      companyProfiles: data.companyProfiles || []
+    });
+  } catch (err) {
+    console.error('Estimates dashboard error:', err);
+    res.status(500).send('Error loading estimates page');
+  }
+});
+
+// Render Dedicated Editor Page
+app.get('/admin/estimates/:id/edit', requireAuth, (req, res) => {
+  const data = getEstimatesData();
+  let estimate = data.estimates.find(e => e.id === req.params.id);
+
+  // If this is a new estimate ID, supply default empty draft structure
+  if (!estimate) {
+    estimate = {
+      id: req.params.id,
+      projectName: 'New Estimate Proposal',
+      status: 'draft',
+      trades: [
+        { name: 'Demolition', description: 'Initial teardown and cleanup', subCost: 1200, markup: { type: 'percent', value: 20 } }
+      ],
+      overhead: { type: 'percent', value: 10 }
+    };
+  }
+
+  res.render('admin-estimates-editor', {
+    estimate,
+    companyProfiles: data.companyProfiles || []
+  });
+});
+
+// Publish Endpoint
+app.post('/admin/estimates/:id/publish', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const estimate = data.estimates.find(e => e.id === req.params.id);
+
+    if (!estimate) return res.status(404).json({ error: 'Estimate not found' });
+
+    const { companyProfileId } = req.body;
+    if (!companyProfileId) return res.status(400).json({ error: 'Company Profile is required' });
+
+    estimate.status = 'published';
+    estimate.companyProfileId = companyProfileId;
+    estimate.publishedAt = new Date().toISOString();
+    
+    // Generate public random ID for client view link if not present
+    if (!estimate.publicId) {
+      estimate.publicId = 'pub_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    saveEstimatesData(data);
+    res.json({ success: true, publicId: estimate.publicId });
+  } catch (err) {
+    console.error('Error publishing estimate:', err);
+    res.status(500).json({ error: 'Failed to publish estimate' });
+  }
+});
+
+// Unpublish Endpoint
+app.post('/admin/estimates/:id/unpublish', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const estimate = data.estimates.find(e => e.id === req.params.id);
+
+    if (!estimate) return res.status(404).json({ error: 'Estimate not found' });
+
+    estimate.status = 'draft';
+    estimate.updatedAt = new Date().toISOString();
+
+    saveEstimatesData(data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error unpublishing estimate:', err);
+    res.status(500).json({ error: 'Failed to unpublish estimate' });
+  }
+});
+
+// Reorder Estimates via Drag & Drop
+app.post('/admin/estimates/reorder', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const { order } = req.body;
+
+    if (!Array.isArray(order)) return res.status(400).json({ error: 'Invalid order list' });
+
+    // Map existing estimates by ID for quick lookup
+    const estimateMap = {};
+    data.estimates.forEach(e => { estimateMap[e.id] = e; });
+
+    // Reconstruct list according to posted ID sequence
+    const reorderedList = order.map(id => estimateMap[id]).filter(Boolean);
+
+    // Append any estimates not explicitly included in the reordered array
+    data.estimates.forEach(e => {
+      if (!order.includes(e.id)) {
+        reorderedList.push(e);
+      }
+    });
+
+    data.estimates = reorderedList;
+    saveEstimatesData(data);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error reordering estimates:', err);
+    res.status(500).json({ error: 'Failed to reorder estimates' });
+  }
+});
+
+// Get Single Estimate Payload via AJAX
+app.get('/admin/estimates/:id/get', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const estimate = data.estimates.find(e => e.id === req.params.id);
+    if (!estimate) return res.status(404).json(null);
+    res.json(estimate);
+  } catch (err) {
+    res.status(500).json(null);
+  }
+});
+
+// Create/Update Draft Estimate
+app.post('/admin/estimates/save', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const { id, projectName, trades, overhead } = req.body;
+
+    let estimate = data.estimates.find(e => e.id === id);
+
+    if (!estimate) {
+      estimate = {
+        id: 'est-' + Date.now(),
+        publicId: 'pub_' + Math.random().toString(36).substring(2, 8),
+        status: 'draft',
+        createdAt: new Date().toISOString()
+      };
+      data.estimates.push(estimate);
+    }
+
+    estimate.projectName = projectName || 'Untitled Project';
+    estimate.trades = Array.isArray(trades) ? trades : [];
+    estimate.overhead = overhead || { type: 'percent', value: 0 };
+    estimate.updatedAt = new Date().toISOString();
+
+    saveEstimatesData(data);
+    res.json({ success: true, estimate });
+  } catch (err) {
+    console.error('Error saving estimate:', err);
+    res.status(500).json({ error: 'Failed to save estimate' });
+  }
+});
+
+// Duplicate Estimate (Template workflow)
+app.post('/admin/estimates/:id/duplicate', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const original = data.estimates.find(e => e.id === req.params.id);
+
+    if (!original) return res.status(404).json({ error: 'Estimate not found' });
+
+    const duplicate = JSON.parse(JSON.stringify(original));
+    duplicate.id = 'est-' + Date.now();
+    duplicate.publicId = 'pub_' + Math.random().toString(36).substring(2, 8);
+    duplicate.projectName = `${original.projectName} (Copy)`;
+    duplicate.status = 'draft';
+    duplicate.createdAt = new Date().toISOString();
+
+    data.estimates.push(duplicate);
+    saveEstimatesData(data);
+
+    res.json({ success: true, estimateId: duplicate.id });
+  } catch (err) {
+    console.error('Error duplicating estimate:', err);
+    res.status(500).json({ error: 'Failed to duplicate estimate' });
+  }
+});
+
+// Delete Estimate
+app.post('/admin/estimates/:id/delete', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    data.estimates = data.estimates.filter(e => e.id !== req.params.id);
+    saveEstimatesData(data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting estimate:', err);
+    res.status(500).json({ error: 'Failed to delete estimate' });
+  }
+});
+
+// Publish Estimate Route
+app.post('/admin/estimates/:id/publish', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const { companyProfileId } = req.body;
+    const estimate = data.estimates.find(e => e.id === req.params.id);
+
+    if (!estimate) return res.status(404).json({ error: 'Estimate not found' });
+
+    estimate.status = 'published';
+    estimate.companyProfileId = companyProfileId;
+    estimate.publishedAt = new Date().toISOString();
+
+    saveEstimatesData(data);
+    
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const shareableUrl = `${baseUrl}/est/${estimate.publicId}`;
+
+    res.json({ success: true, shareableUrl, publicId: estimate.publicId });
+  } catch (err) {
+    console.error('Error publishing estimate:', err);
+    res.status(500).json({ error: 'Failed to publish estimate' });
+  }
+});
+
+// Create/Update Company Profile (with Logo File Uploads)
+app.post('/admin/company-profiles', requireAuth, upload.single('logo'), async (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const { id, name, address, phone, license } = req.body;
+
+    let profile = data.companyProfiles.find(p => p.id === id);
+    let logoUrl = profile ? profile.logoUrl : '';
+
+    if (req.file) {
+      const logoDir = path.join(__dirname, 'public', 'uploads', 'company_logos');
+      fs.mkdirSync(logoDir, { recursive: true });
+
+      const filename = `logo-${Date.now()}${path.extname(req.file.originalname)}`;
+      await sharp(req.file.buffer)
+        .resize({ width: 500, height: 200, fit: 'inside' })
+        .png({ quality: 80 })
+        .toFile(path.join(logoDir, filename));
+
+      logoUrl = `/uploads/company_logos/${filename}`;
+    }
+
+    if (profile) {
+      profile.name = name;
+      profile.address = address;
+      profile.phone = phone;
+      profile.license = license;
+      profile.logoUrl = logoUrl;
+    } else {
+      profile = {
+        id: 'profile-' + Date.now(),
+        name,
+        address,
+        phone,
+        license,
+        logoUrl
+      };
+      data.companyProfiles.push(profile);
+    }
+
+    saveEstimatesData(data);
+    res.json({ success: true, profile });
+  } catch (err) {
+    console.error('Error saving company profile:', err);
+    res.status(500).json({ error: 'Failed to save profile' });
+  }
+});
+
+// Delete Company Profile
+app.post('/admin/company-profiles/:id/delete', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const profile = data.companyProfiles.find(p => p.id === req.params.id);
+
+    if (profile && profile.logoUrl) {
+      deleteFileFromDisk(profile.logoUrl);
+    }
+
+    data.companyProfiles = data.companyProfiles.filter(p => p.id !== req.params.id);
+    saveEstimatesData(data);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting company profile:', err);
+    res.status(500).json({ error: 'Failed to delete profile' });
+  }
+});
+
+
 // =====================
 // PUBLIC VIEW ROUTES
 // =====================
