@@ -1662,7 +1662,7 @@ app.get('/inv/:publicId', (req, res) => {
   }
 });
 
-// Convert Published Estimate to Invoice
+// Convert Published Estimate to Invoice (Auto-Incrementing YY-0001)
 app.post('/admin/estimates/:id/convert-to-invoice', requireAuth, (req, res) => {
   try {
     const data = getEstimatesData();
@@ -1670,18 +1670,39 @@ app.post('/admin/estimates/:id/convert-to-invoice', requireAuth, (req, res) => {
 
     if (!estimate) return res.status(404).json({ error: 'Estimate not found' });
 
-    const { invoiceNumber } = req.body;
+    // 1. Get current 2-digit year (e.g. "26")
+    const yearPrefix = new Date().getFullYear().toString().slice(-2);
+    const prefixPattern = new RegExp(`^${yearPrefix}-(\\d{4})$`);
+
+    // 2. Find highest existing sequential number for this year
+    let maxSeq = 0;
+    data.estimates.forEach(e => {
+      if (e.invoiceNumber) {
+        const match = e.invoiceNumber.match(prefixPattern);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxSeq) maxSeq = num;
+        }
+      }
+    });
+
+    // 3. Increment sequence and pad with 4 zeros (e.g., 26-0001)
+    const nextSeq = String(maxSeq + 1).padStart(4, '0');
+    const autoInvoiceNumber = req.body.invoiceNumber && req.body.invoiceNumber.trim() !== '' 
+      ? req.body.invoiceNumber 
+      : `${yearPrefix}-${nextSeq}`;
+
+    // 4. Save status update
     estimate.status = 'invoiced';
-    estimate.invoiceNumber = invoiceNumber || 'INV-' + Date.now();
+    estimate.invoiceNumber = autoInvoiceNumber;
     estimate.invoicedAt = new Date().toISOString();
 
-    // Set milestones to blank array on initial conversion
     if (!estimate.paymentMilestones) {
       estimate.paymentMilestones = [];
     }
 
     saveEstimatesData(data);
-    res.json({ success: true, publicId: estimate.publicId });
+    res.json({ success: true, publicId: estimate.publicId, invoiceNumber: autoInvoiceNumber });
   } catch (err) {
     console.error('Error converting to invoice:', err);
     res.status(500).json({ error: 'Failed to convert estimate' });

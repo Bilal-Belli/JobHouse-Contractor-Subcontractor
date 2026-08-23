@@ -520,7 +520,25 @@
   function openConvertModal(id, name) {
     document.getElementById('convertTargetId').value = id;
     document.getElementById('convertTargetName').textContent = name;
-    document.getElementById('convertInvoiceNumber').value = 'INV-' + Math.floor(1000 + Math.random() * 9000);
+
+    // Calculate next YY-0001 dynamically on client opening
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    const regex = new RegExp(`^${currentYear}-(\\d{4})$`);
+    let maxSeq = 0;
+
+    <% invoicesList.forEach(inv => { %>
+      if ("<%= inv.invoiceNumber || '' %>") {
+          const match = "<%= inv.invoiceNumber %>".match(regex);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxSeq) maxSeq = num;
+          }
+        }
+    <% }); %>
+
+    const nextInvoiceNum = `${currentYear}-${String(maxSeq + 1).padStart(4, '0')}`;
+    document.getElementById('convertInvoiceNumber').value = nextInvoiceNum;
+
     toggleModal('convertModal');
   }
 
