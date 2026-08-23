@@ -73,6 +73,17 @@
                         <span>Estimates</span>
                     </a>
 
+                    <!-- Client Profiles -->
+                    <a href="/admin/client-profiles"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium transition-all shrink-0 <%= currentPath.startsWith('/admin/client-profiles') ? 'bg-slate-800 text-slate-100 font-bold border-b-2 border-slate-300' : 'text-slate-300 hover:text-white hover:bg-slate-800' %>">
+                        <svg class="w-4 h-4 sm:hidden shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                            </path>
+                        </svg>
+                        <span class="hidden sm:inline">Client Profiles</span>
+                    </a>
+                    
                     <!-- Company Profiles -->
                     <a href="/admin/company-profiles"
                         class="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium transition-all shrink-0 <%= currentPath.startsWith('/admin/company-profiles') ? 'bg-slate-800 text-slate-100 font-bold border-b-2 border-slate-300' : 'text-slate-300 hover:text-white hover:bg-slate-800' %>">
@@ -84,16 +95,7 @@
                         <span class="hidden sm:inline">Company Profiles</span>
                     </a>
 
-                    <!-- Client Profiles -->
-                    <a href="/admin/client-profiles"
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium transition-all shrink-0 <%= currentPath.startsWith('/admin/client-profiles') ? 'bg-slate-800 text-slate-100 font-bold border-b-2 border-slate-300' : 'text-slate-300 hover:text-white hover:bg-slate-800' %>">
-                        <svg class="w-4 h-4 sm:hidden shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
-                            </path>
-                        </svg>
-                        <span class="hidden sm:inline">Client Profiles</span>
-                    </a>
+                    
                     <!-- Logout -->
                     <a href="javascript:void(0)" onclick="logoutAdmin()" title="Sign out"
                         class="inline-flex items-center bg-slate-800 hover:bg-red-600/80 text-slate-300 hover:text-white p-2 text-xs sm:text-sm transition-all shrink-0">
