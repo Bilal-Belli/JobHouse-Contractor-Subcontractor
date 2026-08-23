@@ -1,76 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Estimate Proposal - <%= estimate.projectName %></title>
-  <link rel="icon" type="image/x-icon" href="<%= baseUrl %>/favicon.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-100 text-slate-800 antialiased py-10 px-4 min-h-screen flex flex-col justify-between">
-  
-  <div class="max-w-3xl mx-auto bg-white border border-slate-200 shadow-xl p-8 sm:p-12 space-y-8 w-full">
-    
-    <!-- Header: Selected Operating Company Branding -->
-    <div class="flex flex-col sm:flex-row justify-between items-start border-b border-slate-200 pb-6 gap-6">
-      
-      <!-- Company Branding / Logo & Details -->
-      <div class="space-y-2">
-        <% if (company && company.logoUrl) { %>
-          <img src="<%= company.logoUrl %>" alt="<%= company.name %> Logo" class="h-32 object-contain mb-3">
-        <% } %>
-        
-        <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tight">
-          <%= company && company.name ? company.name : 'Contractor Estimate Proposal' %>
-        </h1>
-        
-        <div class="text-xs text-slate-500 space-y-0.5">
-          <% if (company && company.license) { %>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimate Proposal - <%= estimate.projectName %></title>
+    <link rel="icon" type="image/x-icon" href="<%= baseUrl %>/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      /* Strict US Letter Print Styles */
+      @media print {
+        @page {
+          size: letter portrait;
+          /* 8.5in x 11in */
+          margin: 0.5in;
+          /* Clean standard margins */
+        }
+
+        body {
+          background-color: #ffffff !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        .no-print,
+        .print\:hidden {
+          display: none !important;
+        }
+
+        .paper-card {
+          border: none !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+          max-width: 100% !important;
+          width: 100% !important;
+        }
+
+        /* Prevent ugly page breaks across sections & table rows */
+        tr,
+        .avoid-break {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+
+        thead {
+          display: table-header-group;
+          /* Repeat table header if split across pages */
+        }
+      }
+    </style>
+  </head>
+
+  <body class="bg-slate-100 text-slate-800 antialiased py-10 px-4 min-h-screen flex flex-col justify-between">
+
+    <div class="paper-card max-w-3xl mx-auto bg-white border border-slate-200 shadow-xl p-8 sm:p-12 space-y-8 w-full">
+
+      <!-- Header: Selected Operating Company Branding -->
+      <div
+        class="avoid-break flex flex-col sm:flex-row justify-between items-start border-b border-slate-200 pb-6 gap-6">
+
+        <!-- Company Branding / Logo & Details -->
+        <div class="space-y-2">
+          <% if (company && company.logoUrl) { %>
+          <img src="<%= company.logoUrl %>" alt="<%= company.name %> Logo" class="h-24 object-contain mb-3">
+          <% } %>
+
+          <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tight">
+            <%= company && company.name ? company.name : 'Contractor Estimate Proposal' %>
+          </h1>
+
+          <div class="text-xs text-slate-500 space-y-0.5">
+            <% if (company && company.license) { %>
             <p><span class="font-semibold text-slate-700">License:</span> <%= company.license %></p>
-          <% } %>
-          <% if (company && company.address) { %>
+            <% } %>
+            <% if (company && company.address) { %>
             <p><span class="font-semibold text-slate-700">Address:</span> <%= company.address %></p>
-          <% } %>
-          <% if (company && company.phone) { %>
+            <% } %>
+            <% if (company && company.phone) { %>
             <p><span class="font-semibold text-slate-700">Phone:</span> <%= company.phone %></p>
-          <% } %>
-          <% if (company && company.email) { %>
+            <% } %>
+            <% if (company && company.email) { %>
             <p><span class="font-semibold text-slate-700">Email:</span> <%= company.email %></p>
-          <% } %>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Proposal Metadata -->
+        <div class="text-left sm:text-right shrink-0">
+          <span class="text-xs font-bold uppercase tracking-widest text-amber-600 block mb-1">Official Proposal</span>
+          <h2 class="text-xl font-bold text-slate-800"><%= estimate.projectName %></h2>
+          <p class="text-xs text-slate-500 mt-1">
+            Date Published:
+            <%= new Date(estimate.publishedAt || estimate.updatedAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+          </p>
         </div>
       </div>
 
-      <!-- Proposal Metadata -->
-      <div class="text-left sm:text-right shrink-0">
-        <span class="text-xs font-bold uppercase tracking-widest text-amber-600 block mb-1">Official Proposal</span>
-        <h2 class="text-xl font-bold text-slate-800"><%= estimate.projectName %></h2>
-        <p class="text-xs text-slate-500 mt-1">
-          Date Published: <%= new Date(estimate.publishedAt || estimate.updatedAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
-        </p>
-      </div>
-    </div>
+      <!-- Client Line Items Table -->
+      <div class="space-y-4">
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">Scope of
+          Work & Itemized Pricing</h3>
 
-    <!-- Client Line Items Table (Stripped of sub-costs & markup fields) -->
-    <div class="space-y-4">
-      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">Scope of Work & Itemized Pricing</h3>
-      
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200">
-            <tr>
-              <th class="p-3 w-1/4">Trade / Service</th>
-              <th class="p-3 w-1/2">Description</th>
-              <th class="p-3 text-right w-1/4">Amount</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-200 text-xs">
-            <% if (!clientTrades || clientTrades.length === 0) { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200">
               <tr>
-                <td colspan="3" class="p-4 text-center text-slate-400 italic">No line items specified for this proposal.</td>
+                <th class="p-3 w-1/4">Trade / Service</th>
+                <th class="p-3 w-1/2">Description</th>
+                <th class="p-3 text-right w-1/4">Amount</th>
               </tr>
-            <% } %>
+            </thead>
+            <tbody class="divide-y divide-slate-200 text-xs">
+              <% if (!clientTrades || clientTrades.length === 0) { %>
+              <tr>
+                <td colspan="3" class="p-4 text-center text-slate-400 italic">No line items specified for this proposal.
+                </td>
+              </tr>
+              <% } %>
 
-            <% clientTrades.forEach(trade => { %>
+              <% clientTrades.forEach(trade => { %>
               <tr class="hover:bg-slate-50/50">
                 <td class="p-3 font-bold text-slate-900 align-top"><%= trade.name || 'General' %></td>
                 <td class="p-3 text-slate-600 leading-relaxed align-top"><%= trade.description || 'N/A' %></td>
@@ -78,15 +129,15 @@
                   $<%= trade.clientPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                 </td>
               </tr>
-            <% }); %>
-          </tbody>
-        </table>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <!-- Summary & Grand Total (Includes optional overhead calculation) -->
-    <div class="border-t-2 border-slate-900 pt-6 space-y-3">
-      <% if (overheadTotal > 0) { %>
+      <!-- Summary & Grand Total -->
+      <div class="avoid-break border-t-2 border-slate-900 pt-6 space-y-3">
+        <% if (overheadTotal > 0) { %>
         <div class="flex justify-between items-center text-xs text-slate-500">
           <span>Subtotal:</span>
           <span class="font-mono font-medium text-slate-700">
@@ -94,56 +145,67 @@
           </span>
         </div>
         <div class="flex justify-between items-center text-xs text-slate-500">
-          <span>Overhead & Administrative Fee (<%= estimate.overhead && estimate.overhead.type === 'percent' ? estimate.overhead.value + '%' : 'Flat' %>):</span>
+          <span>Overhead & Administrative Fee
+            (<%= estimate.overhead && estimate.overhead.type === 'percent' ? estimate.overhead.value + '%' : 'Flat' %>):</span>
           <span class="font-mono font-medium text-slate-700">
             $<%= overheadTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
           </span>
         </div>
-      <% } %>
+        <% } %>
 
-      <div class="flex justify-between items-center text-lg font-bold border-t border-slate-200 pt-3">
-        <span class="text-slate-900 uppercase tracking-tight">Grand Total:</span>
-        <span class="text-2xl font-extrabold text-slate-900 font-mono">
-          $<%= grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
-        </span>
+        <div class="flex justify-between items-center text-lg font-bold border-t border-slate-200 pt-3">
+          <span class="text-slate-900 uppercase tracking-tight">Grand Total:</span>
+          <span class="text-2xl font-extrabold text-slate-900 font-mono">
+            $<%= grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+          </span>
+        </div>
       </div>
-    </div>
 
-    <!-- Payment Schedule & Terms Section -->
-    <% if ((estimate.paymentSchedule && estimate.paymentSchedule.trim()) || (estimate.additionalTerms && estimate.additionalTerms.trim())) { %>
+      <!-- Payment Schedule & Terms Section -->
+      <% if ((estimate.paymentSchedule && estimate.paymentSchedule.trim()) || (estimate.additionalTerms && estimate.additionalTerms.trim())) { %>
       <div class="border-t border-slate-200 pt-6 space-y-6">
-        
+
         <% if (estimate.paymentSchedule && estimate.paymentSchedule.trim()) { %>
-          <div class="space-y-2">
-            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1">Payment Schedule</h3>
-            <p class="text-xs text-slate-600 whitespace-pre-line leading-relaxed"><%= estimate.paymentSchedule.trim() %></p>
-          </div>
+        <div class="avoid-break space-y-2">
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1">Payment
+            Schedule</h3>
+          <p class="text-xs text-slate-600 whitespace-pre-line leading-relaxed"><%= estimate.paymentSchedule.trim() %>
+          </p>
+        </div>
         <% } %>
 
         <% if (estimate.additionalTerms && estimate.additionalTerms.trim()) { %>
-          <div class="space-y-2">
-            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1">Terms & Conditions / Releases</h3>
-            <p class="text-xs text-slate-600 whitespace-pre-line leading-relaxed"><%= estimate.additionalTerms.trim() %></p>
-          </div>
+        <div class="avoid-break space-y-2">
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1">Terms &
+            Conditions / Releases</h3>
+          <p class="text-xs text-slate-600 whitespace-pre-line leading-relaxed"><%= estimate.additionalTerms.trim() %>
+          </p>
+        </div>
         <% } %>
 
       </div>
-    <% } %>
+      <% } %>
 
-    <!-- Print & Download Quick Action -->
-    <div class="pt-6 border-t border-slate-100 flex justify-end print:hidden">
-      <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2 transition-all flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-        Print / Save PDF
-      </button>
+      <!-- Print & Download Quick Action -->
+      <div class="pt-6 border-t border-slate-100 flex justify-end print:hidden">
+        <button onclick="window.print()"
+          class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2 transition-all flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+            </path>
+          </svg>
+          Print / Save PDF
+        </button>
+      </div>
+
     </div>
 
-  </div>
+    <!-- Footer Branding -->
+    <footer class="text-center text-[11px] text-slate-400 mt-8 print:hidden">
+      Powered by MRC
+    </footer>
 
-  <!-- Footer Branding -->
-  <footer class="text-center text-[11px] text-slate-400 mt-8 print:hidden">
-    Powered by MRC
-  </footer>
+  </body>
 
-</body>
 </html>
