@@ -1414,17 +1414,35 @@ app.get('/est/:publicId', (req, res) => {
 // ==========================================
 
 // Render Estimates Admin View
+// 1. Pass generalTerms to the admin estimates dashboard
 app.get('/admin/estimates', requireAuth, (req, res) => {
   try {
     const data = getEstimatesData();
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+
     res.render('admin-estimates', {
       estimates: data.estimates || [],
       companyProfiles: data.companyProfiles || [],
-      clientProfiles: data.clientProfiles || [] // <-- ADD THIS LINE
+      clientProfiles: data.clientProfiles || [],
+      generalTerms: data.generalTerms || '', // <-- PASS GENERAL TERMS
+      baseUrl
     });
   } catch (err) {
-    console.error('Estimates dashboard error:', err);
-    res.status(500).send('Error loading estimates page');
+    console.error('Error loading estimates dashboard:', err);
+    res.status(500).send('Error loading dashboard');
+  }
+});
+
+// 2. API endpoint to update General Terms settings
+app.post('/admin/settings/general-terms', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    data.generalTerms = req.body.generalTerms || '';
+    saveEstimatesData(data);
+    res.json({ success: true, generalTerms: data.generalTerms });
+  } catch (err) {
+    console.error('Error saving general terms:', err);
+    res.status(500).json({ success: false, error: 'Failed to save terms' });
   }
 });
 
@@ -1433,7 +1451,10 @@ app.get('/admin/estimates/:id/edit', requireAuth, (req, res) => {
   const data = getEstimatesData();
   let estimate = data.estimates.find(e => e.id === req.params.id);
 
-  // If this is a new estimate ID, supply default empty draft structure
+  // Default fallbacks if no custom general terms have been configured yet
+  const defaultFallbackTerms = 'This estimate is valid for 30 days and is based on the scope described above; any changes to that scope, materials, or design will be documented and priced as a written change order before proceeding. Prices reflect current material costs and may be adjusted if those costs change significantly before work begins. Estimated start and completion dates are approximate and may shift due to weather, permitting, or other factors outside our control. All work is performed by licensed, insured professionals. Acceptance of this estimate (in writing or by signature) constitutes agreement to these terms.';
+
+  // If this is a new estimate ID, supply default empty draft structure with global general terms
   if (!estimate) {
     estimate = {
       id: req.params.id,
@@ -1445,7 +1466,7 @@ app.get('/admin/estimates/:id/edit', requireAuth, (req, res) => {
       overhead: { type: 'percent', value: 10 },
       paymentSchedule: '',
       additionalTerms: '',
-      generalTerms: 'This estimate is valid for 30 days and is based on the scope described above; any changes to that scope, materials, or design will be documented and priced as a written change order before proceeding. Prices reflect current material costs and may be adjusted if those costs change significantly before work begins. Estimated start and completion dates are approximate and may shift due to weather, permitting, or other factors outside our control. All work is performed by licensed, insured professionals. Acceptance of this estimate (in writing or by signature) constitutes agreement to these terms.'
+      generalTerms: (data.generalTerms && data.generalTerms.trim() !== '') ? data.generalTerms : defaultFallbackTerms
     };
   }
 

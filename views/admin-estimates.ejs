@@ -10,6 +10,7 @@
 
   <!-- Top Action & Search Bar -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-300 pb-4">
+    <!-- Search Input -->
     <div class="relative w-full sm:w-72">
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
         <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,13 +22,22 @@
         class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all shadow-sm">
     </div>
 
-    <div class="shrink-0 flex justify-end">
+    <!-- Right-aligned Button Group -->
+    <div class="shrink-0 flex items-center justify-end gap-2">
       <button onclick="createNewEstimate()"
         class="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
         New Estimate
+      </button>
+      <!-- UPDATED: Added onclick="toggleModal('settingsModal')" -->
+      <button onclick="toggleModal('settingsModal')"
+        class="bg-slate-50 hover:bg-slate-100 text-slate-800 font-semibold border border-slate-300 px-4 py-2 text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2"
+        title="Global Settings">
+        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 010 4m-6 8a2 2 0 100-4m0 4a2 2 0 010-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 010-4m0 4v2m0-6V4">
+          </path>
+        </svg>
       </button>
     </div>
   </div>
@@ -317,8 +327,8 @@
     <div>
       <div class="flex justify-between items-center mb-1">
         <label class="block text-xs font-bold text-slate-700 uppercase">Client Profile</label>
-        <button type="button" onclick="openInlineClientModal()"
-          class="text-xs text-amber-600 font-bold">Add Client</button>
+        <button type="button" onclick="openInlineClientModal()" class="text-xs text-amber-600 font-bold">Add
+          Client</button>
       </div>
       <select id="clientProfileSelect"
         class="w-full bg-slate-50 border border-slate-300 p-2 text-xs font-semibold focus:ring-2 focus:ring-amber-500">
@@ -380,6 +390,29 @@
           Select</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: GLOBAL SETTINGS ================= -->
+<div id="settingsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white max-w-lg w-full shadow-2xl border border-slate-300 p-6 space-y-4">
+    <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+      <h3 class="text-lg font-bold text-slate-900">General Settings</h3>
+      <button onclick="toggleModal('settingsModal')" class="text-slate-400 hover:text-slate-700 font-bold text-lg">&times;</button>
+    </div>
+
+    <div class="space-y-2">
+      <label class="block text-xs font-bold text-slate-700 uppercase">Default General Terms & Conditions</label>
+      <p class="text-xs text-slate-500">These default terms will automatically populate when creating a new estimate.</p>
+      <textarea id="settingsGeneralTerms" rows="6"
+        placeholder="Enter default terms & conditions..."
+        class="w-full border border-slate-300 p-2 text-xs focus:ring-2 focus:ring-amber-500 font-sans leading-relaxed"><%= typeof generalTerms !== 'undefined' ? generalTerms : '' %></textarea>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-3 border-t border-slate-200">
+      <button onclick="toggleModal('settingsModal')" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+      <button onclick="saveGeneralTermsSettings()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">Save Terms</button>
+    </div>
   </div>
 </div>
 
@@ -934,6 +967,23 @@
       toggleModal('inlineClientModal');
     } else {
       alert('Failed to create client.');
+    }
+  }
+
+  async function saveGeneralTermsSettings() {
+    const generalTerms = document.getElementById('settingsGeneralTerms').value;
+
+    const res = await fetch('/admin/settings/general-terms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ generalTerms })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      toggleModal('settingsModal');
+    } else {
+      alert('Failed to update general terms settings.');
     }
   }
 </script>
