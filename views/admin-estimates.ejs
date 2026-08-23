@@ -576,6 +576,10 @@
     setupListDragAndDrop('draftsContainer');
     setupListDragAndDrop('publishedContainer');
     setupListDragAndDrop('invoicesContainer');
+
+    // Restore active tab from localStorage on reload (defaults to 'drafts')
+    const activeTab = localStorage.getItem('activeEstimateTab') || 'drafts';
+    switchTab(activeTab);
   });
 
   function toggleModal(id) {
@@ -583,6 +587,9 @@
   }
 
   function switchTab(tab) {
+    // Save selected tab state to browser storage
+    localStorage.setItem('activeEstimateTab', tab);
+
     const dContent = document.getElementById('tabContentDrafts');
     const pContent = document.getElementById('tabContentPublished');
     const iContent = document.getElementById('tabContentInvoices');
@@ -610,11 +617,30 @@
     }
   }
 
+  async function executeConvertInvoice() {
+    const id = document.getElementById('convertTargetId').value;
+    const invoiceNumber = document.getElementById('convertInvoiceNumber').value;
+
+    const res = await fetch(`/admin/estimates/${id}/convert-to-invoice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoiceNumber })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      // Set active tab to 'invoices' BEFORE reloading
+      localStorage.setItem('activeEstimateTab', 'invoices');
+      window.location.reload();
+    } else {
+      alert(data.error || 'Failed to convert estimate to invoice.');
+    }
+  }
+
   function openConvertModal(id, name) {
     document.getElementById('convertTargetId').value = id;
     document.getElementById('convertTargetName').textContent = name;
 
-    // Calculate next YY-0001 dynamically on client opening
     const currentYear = new Date().getFullYear().toString().slice(-2);
     const regex = new RegExp(`^${currentYear}-(\\d{4})$`);
     let maxSeq = 0;
@@ -633,24 +659,6 @@
     document.getElementById('convertInvoiceNumber').value = nextInvoiceNum;
 
     toggleModal('convertModal');
-  }
-
-  async function executeConvertInvoice() {
-    const id = document.getElementById('convertTargetId').value;
-    const invoiceNumber = document.getElementById('convertInvoiceNumber').value;
-
-    const res = await fetch(`/admin/estimates/${id}/convert-to-invoice`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ invoiceNumber })
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      window.location.reload();
-    } else {
-      alert(data.error || 'Failed to convert estimate to invoice.');
-    }
   }
 
   function openMilestonesModal(id, milestones) {
@@ -723,7 +731,7 @@
   async function executePublish() {
     const estimateId = document.getElementById('publishTargetId').value;
     const companyProfileId = document.getElementById('companyProfileSelect').value;
-    const clientProfileId = document.getElementById('clientProfileSelect').value; // <-- GET CLIENT VALUE
+    const clientProfileId = document.getElementById('clientProfileSelect').value;
 
     if (!companyProfileId) {
       alert('Please create or select a company profile first.');
@@ -733,11 +741,12 @@
     const res = await fetch(`/admin/estimates/${estimateId}/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ companyProfileId, clientProfileId }) // <-- PASS BOTH IDs
+      body: JSON.stringify({ companyProfileId, clientProfileId })
     });
 
     const data = await res.json();
     if (data.success) {
+      localStorage.setItem('activeEstimateTab', 'published');
       window.location.reload();
     } else {
       alert(data.error || 'Failed to publish estimate.');
@@ -855,6 +864,7 @@
     const data = await res.json();
 
     if (data.success) {
+      localStorage.setItem('activeEstimateTab', 'drafts');
       window.location.reload();
     } else {
       alert(data.error || 'Failed to unpublish estimate.');
@@ -928,6 +938,7 @@
     const data = await res.json();
 
     if (data.success) {
+      localStorage.setItem('activeEstimateTab', 'drafts');
       window.location.reload();
     } else {
       alert(data.error || 'Failed to revert invoice to draft.');
