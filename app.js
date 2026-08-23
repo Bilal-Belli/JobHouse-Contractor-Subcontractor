@@ -1361,29 +1361,23 @@ app.post('/admin/company-profiles/reorder', requireAuth, (req, res) => {
 app.get('/est/:publicId', (req, res) => {
   try {
     const data = getEstimatesData();
-
-    // 1. Locate the requested published estimate
-    const estimate = data.estimates.find(e => e.publicId === req.params.publicId && e.status === 'published');
+    const estimate = data.estimates.find(e => e.publicId === req.params.publicId && (e.status === 'published' || e.status === 'invoiced'));
 
     if (!estimate) {
-      return res.status(404).render('errors/404');
+      return res.status(404).send('Proposal not found or no longer active.');
     }
 
-    // 2. Fetch the corresponding operating company profile
-    const company = data.companyProfiles.find(c => c.id === estimate.companyProfileId) || null;
+    const company = data.companyProfiles.find(p => p.id === estimate.companyProfileId) || null;
+    const client = data.clientProfiles.find(c => c.id === estimate.clientProfileId) || null; // <-- ADD THIS LINE
 
-    // 3. Process line items: Calculate client prices and strip sub-costs / markups
+    // Calculate Client Line Items & Totals
+    let subtotal = 0;
     const clientTrades = (estimate.trades || []).map(trade => {
-      const subCost = parseFloat(trade.subCost) || 0;
-      const markupVal = parseFloat(trade.markup?.value) || 0;
-      const markupType = trade.markup?.type || 'percent';
-
-      let clientPrice = subCost;
-      if (markupType === 'percent') {
-        clientPrice += subCost * (markupVal / 100);
-      } else {
-        clientPrice += markupVal;
-      }
+      const sub = parseFloat(trade.subCost) || 0;
+      const mkVal = parseFloat(trade.markup?.value) || 0;
+      const mkType = trade.markup?.type || 'percent';
+      const clientPrice = sub + (mkType === 'percent' ? sub * (mkVal / 100) : mkVal);
+      subtotal += clientPrice;
 
       return {
         name: trade.name,
@@ -1392,33 +1386,26 @@ app.get('/est/:publicId', (req, res) => {
       };
     });
 
-    // 4. Calculate subtotal and overhead
-    const subtotal = clientTrades.reduce((acc, item) => acc + item.clientPrice, 0);
-    const overheadVal = parseFloat(estimate.overhead?.value) || 0;
-    const overheadType = estimate.overhead?.type || 'percent';
-
-    let overheadTotal = 0;
-    if (overheadType === 'percent') {
-      overheadTotal = subtotal * (overheadVal / 100);
-    } else {
-      overheadTotal = overheadVal;
-    }
-
+    const ohVal = parseFloat(estimate.overhead?.value) || 0;
+    const ohType = estimate.overhead?.type || 'percent';
+    const overheadTotal = ohType === 'percent' ? subtotal * (ohVal / 100) : ohVal;
     const grandTotal = subtotal + overheadTotal;
 
-    // 5. Render the client-facing proposal
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+
     res.render('public-estimate', {
       estimate,
       company,
+      client, // <-- PASS CLIENT TO VIEW
       clientTrades,
       subtotal,
       overheadTotal,
-      grandTotal
+      grandTotal,
+      baseUrl
     });
-
   } catch (err) {
-    console.error('Error serving published estimate:', err);
-    res.status(500).send('Error loading estimate proposal.');
+    console.error('Error rendering public proposal:', err);
+    res.status(500).send('Error loading proposal');
   }
 });
 
@@ -1432,7 +1419,8 @@ app.get('/admin/estimates', requireAuth, (req, res) => {
     const data = getEstimatesData();
     res.render('admin-estimates', {
       estimates: data.estimates || [],
-      companyProfiles: data.companyProfiles || []
+      companyProfiles: data.companyProfiles || [],
+      clientProfiles: data.clientProfiles || [] // <-- ADD THIS LINE
     });
   } catch (err) {
     console.error('Estimates dashboard error:', err);
@@ -1463,7 +1451,8 @@ app.get('/admin/estimates/:id/edit', requireAuth, (req, res) => {
 
   res.render('admin-estimates-editor', {
     estimate,
-    companyProfiles: data.companyProfiles || []
+    companyProfiles: data.companyProfiles || [],
+    clientProfiles: data.clientProfiles || []
   });
 });
 
@@ -1627,13 +1616,14 @@ app.post('/admin/estimates/:id/delete', requireAuth, (req, res) => {
 app.post('/admin/estimates/:id/publish', requireAuth, (req, res) => {
   try {
     const data = getEstimatesData();
-    const { companyProfileId } = req.body;
+    const { companyProfileId, clientProfileId } = req.body; // <-- ADD clientProfileId
     const estimate = data.estimates.find(e => e.id === req.params.id);
 
     if (!estimate) return res.status(404).json({ error: 'Estimate not found' });
 
     estimate.status = 'published';
     estimate.companyProfileId = companyProfileId;
+    estimate.clientProfileId = clientProfileId || null; // <-- STORE CLIENT ID
     estimate.publishedAt = new Date().toISOString();
 
     saveEstimatesData(data);
@@ -1725,28 +1715,48 @@ app.get('/inv/:publicId', (req, res) => {
     const data = getEstimatesData();
     const estimate = data.estimates.find(e => e.publicId === req.params.publicId && e.status === 'invoiced');
 
-    if (!estimate) return res.status(404).render('errors/404');
+    if (!estimate) {
+      return res.status(404).send('Invoice not found or no longer active.');
+    }
 
-    const company = data.companyProfiles.find(c => c.id === estimate.companyProfileId) || null;
+    const company = data.companyProfiles.find(p => p.id === estimate.companyProfileId) || null;
+    const client = data.clientProfiles.find(c => c.id === estimate.clientProfileId) || null; // <-- ADD THIS LINE
 
+    let subtotal = 0;
     const clientTrades = (estimate.trades || []).map(trade => {
-      const subCost = parseFloat(trade.subCost) || 0;
-      const markupVal = parseFloat(trade.markup?.value) || 0;
-      const markupType = trade.markup?.type || 'percent';
-      let clientPrice = subCost + (markupType === 'percent' ? subCost * (markupVal / 100) : markupVal);
-      return { name: trade.name, description: trade.description, clientPrice };
+      const sub = parseFloat(trade.subCost) || 0;
+      const mkVal = parseFloat(trade.markup?.value) || 0;
+      const mkType = trade.markup?.type || 'percent';
+      const clientPrice = sub + (mkType === 'percent' ? sub * (mkVal / 100) : mkVal);
+      subtotal += clientPrice;
+
+      return {
+        name: trade.name,
+        description: trade.description,
+        clientPrice
+      };
     });
 
-    const subtotal = clientTrades.reduce((acc, item) => acc + item.clientPrice, 0);
-    const overheadVal = parseFloat(estimate.overhead?.value) || 0;
-    const overheadType = estimate.overhead?.type || 'percent';
-    const overheadTotal = overheadType === 'percent' ? subtotal * (overheadVal / 100) : overheadVal;
+    const ohVal = parseFloat(estimate.overhead?.value) || 0;
+    const ohType = estimate.overhead?.type || 'percent';
+    const overheadTotal = ohType === 'percent' ? subtotal * (ohVal / 100) : ohVal;
     const grandTotal = subtotal + overheadTotal;
 
-    res.render('public-invoice', { estimate, company, clientTrades, subtotal, overheadTotal, grandTotal });
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+
+    res.render('public-invoice', {
+      estimate,
+      company,
+      client, // <-- PASS CLIENT TO VIEW
+      clientTrades,
+      subtotal,
+      overheadTotal,
+      grandTotal,
+      baseUrl
+    });
   } catch (err) {
-    console.error('Error serving invoice:', err);
-    res.status(500).send('Error loading invoice.');
+    console.error('Error rendering public invoice:', err);
+    res.status(500).send('Error loading invoice');
   }
 });
 

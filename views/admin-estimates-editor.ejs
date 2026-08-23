@@ -215,19 +215,32 @@
     class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white max-w-md w-full shadow-2xl border border-slate-300 p-6 space-y-4">
         <h3 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2">Publish Estimate</h3>
-        <p class="text-xs text-slate-600">Select which operating company profile to brand this quote with.</p>
+        <p class="text-xs text-slate-600">Select which company profile and client to assign to this proposal before publishing.</p>
 
+        <!-- Company Profile Select -->
         <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Company Profile</label>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Company Profile *</label>
             <select id="companyProfileSelect"
-                class="w-full bg-slate-50 border border-slate-300 p-2 text-sm font-semibold">
+                class="w-full bg-slate-50 border border-slate-300 p-2 text-xs font-semibold focus:ring-2 focus:ring-amber-500">
                 <% companyProfiles.forEach(prof => { %>
-                <option value="<%= prof.id %>"><%= prof.name %></option>
+                <option value="<%= prof.id %>" <%= estimate.companyProfileId === prof.id ? 'selected' : '' %>><%= prof.name %></option>
                 <% }); %>
             </select>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-2">
+        <!-- NEW: Client Profile Select -->
+        <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Client Profile</label>
+            <select id="clientProfileSelect"
+                class="w-full bg-slate-50 border border-slate-300 p-2 text-xs font-semibold focus:ring-2 focus:ring-amber-500">
+                <option value="">-- No Client Selected --</option>
+                <% (typeof clientProfiles !== 'undefined' ? clientProfiles : []).forEach(client => { %>
+                <option value="<%= client.id %>" <%= estimate.clientProfileId === client.id ? 'selected' : '' %>><%= client.name %></option>
+                <% }); %>
+            </select>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
             <button onclick="toggleModal('publishModal')"
                 class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
             <button onclick="executePublish()"
@@ -417,16 +430,24 @@
     async function executePublish() {
         const estimateId = document.getElementById('activeEstimateId').value;
         const companyProfileId = document.getElementById('companyProfileSelect').value;
+        const clientProfileId = document.getElementById('clientProfileSelect').value; // <-- GET CLIENT VALUE
+
+        if (!companyProfileId) {
+            alert('Please select a company profile first.');
+            return;
+        }
 
         await saveCurrentEstimate(false);
 
         const res = await fetch(`/admin/estimates/${estimateId}/publish`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ companyProfileId })
+            body: JSON.stringify({ companyProfileId, clientProfileId }) // <-- PASS BOTH IDs
         });
 
         const data = await res.json();
         if (data.success) window.location.href = '/admin/estimates';
+        else alert(data.error || 'Failed to publish estimate.');
     }
+
 </script>

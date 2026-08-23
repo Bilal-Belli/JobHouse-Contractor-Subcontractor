@@ -299,15 +299,29 @@
     <h3 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2">Publish Estimate</h3>
     <input type="hidden" id="publishTargetId" value="">
 
-    <p class="text-xs text-slate-600">Select which company profile to brand this estimate with before making it public.
-    </p>
+    <p class="text-xs text-slate-600">Select which company profile and client to assign to this proposal before
+      publishing.</p>
 
+    <!-- Company Profile Select -->
     <div>
-      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Company Profile</label>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Company Profile *</label>
       <select id="companyProfileSelect"
         class="w-full bg-slate-50 border border-slate-300 p-2 text-xs font-semibold focus:ring-2 focus:ring-amber-500">
         <% companyProfiles.forEach(prof => { %>
         <option value="<%= prof.id %>"><%= prof.name %> (Lic: <%= prof.license || 'N/A' %>)</option>
+        <% }); %>
+      </select>
+    </div>
+
+    <!-- NEW: Client Profile Select -->
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Client Profile</label>
+      <select id="clientProfileSelect"
+        class="w-full bg-slate-50 border border-slate-300 p-2 text-xs font-semibold focus:ring-2 focus:ring-amber-500">
+        <option value="">-- No Client Selected --</option>
+        <% (typeof clientProfiles !== 'undefined' ? clientProfiles : []).forEach(client => { %>
+        <option value="<%= client.id %>"><%= client.name %> (<%= client.phone || client.email || 'No contact info' %>)
+        </option>
         <% }); %>
       </select>
     </div>
@@ -528,12 +542,12 @@
 
     <% invoicesList.forEach(inv => { %>
       if ("<%= inv.invoiceNumber || '' %>") {
-          const match = "<%= inv.invoiceNumber %>".match(regex);
-          if (match) {
-            const num = parseInt(match[1], 10);
-            if (num > maxSeq) maxSeq = num;
-          }
+        const match = "<%= inv.invoiceNumber %>".match(regex);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxSeq) maxSeq = num;
         }
+      }
     <% }); %>
 
     const nextInvoiceNum = `${currentYear}-${String(maxSeq + 1).padStart(4, '0')}`;
@@ -630,6 +644,7 @@
   async function executePublish() {
     const estimateId = document.getElementById('publishTargetId').value;
     const companyProfileId = document.getElementById('companyProfileSelect').value;
+    const clientProfileId = document.getElementById('clientProfileSelect').value; // <-- GET CLIENT VALUE
 
     if (!companyProfileId) {
       alert('Please create or select a company profile first.');
@@ -639,7 +654,7 @@
     const res = await fetch(`/admin/estimates/${estimateId}/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ companyProfileId })
+      body: JSON.stringify({ companyProfileId, clientProfileId }) // <-- PASS BOTH IDs
     });
 
     const data = await res.json();

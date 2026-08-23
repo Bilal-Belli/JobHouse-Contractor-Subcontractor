@@ -59,6 +59,7 @@
     <div class="paper-card max-w-3xl mx-auto bg-white border border-slate-200 shadow-xl p-8 sm:p-12 space-y-8 w-full">
 
       <!-- Header: Selected Operating Company Branding -->
+      <!-- Header: Selected Operating Company Branding & Client Info -->
       <div
         class="avoid-break flex flex-col sm:flex-row justify-between items-start border-b border-slate-200 pb-6 gap-6">
 
@@ -88,15 +89,32 @@
           </div>
         </div>
 
-        <!-- Proposal Metadata -->
-        <div class="text-left sm:text-right shrink-0">
-          <span class="text-xs font-bold uppercase tracking-widest text-amber-600 block mb-1">Official Proposal</span>
-          <h2 class="text-xl font-bold text-slate-800"><%= estimate.projectName %></h2>
-          <p class="text-xs text-slate-500 mt-1">
-            Date Published:
-            <%= new Date(estimate.publishedAt || estimate.updatedAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
-          </p>
+        <!-- Proposal Metadata & Client Information -->
+        <div class="text-left sm:text-right shrink-0 space-y-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-amber-600 block mb-1">Official Proposal</span>
+            <h2 class="text-xl font-bold text-slate-800"><%= estimate.projectName %></h2>
+            <p class="text-xs text-slate-500 mt-1">
+              Date Published:
+              <%= new Date(estimate.publishedAt || estimate.updatedAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+            </p>
+          </div>
+
+          <!-- NEW: Prepared For Client Info -->
+          <% if (typeof client !== 'undefined' && client) { %>
+          <div class="pt-2 border-t border-slate-100">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-0.5">Prepared
+              For</span>
+            <p class="text-xs font-bold text-slate-900"><%= client.name %></p>
+            <div class="text-xs text-slate-500 space-y-0.5">
+              <% if (client.phone) { %><p><%= client.phone %></p><% } %>
+              <% if (client.email) { %><p><%= client.email %></p><% } %>
+              <% if (client.address) { %><p><%= client.address %></p><% } %>
+            </div>
+          </div>
+          <% } %>
         </div>
+
       </div>
 
       <!-- Client Line Items Table -->
@@ -176,7 +194,8 @@
 
         <% if (estimate.additionalTerms && estimate.additionalTerms.trim()) { %>
         <div class="avoid-break space-y-2">
-          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1">Additional Terms</h3>
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1">
+            Additional Terms</h3>
           <p class="text-xs text-slate-600 whitespace-pre-line leading-relaxed"><%= estimate.additionalTerms.trim() %>
           </p>
         </div>
