@@ -75,7 +75,7 @@
 
           <div class="text-left sm:text-right shrink-0">
             <span class="text-xs font-bold uppercase tracking-widest text-amber-600 block">Official Proposal</span>
-            <h2 class="text-xl font-bold text-slate-800"><%= estimate.projectName %></h2>
+            <h2 class="text-sm font-bold text-slate-800"><%= estimate.projectName %></h2>
             <p class="text-xs text-slate-500 mt-0.5">
               Date Published:
               <%= new Date(estimate.publishedAt || estimate.updatedAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
