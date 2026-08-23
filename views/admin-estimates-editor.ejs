@@ -186,6 +186,16 @@
                         placeholder="e.g. Price estimate valid for 30 days. Any unmapped structural conditions or unforeseen permit requirements subject to written Change Orders. Liability limited to scope of work specified."
                         class="w-full text-xs text-slate-700 bg-slate-50 border border-slate-300 p-2.5 focus:bg-white focus:ring-1 focus:ring-amber-500 focus:outline-none"><%= estimate.additionalTerms || '' %></textarea>
                 </div>
+
+                <!-- General Terms & Conditions -->
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        General Terms & Conditions
+                    </label>
+                    <textarea id="generalTerms" rows="4" oninput="debouncedAutoSave()"
+                        placeholder="Enter standard terms and conditions..."
+                        class="w-full text-xs text-slate-700 bg-slate-50 border border-slate-300 p-2.5 focus:bg-white focus:ring-1 focus:ring-amber-500 focus:outline-none"><%= estimate.generalTerms || 'This estimate is valid for 30 days and is based on the scope described above; any changes to that scope, materials, or design will be documented and priced as a written change order before proceeding. Prices reflect current material costs and may be adjusted if those costs change significantly before work begins. Estimated start and completion dates are approximate and may shift due to weather, permitting, or other factors outside our control. All work is performed by licensed, insured professionals. Acceptance of this estimate (in writing or by signature) constitutes agreement to these terms.' %></textarea>
+                </div>
             </div>
         </div>
     </div>
@@ -376,7 +386,8 @@
                 value: parseFloat(document.getElementById('overheadVal').value) || 0
             },
             paymentSchedule: document.getElementById('paymentSchedule').value,
-            additionalTerms: document.getElementById('additionalTerms').value
+            additionalTerms: document.getElementById('additionalTerms').value,
+            generalTerms: document.getElementById('generalTerms').value
         };
 
         const res = await fetch('/admin/estimates/save', {

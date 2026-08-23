@@ -162,7 +162,7 @@
       </div>
 
       <!-- Payment Schedule & Terms Section -->
-      <% if ((estimate.paymentSchedule && estimate.paymentSchedule.trim()) || (estimate.additionalTerms && estimate.additionalTerms.trim())) { %>
+      <% if ((estimate.paymentSchedule && estimate.paymentSchedule.trim()) || (estimate.additionalTerms && estimate.additionalTerms.trim()) || (estimate.generalTerms && estimate.generalTerms.trim())) { %>
       <div class="border-t border-slate-200 pt-6 space-y-6">
 
         <% if (estimate.paymentSchedule && estimate.paymentSchedule.trim()) { %>
@@ -179,6 +179,15 @@
           <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1">Terms &
             Conditions / Releases</h3>
           <p class="text-xs text-slate-600 whitespace-pre-line leading-relaxed"><%= estimate.additionalTerms.trim() %>
+          </p>
+        </div>
+        <% } %>
+
+        <% if (estimate.generalTerms && estimate.generalTerms.trim()) { %>
+        <div class="avoid-break space-y-2">
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1">General
+            Terms & Conditions</h3>
+          <p class="text-xs text-slate-600 whitespace-pre-line leading-relaxed"><%= estimate.generalTerms.trim() %>
           </p>
         </div>
         <% } %>

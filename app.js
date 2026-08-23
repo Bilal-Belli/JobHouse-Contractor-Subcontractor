@@ -1368,7 +1368,8 @@ app.get('/admin/estimates/:id/edit', requireAuth, (req, res) => {
       ],
       overhead: { type: 'percent', value: 10 },
       paymentSchedule: '',
-      additionalTerms: ''
+      additionalTerms: '',
+      generalTerms: 'This estimate is valid for 30 days and is based on the scope described above; any changes to that scope, materials, or design will be documented and priced as a written change order before proceeding. Prices reflect current material costs and may be adjusted if those costs change significantly before work begins. Estimated start and completion dates are approximate and may shift due to weather, permitting, or other factors outside our control. All work is performed by licensed, insured professionals. Acceptance of this estimate (in writing or by signature) constitutes agreement to these terms.'
     };
   }
 
