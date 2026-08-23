@@ -63,19 +63,6 @@
         </header>
 
         <script>
-            function logoutAdmin() {
-                if (confirm('Are you sure you want to log out of the Admin portal?')) {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('GET', '/admin', true, 'logout', 'logout');
-                    xhr.onreadystatechange = function () {
-                        if (xhr.readyState === 4) {
-                            window.location.href = '/';
-                        }
-                    };
-                    xhr.send();
-                }
-            }
-
             function showLoading() {
                 const overlay = document.getElementById('loadingOverlay');
                 if (overlay) {

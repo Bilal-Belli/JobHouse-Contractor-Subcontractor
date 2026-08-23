@@ -271,12 +271,18 @@ app.post('/admin/login', (req, res) => {
   }
 });
 
-app.get('/admin/logout', (req, res) => {
+app.post('/admin/logout', (req, res) => {
+  if (!req.session) {
+    return res.json({ success: true });
+  }
+
   req.session.destroy(err => {
     if (err) {
       console.error('Logout error:', err);
+      return res.status(500).json({ error: 'Failed to log out' });
     }
-    res.redirect('/admin/login');
+    res.clearCookie('connect.sid'); 
+    return res.json({ success: true, redirectUrl: '/admin/login' });
   });
 });
 
