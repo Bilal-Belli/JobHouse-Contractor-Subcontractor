@@ -1,0 +1,505 @@
+<%- include('partials/admin-estimates-header') %>
+
+<% 
+  const draftsList = estimates.filter(e => e.status === 'draft');
+  const publishedList = estimates.filter(e => e.status === 'published');
+%>
+
+<main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+  <!-- Top Action & Search Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-300 pb-4">
+    <div class="relative w-full sm:w-72">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      </div>
+      <input 
+        type="text" 
+        id="estimateSearchInput" 
+        onkeyup="filterEstimates()" 
+        placeholder="Search estimates..." 
+        class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all shadow-sm"
+      >
+    </div>
+
+    <div class="shrink-0 flex justify-end">
+      <button onclick="createNewEstimate()" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        New Estimate
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Switcher Header -->
+  <div class="flex border-b border-slate-300">
+    <button id="tabBtnDrafts" onclick="switchTab('drafts')" class="px-6 py-2.5 font-semibold text-sm border-b-2 border-amber-500 text-slate-900 transition-colors flex items-center gap-2">
+      <span>Drafts</span>
+      <span class="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold" id="draftsCount"><%= draftsList.length %></span>
+    </button>
+    <button id="tabBtnPublished" onclick="switchTab('published')" class="px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2">
+      <span>Published</span>
+      <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-bold" id="publishedCount"><%= publishedList.length %></span>
+    </button>
+  </div>
+
+  <!-- ================= DRAFTS TAB ================= -->
+  <div id="tabContentDrafts" class="space-y-4">
+    <div class="bg-white shadow-sm border border-slate-200">
+      <div id="draftsContainer" class="divide-y divide-slate-200">
+        <% if (draftsList.length === 0) { %>
+          <div class="p-8 text-center text-xs text-slate-400 italic">No drafts found. Click "New Estimate" to build one.</div>
+        <% } %>
+
+        <% draftsList.forEach(draft => { %>
+          <div 
+            class="estimate-row p-4 hover:bg-slate-50/80 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" 
+            draggable="true" 
+            data-id="<%= draft.id %>"
+          >
+            <div class="flex items-center gap-3">
+              <!-- Drag Handle -->
+              <div class="cursor-grab text-slate-400 hover:text-slate-600 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-slate-900 text-sm"><%= draft.projectName %></h3>
+                  <span class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 font-mono font-medium">Draft</span>
+                </div>
+                <p class="text-xs text-slate-500">Updated: <%= new Date(draft.updatedAt || draft.createdAt).toLocaleDateString() %></p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+              <button onclick="previewEstimate('<%= draft.id %>')" class="bg-slate-800 hover:bg-slate-900 text-white border border-slate-300 px-3 py-1.5 text-xs font-semibold transition-all">
+                Preview
+              </button>
+              <a href="/admin/estimates/<%= draft.id %>/edit" class="bg-white hover:bg-slate-100 text-black border border-slate-300 px-3 py-1.5 text-xs font-semibold transition-all">
+                Edit
+              </a>
+              <button onclick="duplicateEstimate('<%= draft.id %>')" class="bg-white hover:bg-slate-100 px-3 py-1.5 text-xs font-semibold text-black border border-slate-300 transition-all">
+                Duplicate
+              </button>
+              <button onclick="openPublishModal('<%= draft.id %>')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-300 px-3 py-1.5 text-xs font-semibold transition-all shadow-sm">
+                Publish
+              </button>
+              <button onclick="promptDeleteEstimate('<%= draft.id %>', '<%= draft.projectName %>')" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-300 px-3 py-1.5 text-xs font-semibold transition-all">
+                Delete
+              </button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PUBLISHED TAB ================= -->
+  <div id="tabContentPublished" class="hidden space-y-4">
+    <div class="bg-white shadow-sm border border-slate-200">
+      <div id="publishedContainer" class="divide-y divide-slate-200">
+        <% if (publishedList.length === 0) { %>
+          <div class="p-8 text-center text-xs text-slate-400 italic">No published proposals yet.</div>
+        <% } %>
+
+        <% publishedList.forEach(pub => { %>
+          <% const matchingCompany = companyProfiles.find(p => p.id === pub.companyProfileId); %>
+          <div 
+            class="estimate-row p-4 hover:bg-slate-50/80 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" 
+            draggable="true" 
+            data-id="<%= pub.id %>"
+          >
+            <div class="flex items-center gap-3">
+              <!-- Drag Handle -->
+              <div class="cursor-grab text-slate-400 hover:text-slate-600 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-slate-900 text-sm"><%= pub.projectName %></h3>
+                  <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800">
+                    <%= matchingCompany ? matchingCompany.name : 'Default Branding' %>
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500">Published: <%= new Date(pub.publishedAt).toLocaleDateString() %></p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+              <a href="/est/<%= pub.publicId %>" target="_blank" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold transition-all inline-block">
+                View
+              </a>
+              <button onclick="openShareModal('<%= baseUrl %>/est/<%= pub.publicId %>', '<%= pub.projectName %>')" class="bg-white hover:bg-slate-100 text-black border border-slate-300 px-3 py-1.5 text-xs font-semibold transition-all">
+                Share
+              </button>
+              <a href="/admin/estimates/<%= pub.id %>/edit" class="bg-white hover:bg-slate-100 text-black px-3 py-1.5 border border-slate-300 text-xs font-semibold transition-all">
+                Edit
+              </a>
+              <button onclick="promptUnpublishEstimate('<%= pub.id %>', '<%= pub.projectName %>')" class="bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-300 px-3 py-1.5 text-xs font-semibold transition-all">
+                Unpublish
+              </button>
+              <button onclick="promptDeleteEstimate('<%= pub.id %>', '<%= pub.projectName %>')" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-300 px-3 py-1.5 text-xs font-semibold transition-all">
+                Delete
+              </button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ================= MODAL: PUBLISH ESTIMATE ================= -->
+<div id="publishModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white max-w-md w-full shadow-2xl border border-slate-300 p-6 space-y-4">
+    <h3 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2">Publish Estimate</h3>
+    <input type="hidden" id="publishTargetId" value="">
+    
+    <p class="text-xs text-slate-600">Select which company profile to brand this estimate with before making it public.</p>
+
+    <div>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Company Profile</label>
+      <select id="companyProfileSelect" class="w-full bg-slate-50 border border-slate-300 p-2 text-xs font-semibold focus:ring-2 focus:ring-amber-500">
+        <% companyProfiles.forEach(prof => { %>
+          <option value="<%= prof.id %>"><%= prof.name %> (Lic: <%= prof.license || 'N/A' %>)</option>
+        <% }); %>
+      </select>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+      <button onclick="toggleModal('publishModal')" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+      <button onclick="executePublish()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
+        Publish Now
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: QUICK ESTIMATE PREVIEW POPUP ================= -->
+<div id="previewModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white max-w-2xl w-full shadow-2xl border border-slate-300 p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+      <h3 id="previewTitle" class="text-lg font-bold text-slate-900">Proposal Preview</h3>
+      <button onclick="toggleModal('previewModal')" class="text-slate-400 hover:text-slate-700 font-bold text-lg">&times;</button>
+    </div>
+
+    <div id="previewContent" class="space-y-4">
+      <!-- Dynamically filled via AJAX -->
+    </div>
+
+    <div class="flex justify-end border-t border-slate-200 pt-4">
+      <button onclick="toggleModal('previewModal')" class="bg-slate-800 text-white text-xs font-bold px-4 py-2">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: CUSTOM DELETE CONFIRMATION ================= -->
+<div id="deleteConfirmModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white max-w-md w-full shadow-2xl border border-slate-300 p-6 space-y-4">
+    <div class="flex items-center gap-3 border-b border-slate-200 pb-3 text-red-600">
+      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+      <h3 class="text-lg font-bold text-slate-900">Delete Estimate</h3>
+    </div>
+    
+    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+      Are you sure you want to delete <strong id="deleteTargetName" class="text-slate-900"></strong>?
+    </p>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button onclick="toggleModal('deleteConfirmModal')" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+      <button id="confirmDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">Delete Estimate</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ================= MODAL: SHARE OPTIONS POPUP ================= -->
+<div id="shareModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white max-w-sm w-full shadow-2xl border border-slate-300 p-6 space-y-4">
+    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+      <h3 class="text-base font-bold text-slate-900">Share Estimate</h3>
+      <button onclick="toggleModal('shareModal')" class="text-slate-400 hover:text-slate-700 font-bold">&times;</button>
+    </div>
+
+    <p class="text-xs text-slate-600">Choose how you would like to send this proposal link:</p>
+
+    <div class="grid grid-cols-2 gap-3 pt-2">
+      <!-- SMS Button -->
+      <a id="shareSmsBtn" href="#" target="_blank" class="flex flex-col items-center justify-center gap-2 p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 transition-all rounded">
+        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+        <span class="text-xs font-bold">SMS Text</span>
+      </a>
+
+      <!-- Email Button -->
+      <a id="shareEmailBtn" href="#" target="_blank" class="flex flex-col items-center justify-center gap-2 p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 transition-all rounded">
+        <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        <span class="text-xs font-bold">Email</span>
+      </a>
+    </div>
+
+    <div class="pt-2 border-t border-slate-100">
+      <button onclick="copyShareLinkDirect()" class="w-full text-center text-xs text-amber-600 font-semibold hover:underline">
+        Copy Link to Clipboard
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: CUSTOM UNPUBLISH CONFIRMATION ================= -->
+<div id="unpublishConfirmModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white max-w-md w-full shadow-2xl border border-slate-300 p-6 space-y-4">
+    <div class="flex items-center gap-3 border-b border-slate-200 pb-3 text-amber-600">
+      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+      <h3 class="text-lg font-bold text-slate-900">Unpublish Estimate</h3>
+    </div>
+    
+    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+      Unpublishing will revert <strong id="unpublishTargetName" class="text-slate-900"></strong> back to draft status and disable public access. Continue?
+    </p>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button onclick="toggleModal('unpublishConfirmModal')" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+      <button id="confirmUnpublishBtn" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">Unpublish Proposal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let targetEstimateId = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setupListDragAndDrop('draftsContainer');
+    setupListDragAndDrop('publishedContainer');
+  });
+
+  function toggleModal(id) {
+    document.getElementById(id).classList.toggle('hidden');
+  }
+
+  function switchTab(tab) {
+    const dContent = document.getElementById('tabContentDrafts');
+    const pContent = document.getElementById('tabContentPublished');
+    const dBtn = document.getElementById('tabBtnDrafts');
+    const pBtn = document.getElementById('tabBtnPublished');
+
+    if (tab === 'drafts') {
+      dContent.classList.remove('hidden');
+      pContent.classList.add('hidden');
+      dBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-amber-500 text-slate-900 transition-colors flex items-center gap-2";
+      pBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2";
+    } else {
+      dContent.classList.add('hidden');
+      pContent.classList.remove('hidden');
+      pBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-amber-500 text-slate-900 transition-colors flex items-center gap-2";
+      dBtn.className = "px-6 py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-2";
+    }
+  }
+
+  function createNewEstimate() {
+    const newId = 'est_' + Date.now();
+    window.location.href = `/admin/estimates/${newId}/edit`;
+  }
+
+  function openPublishModal(id) {
+    document.getElementById('publishTargetId').value = id;
+    toggleModal('publishModal');
+  }
+
+  async function executePublish() {
+    const estimateId = document.getElementById('publishTargetId').value;
+    const companyProfileId = document.getElementById('companyProfileSelect').value;
+
+    if (!companyProfileId) {
+      alert('Please create or select a company profile first.');
+      return;
+    }
+
+    const res = await fetch(`/admin/estimates/${estimateId}/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ companyProfileId })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      window.location.reload();
+    } else {
+      alert(data.error || 'Failed to publish estimate.');
+    }
+  }
+
+  async function previewEstimate(id) {
+    const res = await fetch(`/admin/estimates/${id}/get`);
+    const est = await res.json();
+
+    if (!est) return;
+
+    document.getElementById('previewTitle').textContent = est.projectName;
+
+    let tradesHtml = '';
+    let grandTotal = 0;
+
+    (est.trades || []).forEach(t => {
+      const sub = parseFloat(t.subCost) || 0;
+      const mkVal = parseFloat(t.markup?.value) || 0;
+      const mkType = t.markup?.type || 'percent';
+      let lineTotal = sub + (mkType === 'percent' ? sub * (mkVal / 100) : mkVal);
+      grandTotal += lineTotal;
+
+      tradesHtml += `
+        <tr class="border-b border-slate-100 text-xs">
+          <td class="p-2 font-bold text-slate-800">${t.name || 'General'}</td>
+          <td class="p-2 text-slate-600">${t.description || ''}</td>
+          <td class="p-2 text-right font-mono font-semibold">$${lineTotal.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+
+    const ohVal = parseFloat(est.overhead?.value) || 0;
+    const ohType = est.overhead?.type || 'percent';
+    const ohTotal = ohType === 'percent' ? grandTotal * (ohVal / 100) : ohVal;
+    grandTotal += ohTotal;
+
+    document.getElementById('previewContent').innerHTML = `
+      <div class="border border-slate-200 p-4 bg-slate-50 space-y-4">
+        <table class="w-full text-left">
+          <thead class="bg-slate-200 text-[10px] uppercase font-bold text-slate-600">
+            <tr><th class="p-2">Trade</th><th class="p-2">Description</th><th class="p-2 text-right">Amount</th></tr>
+          </thead>
+          <tbody>${tradesHtml}</tbody>
+        </table>
+        <div class="border-t border-slate-300 pt-3 flex justify-between font-bold text-sm">
+          <span>Client Grand Total:</span>
+          <span class="font-mono text-base">$${grandTotal.toFixed(2)}</span>
+        </div>
+      </div>
+    `;
+
+    toggleModal('previewModal');
+  }
+
+  async function duplicateEstimate(id) {
+    const res = await fetch(`/admin/estimates/${id}/duplicate`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) window.location.reload();
+  }
+
+  function promptDeleteEstimate(id, name) {
+    targetEstimateId = id;
+    document.getElementById('deleteTargetName').textContent = name;
+    document.getElementById('confirmDeleteBtn').onclick = executeDeleteEstimate;
+    toggleModal('deleteConfirmModal');
+  }
+
+  async function executeDeleteEstimate() {
+    if (!targetEstimateId) return;
+    const res = await fetch(`/admin/estimates/${targetEstimateId}/delete`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) window.location.reload();
+  }
+
+  function filterEstimates() {
+    const q = document.getElementById('estimateSearchInput').value.toLowerCase().trim();
+    document.querySelectorAll('.estimate-row').forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+
+  let currentShareUrl = '';
+let targetUnpublishId = null;
+
+// Share Modal Trigger
+function openShareModal(url, title) {
+  currentShareUrl = url;
+  const message = encodeURIComponent(`Here is the official estimate proposal for ${title}: ${url}`);
+  
+  // Set SMS link
+  document.getElementById('shareSmsBtn').href = `sms:?body=${message}`;
+  
+  // Set Email link
+  document.getElementById('shareEmailBtn').href = `mailto:?subject=${encodeURIComponent('Estimate Proposal - ' + title)}&body=${message}`;
+
+  toggleModal('shareModal');
+}
+
+function copyShareLinkDirect() {
+  if (currentShareUrl) {
+    navigator.clipboard.writeText(currentShareUrl);
+  }
+}
+
+// Prompt Custom Unpublish Modal
+function promptUnpublishEstimate(id, name) {
+  targetUnpublishId = id;
+  document.getElementById('unpublishTargetName').textContent = name;
+  document.getElementById('confirmUnpublishBtn').onclick = executeUnpublishEstimate;
+  toggleModal('unpublishConfirmModal');
+}
+
+// Execute Server Unpublish
+async function executeUnpublishEstimate() {
+  if (!targetUnpublishId) return;
+
+  const res = await fetch(`/admin/estimates/${targetUnpublishId}/unpublish`, { method: 'POST' });
+  const data = await res.json();
+
+  if (data.success) {
+    window.location.reload();
+  } else {
+    alert(data.error || 'Failed to unpublish estimate.');
+  }
+}
+
+  function setupListDragAndDrop(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    let draggedRow = null;
+
+    container.querySelectorAll('.estimate-row').forEach(row => {
+      row.addEventListener('dragstart', () => {
+        draggedRow = row;
+        row.classList.add('opacity-50', 'bg-amber-50');
+      });
+
+      row.addEventListener('dragend', () => {
+        row.classList.remove('opacity-50', 'bg-amber-50');
+        draggedRow = null;
+        saveEstimatesOrder(containerId);
+      });
+    });
+
+    container.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      const rows = [...container.querySelectorAll('.estimate-row:not(.opacity-50)')];
+      const afterElement = rows.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = e.clientY - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+
+      if (afterElement == null) {
+        container.appendChild(draggedRow);
+      } else {
+        container.insertBefore(draggedRow, afterElement);
+      }
+    });
+  }
+
+  async function saveEstimatesOrder(containerId) {
+    const container = document.getElementById(containerId);
+    const order = [...container.querySelectorAll('.estimate-row')].map(row => row.getAttribute('data-id'));
+
+    await fetch('/admin/estimates/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order })
+    });
+  }
+</script>
