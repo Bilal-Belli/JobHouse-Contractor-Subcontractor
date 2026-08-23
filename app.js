@@ -1207,18 +1207,19 @@ function getEstimatesData() {
     if (!fs.existsSync(ESTIMATES_DATA_FILE)) {
       const dir = path.dirname(ESTIMATES_DATA_FILE);
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      const defaultData = { companyProfiles: [], estimates: [] };
+      const defaultData = { companyProfiles: [], clientProfiles: [], estimates: [] };
       fs.writeFileSync(ESTIMATES_DATA_FILE, JSON.stringify(defaultData, null, 2));
       return defaultData;
     }
     const rawData = fs.readFileSync(ESTIMATES_DATA_FILE, 'utf8');
     const parsed = JSON.parse(rawData);
     if (!parsed.companyProfiles) parsed.companyProfiles = [];
+    if (!parsed.clientProfiles) parsed.clientProfiles = []; // <-- Add this check
     if (!parsed.estimates) parsed.estimates = [];
     return parsed;
   } catch (err) {
     console.error('Error reading estimates data:', err);
-    return { companyProfiles: [], estimates: [] };
+    return { companyProfiles: [], clientProfiles: [], estimates: [] };
   }
 }
 
@@ -1226,6 +1227,7 @@ function saveEstimatesData(data) {
   try {
     if (!data || typeof data !== 'object') throw new Error('Invalid estimates object');
     if (!data.companyProfiles) data.companyProfiles = [];
+    if (!data.clientProfiles) data.clientProfiles = []; // <-- Add this check
     if (!data.estimates) data.estimates = [];
 
     const tempFile = ESTIMATES_DATA_FILE + '.tmp';
@@ -1237,6 +1239,86 @@ function saveEstimatesData(data) {
     throw err;
   }
 }
+
+// Render Dedicated Client Profiles Page
+app.get('/admin/client-profiles', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    res.render('admin-client-profiles', {
+      clientProfiles: data.clientProfiles || []
+    });
+  } catch (err) {
+    console.error('Client profiles page error:', err);
+    res.status(500).send('Error loading client profiles page');
+  }
+});
+
+// Create/Update Client Profile
+app.post('/admin/client-profiles', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const { id, name, phone, email, address } = req.body;
+
+    let profile = data.clientProfiles.find(p => p.id === id);
+
+    if (profile) {
+      profile.name = name;
+      profile.phone = phone;
+      profile.email = email;
+      profile.address = address;
+    } else {
+      profile = {
+        id: 'client-' + Date.now(),
+        name,
+        phone,
+        email,
+        address
+      };
+      data.clientProfiles.push(profile);
+    }
+
+    saveEstimatesData(data);
+    res.json({ success: true, profile });
+  } catch (err) {
+    console.error('Error saving client profile:', err);
+    res.status(500).json({ error: 'Failed to save client profile' });
+  }
+});
+
+// Delete Client Profile
+app.post('/admin/client-profiles/:id/delete', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    data.clientProfiles = data.clientProfiles.filter(p => p.id !== req.params.id);
+    saveEstimatesData(data);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting client profile:', err);
+    res.status(500).json({ error: 'Failed to delete client profile' });
+  }
+});
+
+// Reorder Client Profiles via Drag & Drop
+app.post('/admin/client-profiles/reorder', requireAuth, (req, res) => {
+  try {
+    const data = getEstimatesData();
+    const { order } = req.body;
+
+    if (!Array.isArray(order)) return res.status(400).json({ error: 'Invalid order list' });
+
+    const profileMap = {};
+    data.clientProfiles.forEach(p => { profileMap[p.id] = p; });
+
+    data.clientProfiles = order.map(id => profileMap[id]).filter(Boolean);
+    saveEstimatesData(data);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error reordering client profiles:', err);
+    res.status(500).json({ error: 'Failed to reorder client profiles' });
+  }
+});
 
 // Render Dedicated Company Profiles Page
 app.get('/admin/company-profiles', requireAuth, (req, res) => {
