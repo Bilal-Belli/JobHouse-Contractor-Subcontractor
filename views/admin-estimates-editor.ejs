@@ -158,6 +158,36 @@
                 <span id="summaryGrandTotal" class="font-mono text-lg sm:text-xl text-amber-600">$0.00</span>
             </div>
         </div>
+
+        <!-- Payment Schedule & Additional Terms -->
+        <div class="bg-white border border-slate-200 p-5 space-y-4 shadow-sm">
+            <h4
+                class="text-xs font-bold text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2 flex items-center gap-2">
+                <span class="w-1 h-3 bg-slate-800 block"></span> Payment Terms & Legal Clauses
+            </h4>
+
+            <div class="space-y-4 text-xs">
+                <!-- Payment Schedule -->
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Payment Schedule (Deposit & Progress Payments)
+                    </label>
+                    <textarea id="paymentSchedule" rows="3" oninput="debouncedAutoSave()"
+                        placeholder="e.g. 30% Deposit upon signing, 40% Mid-project completion, 30% Final walk-through completion..."
+                        class="w-full text-xs text-slate-700 bg-slate-50 border border-slate-300 p-2.5 focus:bg-white focus:ring-1 focus:ring-amber-500 focus:outline-none"><%= estimate.paymentSchedule || '' %></textarea>
+                </div>
+
+                <!-- Additional Terms & Liabilities -->
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Additional Terms, Exclusions & Change Order Releases
+                    </label>
+                    <textarea id="additionalTerms" rows="4" oninput="debouncedAutoSave()"
+                        placeholder="e.g. Price estimate valid for 30 days. Any unmapped structural conditions or unforeseen permit requirements subject to written Change Orders. Liability limited to scope of work specified."
+                        class="w-full text-xs text-slate-700 bg-slate-50 border border-slate-300 p-2.5 focus:bg-white focus:ring-1 focus:ring-amber-500 focus:outline-none"><%= estimate.additionalTerms || '' %></textarea>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Professional Save Toast Notification -->
@@ -344,7 +374,9 @@
             overhead: {
                 type: document.getElementById('overheadType').value,
                 value: parseFloat(document.getElementById('overheadVal').value) || 0
-            }
+            },
+            paymentSchedule: document.getElementById('paymentSchedule').value,
+            additionalTerms: document.getElementById('additionalTerms').value
         };
 
         const res = await fetch('/admin/estimates/save', {

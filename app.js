@@ -1366,7 +1366,9 @@ app.get('/admin/estimates/:id/edit', requireAuth, (req, res) => {
       trades: [
         { name: 'Demolition', description: 'Initial teardown and cleanup', subCost: 1200, markup: { type: 'percent', value: 20 } }
       ],
-      overhead: { type: 'percent', value: 10 }
+      overhead: { type: 'percent', value: 10 },
+      paymentSchedule: '',
+      additionalTerms: ''
     };
   }
 
@@ -1374,34 +1376,6 @@ app.get('/admin/estimates/:id/edit', requireAuth, (req, res) => {
     estimate,
     companyProfiles: data.companyProfiles || []
   });
-});
-
-// Publish Endpoint
-app.post('/admin/estimates/:id/publish', requireAuth, (req, res) => {
-  try {
-    const data = getEstimatesData();
-    const estimate = data.estimates.find(e => e.id === req.params.id);
-
-    if (!estimate) return res.status(404).json({ error: 'Estimate not found' });
-
-    const { companyProfileId } = req.body;
-    if (!companyProfileId) return res.status(400).json({ error: 'Company Profile is required' });
-
-    estimate.status = 'published';
-    estimate.companyProfileId = companyProfileId;
-    estimate.publishedAt = new Date().toISOString();
-    
-    // Generate public random ID for client view link if not present
-    if (!estimate.publicId) {
-      estimate.publicId = 'pub_' + Math.random().toString(36).substr(2, 9);
-    }
-
-    saveEstimatesData(data);
-    res.json({ success: true, publicId: estimate.publicId });
-  } catch (err) {
-    console.error('Error publishing estimate:', err);
-    res.status(500).json({ error: 'Failed to publish estimate' });
-  }
 });
 
 // Unpublish Endpoint
@@ -1471,7 +1445,7 @@ app.get('/admin/estimates/:id/get', requireAuth, (req, res) => {
 app.post('/admin/estimates/save', requireAuth, (req, res) => {
   try {
     const data = getEstimatesData();
-    const { id, projectName, trades, overhead } = req.body;
+    const { id, projectName, trades, overhead, paymentSchedule, additionalTerms } = req.body;
 
     let estimate = data.estimates.find(e => e.id === id);
 
@@ -1488,6 +1462,8 @@ app.post('/admin/estimates/save', requireAuth, (req, res) => {
     estimate.projectName = projectName || 'Untitled Project';
     estimate.trades = Array.isArray(trades) ? trades : [];
     estimate.overhead = overhead || { type: 'percent', value: 0 };
+    estimate.paymentSchedule = paymentSchedule || '';
+    estimate.additionalTerms = additionalTerms || '';
     estimate.updatedAt = new Date().toISOString();
 
     saveEstimatesData(data);
@@ -1565,7 +1541,7 @@ app.post('/admin/estimates/:id/publish', requireAuth, (req, res) => {
 app.post('/admin/company-profiles', requireAuth, upload.single('logo'), async (req, res) => {
   try {
     const data = getEstimatesData();
-    const { id, name, address, phone, email, license } = req.body;
+    const { id, name, address, phone, license } = req.body;
 
     let profile = data.companyProfiles.find(p => p.id === id);
     let logoUrl = profile ? profile.logoUrl : '';
@@ -1587,7 +1563,6 @@ app.post('/admin/company-profiles', requireAuth, upload.single('logo'), async (r
       profile.name = name;
       profile.address = address;
       profile.phone = phone;
-      profile.email = email || '';
       profile.license = license;
       profile.logoUrl = logoUrl;
     } else {
@@ -1596,7 +1571,6 @@ app.post('/admin/company-profiles', requireAuth, upload.single('logo'), async (r
         name,
         address,
         phone,
-        email: email || '',
         license,
         logoUrl
       };

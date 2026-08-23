@@ -109,6 +109,27 @@
       </div>
     </div>
 
+    <!-- Payment Schedule & Terms Section -->
+    <% if ((estimate.paymentSchedule && estimate.paymentSchedule.trim()) || (estimate.additionalTerms && estimate.additionalTerms.trim())) { %>
+      <div class="border-t border-slate-200 pt-6 space-y-6">
+        
+        <% if (estimate.paymentSchedule && estimate.paymentSchedule.trim()) { %>
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1">Payment Schedule</h3>
+            <p class="text-xs text-slate-600 whitespace-pre-line leading-relaxed"><%= estimate.paymentSchedule.trim() %></p>
+          </div>
+        <% } %>
+
+        <% if (estimate.additionalTerms && estimate.additionalTerms.trim()) { %>
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1">Terms & Conditions / Releases</h3>
+            <p class="text-xs text-slate-600 whitespace-pre-line leading-relaxed"><%= estimate.additionalTerms.trim() %></p>
+          </div>
+        <% } %>
+
+      </div>
+    <% } %>
+
     <!-- Print & Download Quick Action -->
     <div class="pt-6 border-t border-slate-100 flex justify-end print:hidden">
       <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-2 transition-all flex items-center gap-2">
