@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Admin Portal - Estimates</title>
+        <link rel="icon" type="image/x-icon" href="<%= baseUrl %>/favicon.png">
+        <!-- Tailwind CSS via CDN -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            /* Hide scrollbar for Chrome, Safari and Opera */
+            .no-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* Hide scrollbar for IE, Edge and Firefox */
+            .no-scrollbar {
+                -ms-overflow-style: none;
+                /* IE and Edge */
+                scrollbar-width: none;
+                /* Firefox */
+            }
+
+            .duplicate-btn {
+                background: #f59e0b;
+                color: white;
+                border: 1px solid #f59e0b;
+            }
+
+            .duplicate-btn:hover {
+                background: #d97706;
+                border-color: #d97706;
+            }
+        </style>
+    </head>
+
+    <body class="bg-[#F4F1EC] text-slate-900 antialiased flex flex-col min-h-screen">
+
+        <!-- MAIN HEADER -->
+        <header class="bg-slate-900 text-white shadow-md flex-shrink-0 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+
+        <!-- LEFT: Logo & App Title -->
+        <a href="/admin" class="flex items-center space-x-3 text-white hover:text-amber-400 transition-colors shrink-0">
+            <img src="<%= baseUrl %>/logo.png" alt="Logo" class="w-28 sm:w-32 h-8 sm:h-10 object-contain">
+        </a>
+
+        <!-- CENTER/RIGHT: Main Navigation Links -->
+        <div class="flex items-center space-x-1 sm:space-x-2 shrink-0">
+            <!-- Projects / QR System -->
+            <a href="/admin" 
+                class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs sm:text-sm font-medium transition-all <%= currentPath === '/admin' ? 'bg-slate-800 text-amber-400 font-bold border-b-2 border-amber-400' : 'text-slate-300 hover:text-white hover:bg-slate-800' %>">
+                <span class="hidden md:inline">Dashboard</span>
+            </a>
+
+            <!-- Estimates -->
+            <a href="/admin/estimates" 
+                class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs sm:text-sm font-medium transition-all <%= currentPath.startsWith('/admin/estimates') ? 'bg-slate-800 text-slate-300 font-bold border-b-2 border-slate-300' : 'text-slate-300 hover:text-white hover:bg-slate-800' %>">
+                <span>Estimates</span>
+            </a>
+
+            <!-- Dedicated Company Profiles Page -->
+            <a href="/admin/company-profiles" 
+                class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs sm:text-sm font-medium transition-all <%= currentPath.startsWith('/admin/company-profiles') ? 'bg-slate-800 text-slate-300 font-bold border-b-2 border-slate-300' : 'text-slate-300 hover:text-white hover:bg-slate-800' %>">
+                <span class="hidden sm:inline">Company Profiles</span>
+            </a>
+
+            <!-- Logout -->
+            <a href="javascript:void(0)" onclick="logoutAdmin()" title="Sign out"
+                class="inline-flex items-center bg-slate-800 hover:bg-red-600/80 text-slate-300 hover:text-white p-2 text-xs sm:text-sm transition-all ml-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </a>
+        </div>
+
+    </div>
+</header>
+
+        <!-- Client-side helper script for search filter and Basic Auth logout -->
+        <script>
+            function filterHouses() {
+                const query = document.getElementById('houseSearchInput').value.toLowerCase().trim();
+                const houseCards = document.querySelectorAll('[data-house-card]');
+
+                houseCards.forEach(houseCard => {
+                    const houseName = (houseCard.getAttribute('data-house-name') || '').toLowerCase();
+                    const houseMatches = houseName.includes(query);
+
+                    const roomCards = houseCard.querySelectorAll('[data-room-card]');
+                    let matchingRoomCount = 0;
+
+                    roomCards.forEach(roomCard => {
+                        const roomName = (roomCard.getAttribute('data-room-name') || '').toLowerCase();
+                        const roomMatches = roomName.includes(query);
+
+                        if (houseMatches || roomMatches) {
+                            roomCard.style.display = '';
+                            matchingRoomCount++;
+                        } else {
+                            roomCard.style.display = 'none';
+                        }
+                    });
+
+                    if (houseMatches || matchingRoomCount > 0 || query === '') {
+                        houseCard.style.display = '';
+                    } else {
+                        houseCard.style.display = 'none';
+                    }
+                });
+            }
+
+            function logoutAdmin() {
+                if (confirm('Are you sure you want to log out of the Admin portal?')) {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', '/admin', true, 'logout', 'logout');
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            window.location.href = '/';
+                        }
+                    };
+                    xhr.send();
+                }
+            }
+        </script>
+
+        <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
