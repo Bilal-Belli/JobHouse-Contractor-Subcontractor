@@ -1565,7 +1565,7 @@ app.post('/admin/estimates/:id/publish', requireAuth, (req, res) => {
 app.post('/admin/company-profiles', requireAuth, upload.single('logo'), async (req, res) => {
   try {
     const data = getEstimatesData();
-    const { id, name, address, phone, license } = req.body;
+    const { id, name, address, phone, email, license } = req.body;
 
     let profile = data.companyProfiles.find(p => p.id === id);
     let logoUrl = profile ? profile.logoUrl : '';
@@ -1587,6 +1587,7 @@ app.post('/admin/company-profiles', requireAuth, upload.single('logo'), async (r
       profile.name = name;
       profile.address = address;
       profile.phone = phone;
+      profile.email = email || '';
       profile.license = license;
       profile.logoUrl = logoUrl;
     } else {
@@ -1595,6 +1596,7 @@ app.post('/admin/company-profiles', requireAuth, upload.single('logo'), async (r
         name,
         address,
         phone,
+        email: email || '',
         license,
         logoUrl
       };
