@@ -63,7 +63,7 @@
                     </button>
                 </div>
 
-                <!-- Trade Name (Now on its own dedicated line) -->
+                <!-- Trade Name -->
                 <div>
                     <label
                         class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Trade</label>
@@ -344,7 +344,6 @@
         const container = document.getElementById('tradesContainer');
         const div = document.createElement('div');
         div.className = "trade-item bg-white p-4 border border-slate-200 shadow-sm space-y-3";
-        // REMOVED: div.draggable = true;
 
         div.innerHTML = `
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -358,7 +357,39 @@
                 &times;
             </button>
         </div>
-        <!-- ... Rest of template remains unchanged ... -->
+
+        <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Trade</label>
+            <input type="text" value="${data.name}" placeholder="e.g. Electrical / Plumbing" oninput="debouncedAutoSave()" class="trade-name-input w-full text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 px-2.5 py-1.5 focus:bg-white focus:ring-1 focus:ring-amber-500">
+        </div>
+
+        <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Description</label>
+            <input type="text" value="${data.description}" placeholder="Describe the scope of work..." oninput="debouncedAutoSave()" class="trade-desc-input w-full text-xs text-slate-700 bg-slate-50 border border-slate-300 px-2.5 py-1.5 focus:bg-white focus:ring-1 focus:ring-amber-500">
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50/80 p-3 border border-slate-100">
+            <div>
+                <span class="text-[10px] text-slate-400 font-bold block uppercase mb-1">Sub Cost ($)</span>
+                <input type="number" value="${data.subCost}" oninput="recalculateTotals(); debouncedAutoSave();" class="sub-cost-input w-full text-xs text-right font-mono bg-white border border-slate-300 px-2 py-1.5">
+            </div>
+
+            <div>
+                <span class="text-[10px] text-slate-400 font-bold block uppercase mb-1">Markup</span>
+                <div class="flex">
+                    <input type="number" value="${data.markupVal}" oninput="recalculateTotals(); debouncedAutoSave();" class="markup-val-input w-full text-xs text-right font-mono bg-white border border-r-0 border-slate-300 px-2 py-1.5">
+                    <select onchange="recalculateTotals(); debouncedAutoSave();" class="markup-type-input bg-slate-200 text-slate-900 text-xs font-bold border border-slate-300 w-10 text-center focus:outline-none shrink-0 cursor-pointer">
+                        <option value="percent" ${data.markupType === 'percent' ? 'selected' : ''}>%</option>
+                        <option value="flat" ${data.markupType === 'flat' ? 'selected' : ''}>$</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-span-2 sm:col-span-1 flex flex-col justify-center text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3">
+                <span class="text-[10px] text-slate-400 font-bold uppercase">Client Price</span>
+                <span class="line-total-val text-sm font-extrabold text-slate-900 font-mono">$0.00</span>
+            </div>
+        </div>
         `;
 
         container.appendChild(div);
@@ -371,12 +402,28 @@
         let draggedItem = null;
 
         container.querySelectorAll('.trade-item').forEach(item => {
-            item.addEventListener('dragstart', () => { draggedItem = item; item.classList.add('opacity-50'); });
-            item.addEventListener('dragend', () => { item.classList.remove('opacity-50'); draggedItem = null; debouncedAutoSave(); });
+            const handle = item.querySelector('.drag-handle');
+            if (!handle) return;
+
+            handle.ondragstart = (e) => {
+                draggedItem = item;
+                item.classList.add('opacity-50');
+                e.dataTransfer.setData('text/plain', '');
+            };
+
+            handle.ondragend = () => {
+                if (draggedItem) {
+                    draggedItem.classList.remove('opacity-50');
+                    draggedItem = null;
+                    debouncedAutoSave();
+                }
+            };
         });
 
-        container.addEventListener('dragover', (e) => {
+        container.ondragover = (e) => {
             e.preventDefault();
+            if (!draggedItem) return;
+
             const draggableElements = [...container.querySelectorAll('.trade-item:not(.opacity-50)')];
             const afterElement = draggableElements.reduce((closest, child) => {
                 const box = child.getBoundingClientRect();
@@ -384,9 +431,12 @@
                 return (offset < 0 && offset > closest.offset) ? { offset: offset, element: child } : closest;
             }, { offset: Number.NEGATIVE_INFINITY }).element;
 
-            if (afterElement == null) container.appendChild(draggedItem);
-            else container.insertBefore(draggedItem, afterElement);
-        });
+            if (afterElement == null) {
+                container.appendChild(draggedItem);
+            } else {
+                container.insertBefore(draggedItem, afterElement);
+            }
+        };
     }
 
     function debouncedAutoSave() {
@@ -450,7 +500,7 @@
     async function executePublish() {
         const estimateId = document.getElementById('activeEstimateId').value;
         const companyProfileId = document.getElementById('companyProfileSelect').value;
-        const clientProfileId = document.getElementById('clientProfileSelect').value; // <-- GET CLIENT VALUE
+        const clientProfileId = document.getElementById('clientProfileSelect').value;
 
         if (!companyProfileId) {
             alert('Please select a company profile first.');
@@ -462,7 +512,7 @@
         const res = await fetch(`/admin/estimates/${estimateId}/publish`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ companyProfileId, clientProfileId }) // <-- PASS BOTH IDs
+            body: JSON.stringify({ companyProfileId, clientProfileId })
         });
 
         const data = await res.json();
