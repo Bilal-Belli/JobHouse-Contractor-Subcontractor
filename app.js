@@ -7,6 +7,7 @@ const QRCode = require('qrcode');
 const { createCanvas, loadImage, registerFont } = require('canvas');
 const session = require('express-session');
 const nodemailer = require('nodemailer');
+const ExcelJS = require('exceljs');
 const app = express();
 const DATA_FILE = path.join(__dirname, 'data', 'jobsite_data.json');
 
@@ -934,6 +935,209 @@ app.post('/admin/edit/:roomId/delete-all-files/:tradeId', (req, res) => {
   } catch (err) {
     console.error('Error deleting all files:', err);
     res.status(500).send('Error deleting files');
+  }
+});
+
+// ==========================================
+// DYNAMIC EXCEL EXPORT ROUTE
+// ==========================================
+app.get('/houses/:houseId/export-excel', async (req, res) => {
+  try {
+    const data = getData();
+    const house = data.houses.find(h => h.id === req.params.houseId);
+
+    if (!house) return res.status(404).send('House project not found');
+
+    const jobs = house.schedule?.jobs || [];
+    if (jobs.length === 0) {
+      return res.status(400).send('No jobs scheduled to export.');
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Gantt Schedule');
+
+    const startDates = jobs.map(j => new Date(j.startDate + 'T00:00:00'));
+    const endDates = jobs.map(j => new Date(j.endDate + 'T00:00:00'));
+
+    const minDate = new Date(Math.min(...startDates));
+    minDate.setDate(minDate.getDate() - 2);
+
+    const maxDate = new Date(Math.max(...endDates));
+    maxDate.setDate(maxDate.getDate() + 2);
+
+    const totalDays = Math.round((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
+    const houseTitle = house.id.charAt(0).toUpperCase() + house.id.slice(1);
+
+    const row1Values = [houseTitle, 'Start Date', 'End Date', 'Days'];
+    const row2Values = ['', '', '', ''];
+
+    const monthRanges = [];
+    let currentMonthKey = '';
+    let currentMonthStartCol = 5;
+
+    for (let i = 0; i < totalDays; i++) {
+      const d = new Date(minDate);
+      d.setDate(d.getDate() + i);
+
+      const colIdx = 5 + i;
+      const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
+      const monthLabel = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+      row2Values.push(d.getDate());
+
+      if (monthKey !== currentMonthKey) {
+        if (currentMonthKey !== '') {
+          monthRanges.push({
+            startCol: currentMonthStartCol,
+            endCol: colIdx - 1,
+            label: row1Values[currentMonthStartCol - 1]
+          });
+        }
+        currentMonthKey = monthKey;
+        currentMonthStartCol = colIdx;
+        row1Values.push(monthLabel);
+      } else {
+        row1Values.push('');
+      }
+    }
+
+    if (currentMonthKey !== '') {
+      monthRanges.push({
+        startCol: currentMonthStartCol,
+        endCol: 4 + totalDays,
+        label: row1Values[currentMonthStartCol - 1]
+      });
+    }
+
+    const row1 = worksheet.addRow(row1Values);
+    const row2 = worksheet.addRow(row2Values);
+
+    for (let col = 1; col <= 4; col++) {
+      worksheet.mergeCells(1, col, 2, col);
+      const cell = worksheet.getCell(1, col);
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.font = { bold: true, color: { argb: 'FFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0F172A' } };
+    }
+
+    monthRanges.forEach(m => {
+      if (m.startCol < m.endCol) worksheet.mergeCells(1, m.startCol, 1, m.endCol);
+      const cell = worksheet.getCell(1, m.startCol);
+      cell.value = m.label;
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.font = { bold: true, color: { argb: 'FFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E293B' } };
+    });
+
+    for (let i = 0; i < totalDays; i++) {
+      const col = 5 + i;
+      const d = new Date(minDate);
+      d.setDate(d.getDate() + i);
+
+      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+      const cell = row2.getCell(col);
+
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.font = { size: 9, bold: true, color: { argb: isWeekend ? '334155' : '475569' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: isWeekend ? 'CBD5E1' : 'F8FAFC' }
+      };
+    }
+
+    worksheet.getColumn(1).width = 25;
+    worksheet.getColumn(2).width = 12;
+    worksheet.getColumn(3).width = 12;
+    worksheet.getColumn(4).width = 8;
+    for (let col = 5; col <= 4 + totalDays; col++) {
+      worksheet.getColumn(col).width = 3.5;
+    }
+
+    jobs.forEach(job => {
+      const start = new Date(job.startDate + 'T00:00:00');
+      const end = new Date(job.endDate + 'T00:00:00');
+      const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+      const rowData = [job.name, job.startDate, job.endDate, days];
+      const addedRow = worksheet.addRow(rowData);
+      const currentRowNum = addedRow.number;
+
+      const startCol = Math.max(0, Math.round((start - minDate) / (1000 * 60 * 60 * 24))) + 5;
+      const endCol = startCol + days - 1;
+
+      let hexColor = (job.color || '#F59E0B').replace('#', '');
+      if (hexColor.length === 3) {
+        hexColor = hexColor.split('').map(c => c + c).join('');
+      }
+      const argbColor = 'FF' + hexColor.toUpperCase();
+
+      for (let i = 0; i < totalDays; i++) {
+        const col = 5 + i;
+        const d = new Date(minDate);
+        d.setDate(d.getDate() + i);
+
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+        if (isWeekend && (col < startCol || col > endCol)) {
+          addedRow.getCell(col).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'E2E8F0' }
+          };
+        }
+      }
+
+      if (startCol <= endCol) {
+        if (startCol < endCol) worksheet.mergeCells(currentRowNum, startCol, currentRowNum, endCol);
+        const barCell = worksheet.getCell(currentRowNum, startCol);
+        barCell.value = job.name;
+        barCell.alignment = { vertical: 'middle', horizontal: 'center' };
+        barCell.font = { size: 9, bold: true, color: { argb: 'FFFFFF' } };
+
+        for (let c = startCol; c <= endCol; c++) {
+          addedRow.getCell(c).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: argbColor }
+          };
+        }
+      }
+    });
+
+    const totalRows = worksheet.rowCount;
+    for (let r = 1; r <= totalRows; r++) {
+      const row = worksheet.getRow(r);
+      for (let col = 1; col <= 4; col++) {
+        row.getCell(col).border = {
+          top: { style: 'thin', color: { argb: '000000' } },
+          bottom: { style: 'thin', color: { argb: '000000' } },
+          left: { style: 'thin', color: { argb: '000000' } },
+          right: { style: 'thin', color: { argb: '000000' } }
+        };
+      }
+
+      for (let col = 5; col <= 4 + totalDays; col++) {
+        const cell = row.getCell(col);
+        const isMonthEnd = monthRanges.some(m => m.endCol === col);
+        cell.border = {
+          top: { style: 'thin', color: { argb: '000000' } },
+          bottom: { style: 'thin', color: { argb: '000000' } },
+          left: { style: 'thin', color: { argb: '000000' } },
+          right: isMonthEnd ? { style: 'medium', color: { argb: '000000' } } : { style: 'thin', color: { argb: '000000' } }
+        };
+      }
+    }
+
+    // Set HTTP Headers to trigger instant file download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="Schedule_Gantt_${house.id}.xlsx"`);
+
+    // Stream Excel file directly to client
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error('Error generating dynamic Excel:', err);
+    res.status(500).send('Error generating Excel file');
   }
 });
 

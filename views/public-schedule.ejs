@@ -7,10 +7,9 @@
         <title>Manu Romero Construction</title>
         <link rel="icon" type="image/x-icon" href="<%= baseUrl %>/favicon.png">
         <script src="https://cdn.tailwindcss.com"></script>
-        <!-- HTML Canvas, PDF & Excel Libraries -->
+        <!-- HTML Canvas & PDF Libraries -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
         <style>
             /* Custom scrollbar for better aesthetics */
             .custom-scrollbar::-webkit-scrollbar {
@@ -64,10 +63,16 @@
             
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-2 mb-4 justify-end no-print">
-                <button onclick="exportGanttToExcel()" class="px-4 py-2 bg-white text-slate-800  border border-slate-600 text-sm  hover:bg-slate-100 transition">
+                <button onclick="sharePage()" class="px-4 py-2 bg-white border border-slate-600 text-slate-800 text-sm hover:bg-slate-100 transition">
+                    Share
+                </button>
+                <button onclick="sendExcelFile()" class="px-4 py-2 bg-white border border-slate-600 text-slate-800 text-sm hover:bg-slate-100 transition">
+                    Send
+                </button>
+                <button onclick="exportGanttToExcel()" class="px-4 py-2 bg-white text-slate-800 border border-slate-600 text-sm hover:bg-slate-100 transition">
                     Export As Excel
                 </button>
-                <button onclick="exportGanttToPDF()" class="px-4 py-2 bg-white text-slate-800  border border-slate-600 text-sm  hover:bg-slate-100 transition">
+                <button onclick="exportGanttToPDF()" class="px-4 py-2 bg-white text-slate-800 border border-slate-600 text-sm hover:bg-slate-100 transition">
                     Download As PDF
                 </button>
             </div>
@@ -89,7 +94,7 @@
                     <div class="flex items-center justify-between mb-4">
                         <h3 id="detailJobName" class="text-lg font-bold text-slate-900">Job Details</h3>
                         <button onclick="closeDetailModal()"
-                            class="text-slate-400 hover:text-slate-600 text-2xl leading-none">×</button>
+                            class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
                     </div>
                     <div class="space-y-3">
                         <div>
@@ -115,6 +120,30 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Share / Send Options Modal -->
+            <div id="shareModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+                <div class="bg-white border border-slate-200 shadow-xl max-w-sm w-full p-6 mx-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 id="shareModalTitle" class="text-lg font-bold text-slate-900">Share</h3>
+                        <button onclick="closeShareModal()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+                    </div>
+                    <p id="shareModalDesc" class="text-sm text-slate-600 mb-5">Choose how you want to share:</p>
+                    
+                    <div class="space-y-3">
+                        <button id="btnShareWhatsApp" onclick="executeShare('whatsapp')" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded shadow flex items-center justify-center gap-2 transition">
+                            WhatsApp
+                        </button>
+                        <button id="btnShareEmail" onclick="executeShare('email')" class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-900 text-white font-medium text-sm rounded shadow flex items-center justify-center gap-2 transition">
+                            Email
+                        </button>
+                    </div>
+
+                    <button onclick="closeShareModal()" class="mt-4 w-full py-2 text-xs font-medium text-slate-500 hover:text-slate-800 transition">
+                        Cancel
+                    </button>
+                </div>
+            </div>
         </main>
 
         <!-- Footer -->
@@ -135,14 +164,7 @@
                 return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             }
 
-            // Format date short
-            function formatDateShort(dateStr) {
-                if (!dateStr) return 'N/A';
-                const d = new Date(dateStr + 'T00:00:00');
-                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            }
-
-            // Get month name safely without UTC offset shifts
+            // Get month name safely
             function getMonthName(dateObj) {
                 if (!dateObj) return 'N/A';
                 const d = typeof dateObj === 'string' ? new Date(dateObj + 'T00:00:00') : dateObj;
@@ -158,7 +180,6 @@
                       <div class="text-center py-16 w-full absolute left-0 right-0">
                         <div class="text-4xl mb-3">📋</div>
                         <p class="text-slate-500 text-sm">No jobs scheduled yet.</p>
-                        <p class="text-slate-400 text-xs mt-1">Check back later for updates.</p>
                       </div>
                     `;
                     return;
@@ -176,29 +197,18 @@
 
                 const totalDays = Math.round((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
 
-                // Responsive day width
-                let dayWidth;
-                if (window.innerWidth < 640) {
-                    dayWidth = Math.max(20, Math.min(35, 400 / totalDays));
-                } else if (window.innerWidth < 1024) {
-                    dayWidth = Math.max(25, Math.min(45, 600 / totalDays));
-                } else {
-                    dayWidth = Math.max(30, Math.min(60, 800 / totalDays));
-                }
+                let dayWidth = 30;
+                if (window.innerWidth < 640) dayWidth = Math.max(20, Math.min(35, 400 / totalDays));
+                else if (window.innerWidth < 1024) dayWidth = Math.max(25, Math.min(45, 600 / totalDays));
+                else dayWidth = Math.max(30, Math.min(60, 800 / totalDays));
 
                 const totalWidth = totalDays * dayWidth;
 
                 let html = `<div class="flex flex-col w-full">`;
-
-                // ==========================================
-                // HEADER ROW (Sticky Top)
-                // ==========================================
                 html += `<div class="flex sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm" style="height: 50px; min-width: max-content;">`;
                 
-                // Top-Left Corner (Sticky Left + Top)
-                html += `<div class="sticky left-0 z-40 bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center p-2 flex-shrink-0 border-r border-slate-100" style="width: 150px; height: 50px;"><span class="truncate"><%= house.id.charAt(0).toUpperCase() + house.id.slice(1) %></span></div>`;
+                html += `<div class="sticky left-0 z-40 bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center p-2 flex-shrink-0 border-r border-slate-200" style="width: 150px; height: 50px;"><span class="truncate"><%= house.id.charAt(0).toUpperCase() + house.id.slice(1) %></span></div>`;
 
-                // Timeline Header (Months & Days)
                 html += `<div class="relative flex-1" style="width: ${totalWidth}px; height: 50px;">`;
                 
                 let currentMonth = '';
@@ -213,7 +223,7 @@
                     if (monthKey !== currentMonth) {
                         if (currentMonth !== '') {
                             const monthWidth = (i - monthStartDay) * dayWidth;
-                            html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 bg-slate-50 px-1 sm:px-2 py-0.5 rounded-sm border-r border-slate-400" 
+                            html += `<div class="absolute top-0 text-[10px] font-bold text-slate-700 bg-slate-50 px-2 py-0.5 border-r border-slate-400" 
                               style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 1px solid #e2e8f0;">`;
                             html += `${getMonthName(monthStartDate)}`;
                             html += `</div>`;
@@ -224,16 +234,14 @@
                     }
                 }
                 
-                // Last month block
                 if (currentMonth !== '') {
                     const monthWidth = (totalDays - monthStartDay) * dayWidth;
-                    html += `<div class="absolute top-0 text-[9px] sm:text-[10px] font-bold text-slate-700 bg-slate-50 px-1 sm:px-2 py-0.5 rounded-sm" 
+                    html += `<div class="absolute top-0 text-[10px] font-bold text-slate-700 bg-slate-50 px-2 py-0.5" 
                       style="left: ${monthStartDay * dayWidth}px; width: ${monthWidth}px; text-align: center; border-bottom: 1px solid #e2e8f0;">`;
                     html += `${getMonthName(monthStartDate)}`;
                     html += `</div>`;
                 }
 
-                // Day markers
                 html += `<div class="absolute bottom-0 flex w-full">`;
                 for (let i = 0; i < totalDays; i++) {
                     const date = new Date(minDate);
@@ -242,41 +250,24 @@
                     const isToday = date.toDateString() === today.toDateString();
 
                     const headerBg = isWeekend ? 'bg-slate-200/60 text-slate-600 font-semibold' : '';
-html += `<div class="text-[6px] sm:text-[8px] text-slate-400 border-r border-slate-100 ${headerBg} ${isToday ? 'font-bold text-amber-600' : ''}" 
-  style="width: ${dayWidth}px; text-align: center;">`;
-                    html += `${date.getDate()}`;
-                    html += `</div>`;
+                    html += `<div class="text-[8px] text-slate-400 border-r border-slate-100 ${headerBg} ${isToday ? 'font-bold text-amber-600' : ''}" style="width: ${dayWidth}px; text-align: center;">${date.getDate()}</div>`;
                 }
-                html += `</div>`;
+                html += `</div></div></div>`;
 
-                html += `</div></div>`; // End Header Row
-
-                // ==========================================
-                // JOB ROWS
-                // ==========================================
                 jobs.forEach(job => {
-                    // Increased horizontal border visibility for rows
                     html += `<div class="flex border-b border-slate-200 group" style="min-width: max-content;">`;
+                    html += `<div class="sticky left-0 z-20 bg-white group-hover:bg-slate-50 flex-shrink-0 border-r border-slate-200 flex items-center" style="width: 150px; height: 28px;">`;
+                    html += `<div class="p-2 text-xs sm:text-sm font-medium text-slate-700 w-full truncate" title="${job.name}">${job.name}</div></div>`;
                     
-                    // Job Name Column (Sticky Left)
-                    html += `<div class="sticky left-0 z-20 bg-white group-hover:bg-slate-50 flex-shrink-0 border-r border-slate-200 transition-colors flex items-center" style="width: 150px; height: 28px;">`;
-                    html += `<div class="p-2 text-xs sm:text-sm font-medium text-slate-700 w-full truncate" title="${job.name}">${job.name}</div>`;
-                    html += `</div>`;
-                    
-                    // Job Timeline Area
                     const start = new Date(job.startDate + 'T00:00:00');
                     const end = new Date(job.endDate + 'T00:00:00');
-
                     const startOffset = Math.max(0, (start - minDate) / (1000 * 60 * 60 * 24));
                     const duration = Math.max(1, (end - start) / (1000 * 60 * 60 * 24) + 1);
-
-                    // Solid colors generator
                     const bgColor = job.color || '#f59e0b';
 
-                    html += `<div class="relative flex-1 bg-white group-hover:bg-slate-50 transition-colors overflow-hidden" style="width: ${totalWidth}px; height: 28px;">`;
-
-                    // --- BACKGROUND GRID & MONTH DIVIDERS ---
+                    html += `<div class="relative flex-1 bg-white group-hover:bg-slate-50 overflow-hidden" style="width: ${totalWidth}px; height: 28px;">`;
                     html += `<div class="absolute inset-0 flex pointer-events-none">`;
+                    
                     let monthIndex = 0;
                     let currentMonthKey = '';
                     for (let i = 0; i < totalDays; i++) {
@@ -292,41 +283,32 @@ html += `<div class="text-[6px] sm:text-[8px] text-slate-400 border-r border-sla
                         }
                         
                         const isMonthEnd = (i === totalDays - 1) || (nextDate.getMonth() !== date.getMonth());
-                        
                         const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-const bgClass = isWeekend ? 'bg-slate-200/60' : ((monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/50');
+                        const bgClass = isWeekend ? 'bg-slate-200/60' : ((monthIndex % 2 === 0) ? 'bg-white' : 'bg-slate-100/50');
                         const borderClass = isMonthEnd ? 'border-r-2 border-slate-400' : 'border-r border-slate-300';
 
                         html += `<div class="${bgClass} ${borderClass} h-full flex-shrink-0" style="width: ${dayWidth}px;"></div>`;
                     }
                     html += `</div>`;
 
-                    // Job bar
-                    html += `<div class="absolute top-1 rounded-sm cursor-pointer hover:opacity-80 transition shadow-sm z-10" 
-                    style="left: ${startOffset * dayWidth}px; 
-                        width: ${duration * dayWidth - 4}px; 
-                        height: 32px; 
-                        background: ${bgColor}; 
-                        border: 2px solid ${bgColor};
-                        min-width: 12px;"
-                    onclick="showJobDetails('${job.id}')"
-                    title="Click for details: ${job.name}">`;
+                    html += `<div class="absolute top-1 rounded-sm cursor-pointer hover:opacity-80 shadow-sm z-10" 
+                    style="left: ${startOffset * dayWidth}px; width: ${duration * dayWidth - 4}px; height: 22px; background: ${bgColor}; border: 1px solid ${bgColor};"
+                    onclick="showJobDetails('${job.id}')" title="${job.name}">`;
 
                     if (duration * dayWidth > 60) {
-                        html += `<span class="text-white text-[8px] sm:text-[10px] font-semibold px-2 leading-[28px] block truncate">${job.name}</span>`;
+                        html += `<span class="text-white text-[10px] font-semibold px-2 leading-[20px] block truncate">${job.name}</span>`;
                     } else {
-                        html += `<span class="text-white text-[10px] leading-[28px] block text-center">●</span>`;
+                        html += `<span class="text-white text-[10px] leading-[20px] block text-center">●</span>`;
                     }
 
-                    html += `</div>`;
-                    html += `</div></div>`; // End Job Row
+                    html += `</div></div></div>`;
                 });
 
                 html += `</div>`;
                 container.innerHTML = html;
             }
 
-            // Show job details in modal
+            // Job details modal
             function showJobDetails(jobId) {
                 const job = jobs.find(j => j.id === jobId);
                 if (!job) return;
@@ -350,275 +332,104 @@ const bgClass = isWeekend ? 'bg-slate-200/60' : ((monthIndex % 2 === 0) ? 'bg-wh
                 document.body.style.overflow = '';
             }
 
-            // Close modal on Escape key
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeDetailModal();
-            });
+            // Share / Send Modal Handlers
+            let currentShareType = 'page';
 
-            // Close modal on click outside
-            document.getElementById('detailModal').addEventListener('click', (e) => {
-                if (e.target === e.currentTarget) closeDetailModal();
-            });
-
-            // Handle resize
-            let resizeTimeout;
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(renderGantt, 250);
-            });
-
-            // Initial render
-            renderGantt();
-
-            // Listen for fullscreen exit to restore height
-            document.addEventListener('fullscreenchange', () => {
-                const container = document.getElementById('ganttContainer');
-                if (!document.fullscreenElement) {
-                    container.classList.add('max-h-[60vh]');
-                    container.classList.remove('h-screen', 'p-4');
-                }
-            });
-
-            // 1. Export Full Gantt Chart with Dynamic House Title, Weekend Day Colors, and Black Borders
-            async function exportGanttToExcel() {
-                if (jobs.length === 0) return alert('No jobs to export.');
-
-                const workbook = new ExcelJS.Workbook();
-                const worksheet = workbook.addWorksheet('Gantt Schedule');
-
-                const startDates = jobs.map(j => new Date(j.startDate + 'T00:00:00'));
-                const endDates = jobs.map(j => new Date(j.endDate + 'T00:00:00'));
-
-                const minDate = new Date(Math.min(...startDates));
-                minDate.setDate(minDate.getDate() - 2);
-
-                const maxDate = new Date(Math.max(...endDates));
-                maxDate.setDate(maxDate.getDate() + 2);
-
-                const totalDays = Math.round((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
-
-                // --- DYNAMIC HOUSE ID TITLE ---
-                const houseTitle = "<%= house.id.charAt(0).toUpperCase() + house.id.slice(1) %>";
-
-                // --- BUILD ROW 1 (MONTHS) & ROW 2 (DAYS) ---
-                const row1Values = [houseTitle, 'Start Date', 'End Date', 'Days'];
-                const row2Values = ['', '', '', ''];
-
-                const monthRanges = []; 
-                let currentMonthKey = '';
-                let currentMonthStartCol = 5;
-
-                for (let i = 0; i < totalDays; i++) {
-                    const d = new Date(minDate);
-                    d.setDate(d.getDate() + i);
-
-                    const colIdx = 5 + i;
-                    const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
-                    const monthLabel = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-
-                    row2Values.push(d.getDate());
-
-                    if (monthKey !== currentMonthKey) {
-                        if (currentMonthKey !== '') {
-                            monthRanges.push({
-                                startCol: currentMonthStartCol,
-                                endCol: colIdx - 1,
-                                label: row1Values[currentMonthStartCol - 1]
-                            });
-                        }
-                        currentMonthKey = monthKey;
-                        currentMonthStartCol = colIdx;
-                        row1Values.push(monthLabel);
-                    } else {
-                        row1Values.push('');
-                    }
-                }
-
-                if (currentMonthKey !== '') {
-                    monthRanges.push({
-                        startCol: currentMonthStartCol,
-                        endCol: 4 + totalDays,
-                        label: row1Values[currentMonthStartCol - 1]
-                    });
-                }
-
-                // Add Header Rows
-                const row1 = worksheet.addRow(row1Values);
-                const row2 = worksheet.addRow(row2Values);
-
-                // Merge Info Columns across Rows 1 & 2
-                for (let col = 1; col <= 4; col++) {
-                    worksheet.mergeCells(1, col, 2, col);
-                    const cell = worksheet.getCell(1, col);
-                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                    cell.font = { bold: true, color: { argb: 'FFFFFF' } };
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '0F172A' } };
-                }
-
-                // Merge Month Cells & Format Row 1
-                monthRanges.forEach(m => {
-                    if (m.startCol < m.endCol) {
-                        worksheet.mergeCells(1, m.startCol, 1, m.endCol);
-                    }
-                    const cell = worksheet.getCell(1, m.startCol);
-                    cell.value = m.label;
-                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                    cell.font = { bold: true, color: { argb: 'FFFFFF' } };
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E293B' } };
-                });
-
-                // Format Row 2 (Days) with Weekend Matching Colors
-                for (let i = 0; i < totalDays; i++) {
-                    const col = 5 + i;
-                    const d = new Date(minDate);
-                    d.setDate(d.getDate() + i);
-
-                    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                    const cell = row2.getCell(col);
-
-                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                    cell.font = { size: 9, bold: true, color: { argb: isWeekend ? '334155' : '475569' } };
-                    
-                    cell.fill = {
-                        type: 'pattern',
-                        pattern: 'solid',
-                        fgColor: { argb: isWeekend ? 'CBD5E1' : 'F8FAFC' }
-                    };
-                }
-
-                // Set Column Widths
-                worksheet.getColumn(1).width = 25;
-                worksheet.getColumn(2).width = 12;
-                worksheet.getColumn(3).width = 12;
-                worksheet.getColumn(4).width = 8;
-                for (let col = 5; col <= 4 + totalDays; col++) {
-                    worksheet.getColumn(col).width = 3.5;
-                }
-
-                // --- POPULATE JOB ROWS ---
-                jobs.forEach(job => {
-                    const start = new Date(job.startDate + 'T00:00:00');
-                    const end = new Date(job.endDate + 'T00:00:00');
-                    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-
-                    const rowData = [job.name, job.startDate, job.endDate, days];
-                    const addedRow = worksheet.addRow(rowData);
-                    const currentRowNum = addedRow.number;
-
-                    const startCol = Math.max(0, Math.round((start - minDate) / (1000 * 60 * 60 * 24))) + 5;
-                    const endCol = startCol + days - 1;
-
-                    // Convert Hex Color to ARGB
-                    let hexColor = (job.color || '#F59E0B').replace('#', '');
-                    if (hexColor.length === 3) {
-                        hexColor = hexColor.split('').map(c => c + c).join('');
-                    }
-                    const argbColor = 'FF' + hexColor.toUpperCase();
-
-                    // Shading Weekends
-                    for (let i = 0; i < totalDays; i++) {
-                        const col = 5 + i;
-                        const d = new Date(minDate);
-                        d.setDate(d.getDate() + i);
-
-                        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                        if (isWeekend && (col < startCol || col > endCol)) {
-                            addedRow.getCell(col).fill = {
-                                type: 'pattern',
-                                pattern: 'solid',
-                                fgColor: { argb: 'E2E8F0' }
-                            };
-                        }
-                    }
-
-                    // --- MERGE BAR CELLS & INSERT JOB NAME INSIDE THE PIPE ---
-                    if (startCol <= endCol) {
-                        if (startCol < endCol) {
-                            worksheet.mergeCells(currentRowNum, startCol, currentRowNum, endCol);
-                        }
-                        const barCell = worksheet.getCell(currentRowNum, startCol);
-                        barCell.value = job.name;
-                        barCell.alignment = { vertical: 'middle', horizontal: 'center' };
-                        barCell.font = { size: 9, bold: true, color: { argb: 'FFFFFF' } };
-
-                        // Apply fill across the merged pipe
-                        for (let c = startCol; c <= endCol; c++) {
-                            addedRow.getCell(c).fill = {
-                                type: 'pattern',
-                                pattern: 'solid',
-                                fgColor: { argb: argbColor }
-                            };
-                        }
-                    }
-                });
-
-                // --- APPLY BLACK BORDERS BETWEEN DAYS AND JOB ROWS ---
-                const totalRows = worksheet.rowCount;
-                for (let r = 1; r <= totalRows; r++) {
-                    const row = worksheet.getRow(r);
-                    
-                    // Black borders for first 4 info columns
-                    for (let col = 1; col <= 4; col++) {
-                        const cell = row.getCell(col);
-                        cell.border = {
-                            top: { style: 'thin', color: { argb: '000000' } },
-                            bottom: { style: 'thin', color: { argb: '000000' } },
-                            left: { style: 'thin', color: { argb: '000000' } },
-                            right: { style: 'thin', color: { argb: '000000' } }
-                        };
-                    }
-
-                    // Black borders for timeline cells
-                    for (let col = 5; col <= 4 + totalDays; col++) {
-                        const cell = row.getCell(col);
-                        const isMonthEnd = monthRanges.some(m => m.endCol === col);
-
-                        cell.border = {
-                            top: { style: 'thin', color: { argb: '000000' } },
-                            bottom: { style: 'thin', color: { argb: '000000' } },
-                            left: { style: 'thin', color: { argb: '000000' } },
-                            right: isMonthEnd 
-                                ? { style: 'medium', color: { argb: '000000' } } 
-                                : { style: 'thin', color: { argb: '000000' } }
-                        };
-                    }
-                }
-
-                // Generate and Trigger File Download
-                const buffer = await workbook.xlsx.writeBuffer();
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `Schedule_Gantt_${houseId}.xlsx`;
-                link.click();
+            function sharePage() {
+                currentShareType = 'page';
+                document.getElementById('shareModalTitle').textContent = 'Share Page';
+                document.getElementById('shareModalDesc').textContent = 'Share link to this schedule page via:';
+                document.getElementById('shareModal').classList.remove('hidden');
             }
-                        
-            // 2. Export Entire Full-Size Gantt Diagram (No scrolling cutoff) to PDF
+
+            function sendExcelFile() {
+                currentShareType = 'file';
+                document.getElementById('shareModalTitle').textContent = 'Send Excel Download Link';
+                document.getElementById('shareModalDesc').textContent = 'Send the direct Excel download link via:';
+                document.getElementById('shareModal').classList.remove('hidden');
+            }
+
+            function closeShareModal() {
+                document.getElementById('shareModal').classList.add('hidden');
+            }
+
+            // Execute share action
+            function executeShare(channel) {
+                closeShareModal();
+                const pageUrl = window.location.href;
+                const formattedTitle = houseId.charAt(0).toUpperCase() + houseId.slice(1);
+                
+                // Dynamic route URL pointing to your backend Excel generator
+                const excelDownloadUrl = `${window.location.origin}/houses/${houseId}/export-excel`;
+
+                if (currentShareType === 'page') {
+                    const text = `Construction Schedule for ${formattedTitle}:\n${pageUrl}`;
+                    if (channel === 'whatsapp') {
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                    } else if (channel === 'email') {
+                        const subject = encodeURIComponent(`Schedule - ${formattedTitle}`);
+                        const body = encodeURIComponent(`Hello,\n\nHere is the schedule link for ${formattedTitle}:\n${pageUrl}`);
+                        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                    }
+                } else if (currentShareType === 'file') {
+                    const text = `Excel Schedule download link for ${formattedTitle}:\n${excelDownloadUrl}`;
+
+                    if (channel === 'whatsapp') {
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                    } else if (channel === 'email') {
+                        const subject = encodeURIComponent(`Excel Schedule - ${formattedTitle}`);
+                        const body = encodeURIComponent(`Hello,\n\nYou can download the latest Excel schedule for ${formattedTitle} here:\n${excelDownloadUrl}\n\nOr view it online:\n${pageUrl}`);
+                        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                    }
+                }
+            }
+
+            // Export directly calls the backend route
+            function exportGanttToExcel() {
+                window.location.href = `/houses/${houseId}/export-excel`;
+            }
+
+            // Export to PDF
             async function exportGanttToPDF() {
                 if (jobs.length === 0) return alert('No jobs to export.');
 
                 const element = document.getElementById('ganttChart');
                 const container = document.getElementById('ganttContainer');
 
-                // Store original styles
+                // 1. Store original styles
                 const originalMaxHeight = container.style.maxHeight;
                 const originalOverflow = container.style.overflow;
 
-                // Temporarily remove scroll limits so full width/height renders
+                // 2. Expand container to render full content
                 container.style.maxHeight = 'none';
                 container.style.overflow = 'visible';
 
+                // 3. Temporarily unclip hidden overflow and sticky headers during html2canvas capture
+                const overflowElements = element.querySelectorAll('.overflow-hidden, .truncate');
+                overflowElements.forEach(el => {
+                    el.classList.remove('overflow-hidden', 'truncate');
+                    el.dataset.pdfModified = 'true';
+                });
+
+                const stickyElements = element.querySelectorAll('.sticky');
+                stickyElements.forEach(el => {
+                    el.style.position = 'static';
+                    el.dataset.pdfSticky = 'true';
+                });
+
                 try {
-                    const canvas = await html2canvas(element, {
-                        scale: 2, // High resolution capture
-                        useCORS: true,
-                        logging: false
+                    const canvas = await html2canvas(element, { 
+                        scale: 2, 
+                        useCORS: true, 
+                        logging: false,
+                        scrollX: 0,
+                        scrollY: 0,
+                        windowWidth: element.scrollWidth
                     });
 
                     const imgData = canvas.toDataURL('image/png');
                     const { jsPDF } = window.jspdf;
 
-                    // Auto-scale PDF canvas size to fit full chart dimensions
                     const pdf = new jsPDF({
                         orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
                         unit: 'px',
@@ -631,11 +442,23 @@ const bgClass = isWeekend ? 'bg-slate-200/60' : ((monthIndex % 2 === 0) ? 'bg-wh
                     console.error(err);
                     alert('Failed to generate PDF export.');
                 } finally {
-                    // Restore container scrolling
+                    // 4. Restore original layout styles
                     container.style.maxHeight = originalMaxHeight;
                     container.style.overflow = originalOverflow;
+
+                    element.querySelectorAll('[data-pdf-modified="true"]').forEach(el => {
+                        el.classList.add('overflow-hidden', 'truncate');
+                        delete el.dataset.pdfModified;
+                    });
+
+                    element.querySelectorAll('[data-pdf-sticky="true"]').forEach(el => {
+                        el.style.position = '';
+                        delete el.dataset.pdfSticky;
+                    });
                 }
             }
+
+            renderGantt();
         </script>
     </body>
 </html>
