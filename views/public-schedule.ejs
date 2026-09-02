@@ -64,9 +64,6 @@
             
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-2 mb-4 justify-end no-print">
-                <button onclick="toggleFullscreen()" class="px-4 py-2 bg-white border border-slate-600 text-slate-800 text-sm  hover:bg-slate-100 transition">
-                    Fullscreen
-                </button>
                 <button onclick="exportGanttToExcel()" class="px-4 py-2 bg-white text-slate-800  border border-slate-600 text-sm  hover:bg-slate-100 transition">
                     Export As Excel
                 </button>
@@ -372,24 +369,6 @@ const bgClass = isWeekend ? 'bg-slate-200/60' : ((monthIndex % 2 === 0) ? 'bg-wh
 
             // Initial render
             renderGantt();
-
-            // Toggle Fullscreen View
-            function toggleFullscreen() {
-                const container = document.getElementById('ganttContainer');
-                if (!document.fullscreenElement) {
-                    if (container.requestFullscreen) {
-                        container.requestFullscreen();
-                    } else if (container.webkitRequestFullscreen) { /* Safari */
-                        container.webkitRequestFullscreen();
-                    }
-                    container.classList.remove('max-h-[60vh]');
-                    container.classList.add('h-screen', 'p-4');
-                } else {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    }
-                }
-            }
 
             // Listen for fullscreen exit to restore height
             document.addEventListener('fullscreenchange', () => {
