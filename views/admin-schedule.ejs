@@ -56,8 +56,22 @@
     <!-- Gantt Chart Area -->
     <div class="bg-white border border-slate-300 overflow-hidden mr-2 ml-2 shadow-sm rounded-sm">
         <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50">
-            <h2 class="text-sm font-bold text-slate-800">Project Timeline</h2>
-            <span id="jobCount" class="text-xs font-medium text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-sm"></span>
+            <div class="flex items-center gap-3">
+                <h2 class="text-sm font-bold text-slate-800">Project Timeline</h2>
+                <span id="jobCount" class="text-xs font-medium text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-sm"></span>
+            </div>
+            
+            <!-- Save / Discard Actions -->
+            <div class="flex items-center gap-2">
+                <button type="button" id="discardChangesBtn" onclick="discardScheduleChanges()" disabled
+                    class="bg-slate-100 text-slate-400 border border-slate-200 text-xs font-semibold px-3 py-1.5 transition rounded-sm cursor-not-allowed">
+                    Discard
+                </button>
+                <button type="button" id="saveChangesBtn" onclick="saveScheduleChanges()" disabled
+                    class="bg-slate-300 text-slate-500 text-xs font-semibold px-4 py-1.5 transition rounded-sm shadow-sm cursor-not-allowed">
+                    Save Changes
+                </button>
+            </div>
         </div>
         <div id="ganttContainer" class="w-full relative">
             <div id="ganttChart" class="relative overflow-auto custom-scrollbar" style="max-height: 65vh;">
@@ -98,7 +112,11 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
     const houseId = '<%= house.id %>';
-    let jobs = <%- JSON.stringify(house.schedule?.jobs || []) %>;
+    let originalJobs = <%- JSON.stringify(house.schedule?.jobs || []) %>;
+    let jobs = JSON.parse(JSON.stringify(originalJobs));
+
+    // Change tracking flag
+    let hasUnsavedChanges = false;
 
     // State Variables
     let globalMinDate = null;
@@ -107,6 +125,28 @@
     let dragStartX = 0;
     let dragStartOffsetDays = 0;
     let isDragging = false;
+
+    function setUnsavedChanges(dirty) {
+        hasUnsavedChanges = dirty;
+        const saveBtn = document.getElementById('saveChangesBtn');
+        const discardBtn = document.getElementById('discardChangesBtn');
+
+        if (!saveBtn || !discardBtn) return;
+
+        if (dirty) {
+            saveBtn.disabled = false;
+            saveBtn.className = 'bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-1.5 transition rounded-sm shadow-sm cursor-pointer';
+            
+            discardBtn.disabled = false;
+            discardBtn.className = 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-xs font-semibold px-3 py-1.5 transition rounded-sm shadow-sm cursor-pointer';
+        } else {
+            saveBtn.disabled = true;
+            saveBtn.className = 'bg-slate-300 text-slate-500 text-xs font-semibold px-4 py-1.5 transition rounded-sm shadow-sm cursor-not-allowed';
+
+            discardBtn.disabled = true;
+            discardBtn.className = 'bg-slate-100 text-slate-400 border border-slate-200 text-xs font-semibold px-3 py-1.5 transition rounded-sm cursor-not-allowed';
+        }
+    }
 
     // --- ROCK SOLID DATE UTILITIES (DST SAFE) ---
     function getDaysDiff(d1, d2) {
@@ -282,9 +322,9 @@
                 const isMonthEnd = (i === totalDays - 1) || (nextDate.getMonth() !== date.getMonth());
                 
                 const colBg = isWeekend ? 'bg-slate-200/60' : (isEvenMonth ? 'bg-slate-100/50' : 'bg-transparent');
-const borderClass = isMonthEnd ? 'border-r-2 border-slate-300' : 'border-r border-slate-300/70';
+                const borderClass = isMonthEnd ? 'border-r-2 border-slate-300' : 'border-r border-slate-300/70';
 
-html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWidth}px;"></div>`;
+                html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWidth}px;"></div>`;
             }
             html += `</div>`;
 
@@ -318,18 +358,11 @@ html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWi
                     const toIndex = evt.newIndex;
                     if (fromIndex === toIndex) return;
                     
-                    // Reorder the jobs array
+                    // Reorder local jobs array without pushing to server immediately
                     const [movedJob] = jobs.splice(fromIndex, 1);
                     jobs.splice(toIndex, 0, movedJob);
                     
-                    // Save order to server
-                    const order = jobs.map(j => j.id);
-                    fetch(`/admin/houses/schedule/reorder/${houseId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ order })
-                    }).catch(err => console.error('Failed to save order:', err));
-                    
+                    setUnsavedChanges(true);
                     renderGantt();
                 }
             });
@@ -374,7 +407,7 @@ html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWi
         if (jobBar) jobBar.style.left = `${newOffsetDays * globalDayWidth}px`;
     }
 
-    async function stopDrag(e) {
+    function stopDrag(e) {
         window.removeEventListener('mousemove', onDrag);
         window.removeEventListener('mouseup', stopDrag);
 
@@ -393,30 +426,11 @@ html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWi
                     const newStart = addDays(start, daysShift);
                     const newEnd = addDays(end, daysShift);
 
-                    try {
-                        const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${job.id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                name: job.name,
-                                startDate: formatDateISO(newStart),
-                                endDate: formatDateISO(newEnd),
-                                color: job.color
-                            })
-                        });
+                    // Update dates locally
+                    job.startDate = formatDateISO(newStart);
+                    job.endDate = formatDateISO(newEnd);
 
-                        const data = await response.json();
-                        if (data.success) {
-                            Object.assign(job, data.job || {
-                                startDate: formatDateISO(newStart),
-                                endDate: formatDateISO(newEnd)
-                            });
-                        } else {
-                            alert('Failed to update dates: ' + (data.error || 'Unknown error'));
-                        }
-                    } catch (err) {
-                        alert('Network Error updating dates');
-                    }
+                    setUnsavedChanges(true);
                 }
             }
             renderGantt();
@@ -426,6 +440,50 @@ html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWi
             isDragging = false;
             draggedJobId = null;
         }, 50);
+    }
+
+    // --- SAVE AND DISCARD LOGIC ---
+    async function saveScheduleChanges() {
+        const saveBtn = document.getElementById('saveChangesBtn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+            // Save modified task dates sequentially
+            for (const job of jobs) {
+                await fetch(`/admin/houses/schedule/${houseId}/jobs/${job.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: job.name,
+                        startDate: job.startDate,
+                        endDate: job.endDate,
+                        color: job.color
+                    })
+                });
+            }
+
+            // Save final task order
+            const order = jobs.map(j => j.id);
+            await fetch(`/admin/houses/schedule/reorder/${houseId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order })
+            });
+
+            originalJobs = JSON.parse(JSON.stringify(jobs));
+            setUnsavedChanges(false);
+        } catch (err) {
+            alert('Failed to save changes. Please check network connection.');
+        } finally {
+            saveBtn.textContent = 'Save Changes';
+        }
+    }
+
+    function discardScheduleChanges() {
+        jobs = JSON.parse(JSON.stringify(originalJobs));
+        setUnsavedChanges(false);
+        renderGantt();
     }
 
     // --- MODAL CONTROLS ---
@@ -479,7 +537,6 @@ html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWi
         document.body.appendChild(modal);
         document.body.style.overflow = 'hidden';
 
-        // Update days counter
         function updateDayCount() {
             const start = document.getElementById('editStartDate').value;
             const end = document.getElementById('editEndDate').value;
@@ -518,6 +575,13 @@ html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWi
                         jobToUpdate.startDate = startDate;
                         jobToUpdate.endDate = endDate;
                         jobToUpdate.color = color;
+                    }
+                    const origJobToUpdate = originalJobs.find(j => j.id === id);
+                    if (origJobToUpdate) {
+                        origJobToUpdate.name = name;
+                        origJobToUpdate.startDate = startDate;
+                        origJobToUpdate.endDate = endDate;
+                        origJobToUpdate.color = color;
                     }
                     closeEditModal();
                     renderGantt();
@@ -561,6 +625,7 @@ html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWi
                 const data = await response.json();
                 if (data.success) {
                     jobs.push(data.job);
+                    originalJobs.push(JSON.parse(JSON.stringify(data.job)));
                     renderGantt();
                     addJobForm.reset();
                     document.getElementById('jobColor').value = '#f59e0b';
@@ -609,6 +674,7 @@ html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWi
             const data = await response.json();
             if (data.success) {
                 jobs = jobs.filter(j => j.id !== pendingDeleteJobId);
+                originalJobs = originalJobs.filter(j => j.id !== pendingDeleteJobId);
                 renderGantt();
                 closeDeleteModal();
             } else {
@@ -652,66 +718,45 @@ html += `<div class="${borderClass} h-full ${colBg}" style="width: ${globalDayWi
 </script>
 
 <script>
-    // Update days counter
-function updateDayCount() {
-    const start = document.getElementById('editStartDate').value;
-    const end = document.getElementById('editEndDate').value;
-    if (start && end) {
-        const startDate = new Date(start + 'T00:00:00');
-        const endDate = new Date(end + 'T00:00:00');
-        const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-        document.getElementById('editDayCount').textContent = days >= 0 ? days : 0;
-    }
-}
+    let currentStatus = '<%= house.schedule?.status || "draft" %>';
 
-document.getElementById('editStartDate').addEventListener('change', updateDayCount);
-document.getElementById('editEndDate').addEventListener('change', updateDayCount);
-updateDayCount();
-</script>
-<script>
-    // State Variable (Reads status from server, defaults to 'draft')
-let currentStatus = '<%= house.schedule?.status || "draft" %>';
+    function updateStatusUI() {
+        const btn = document.getElementById('statusToggleBtn');
+        const text = document.getElementById('statusText');
+        if (!btn) return;
 
-// Update Button Styling based on State
-function updateStatusUI() {
-    const btn = document.getElementById('statusToggleBtn');
-    const text = document.getElementById('statusText');
-    if (!btn) return;
-
-    if (currentStatus === 'published') {
-        btn.className = 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100 text-xs sm:text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm flex items-center justify-center gap-2 border w-full sm:w-auto';
-        text.textContent = 'Published';
-    } else {
-        btn.className = 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100 text-xs sm:text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm flex items-center justify-center gap-2 border w-full sm:w-auto';
-        text.textContent = 'Draft';
-    }
-}
-
-// Toggle Handler Function
-async function togglePublishStatus() {
-    const nextStatus = currentStatus === 'published' ? 'draft' : 'published';
-
-    try {
-        const response = await fetch(`/admin/houses/schedule/status/${houseId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: nextStatus })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            currentStatus = nextStatus;
-            updateStatusUI();
+        if (currentStatus === 'published') {
+            btn.className = 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100 text-xs sm:text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm flex items-center justify-center gap-2 border w-full sm:w-auto';
+            text.textContent = 'Published';
         } else {
-            alert('Failed to update status: ' + (data.error || 'Unknown error'));
+            btn.className = 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100 text-xs sm:text-sm font-semibold px-4 py-2 transition rounded-sm shadow-sm flex items-center justify-center gap-2 border w-full sm:w-auto';
+            text.textContent = 'Draft';
         }
-    } catch (err) {
-        alert('Network error updating status');
     }
-}
 
-// Initial UI paint on boot (place at bottom of script)
-updateStatusUI();
+    async function togglePublishStatus() {
+        const nextStatus = currentStatus === 'published' ? 'draft' : 'published';
+
+        try {
+            const response = await fetch(`/admin/houses/schedule/status/${houseId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: nextStatus })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                currentStatus = nextStatus;
+                updateStatusUI();
+            } else {
+                alert('Failed to update status: ' + (data.error || 'Unknown error'));
+            }
+        } catch (err) {
+            alert('Network error updating status');
+        }
+    }
+
+    updateStatusUI();
 </script>
 </main>
 <footer class="bg-slate-900 border-t border-slate-600 flex-shrink-0 mt-auto">
