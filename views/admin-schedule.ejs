@@ -487,6 +487,7 @@
     }
 
     // --- MODAL CONTROLS ---
+    // --- MODAL CONTROLS ---
     function openEditModal(jobId) {
         const job = jobs.find(j => j.id === jobId);
         if (!job) return;
@@ -529,7 +530,7 @@
                 </div>
                 <div class="flex justify-end gap-2 pt-4 border-t border-slate-200 mt-2">
                     <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition rounded-sm shadow-sm">Cancel</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 transition rounded-sm shadow-sm">Save Changes</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 transition rounded-sm shadow-sm">Save Draft</button>
                 </div>
             </form>
         </div>`;
@@ -552,7 +553,7 @@
         document.getElementById('editEndDate').addEventListener('change', updateDayCount);
         updateDayCount();
 
-        document.getElementById('editJobForm').addEventListener('submit', async (e) => {
+        document.getElementById('editJobForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const id = document.getElementById('editJobId').value;
             const name = document.getElementById('editJobName').value.trim();
@@ -560,40 +561,23 @@
             const endDate = document.getElementById('editEndDate').value;
             const color = document.getElementById('editJobColor').value;
 
-            try {
-                const response = await fetch(`/admin/houses/schedule/${houseId}/jobs/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, startDate, endDate, color })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    const jobToUpdate = jobs.find(j => j.id === id);
-                    if (jobToUpdate) {
-                        jobToUpdate.name = name;
-                        jobToUpdate.startDate = startDate;
-                        jobToUpdate.endDate = endDate;
-                        jobToUpdate.color = color;
-                    }
-                    const origJobToUpdate = originalJobs.find(j => j.id === id);
-                    if (origJobToUpdate) {
-                        origJobToUpdate.name = name;
-                        origJobToUpdate.startDate = startDate;
-                        origJobToUpdate.endDate = endDate;
-                        origJobToUpdate.color = color;
-                    }
-                    closeEditModal();
-                    renderGantt();
-                } else {
-                    alert('Failed to update job: ' + (data.error || 'Unknown error'));
-                }
-            } catch (err) {
-                alert('Network error updating job');
+            // Update local job state immediately without sending a network request
+            const jobToUpdate = jobs.find(j => j.id === id);
+            if (jobToUpdate) {
+                jobToUpdate.name = name;
+                jobToUpdate.startDate = startDate;
+                jobToUpdate.endDate = endDate;
+                jobToUpdate.color = color;
             }
+
+            // Flag changes as unsaved so the top main 'Save Changes' button activates
+            setUnsavedChanges(true);
+            
+            closeEditModal();
+            renderGantt();
         });
     }
-
+    
     function closeEditModal() {
         const modal = document.getElementById('editModal');
         if (modal) modal.remove();
