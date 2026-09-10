@@ -613,11 +613,15 @@
 
                         <!-- File/Image Input Container -->
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
+                            <!-- Modified File Input Section -->
                             <div class="w-full sm:w-auto">
                                 <label class="block text-xs font-medium text-black mb-1">Attach files or photos:</label>
-                                <input type="file" name="attachments" multiple accept="image/*,.pdf,.doc,.docx,.txt"
+                                <input type="file" id="commentImageInput" name="attachments" multiple accept="image/*,.pdf,.doc,.docx,.txt"
                                     class="block w-full text-xs text-black file:mr-3 file:py-1.5 file:px-3 file:border file:border-slate-300 file:bg-slate-100 file:text-xs file:font-medium file:text-black hover:file:bg-slate-200 file:cursor-pointer cursor-pointer">
                             </div>
+
+                            <!-- Dynamic Image Rotation & Preview Container -->
+                            <div id="imagePreviewContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2"></div>
                             <button type="submit"
                                 class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-5 py-2 transition w-full sm:w-auto self-end">Post
                                 comment</button>
@@ -1070,7 +1074,94 @@
                 });
             });
         </script>
+        <script>
+            const commentImageInput = document.getElementById('commentImageInput');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            let selectedFilesData = []; // Store file objects and their current rotation degrees
 
+            if (commentImageInput) {
+                commentImageInput.addEventListener('change', function(e) {
+                    const files = Array.from(e.target.files);
+                    
+                    files.forEach((file) => {
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(event) {
+                                selectedFilesData.push({
+                                    file: file,
+                                    src: event.target.result,
+                                    rotation: 0
+                                });
+                                renderImagePreviews();
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                });
+            }
+
+            function renderImagePreviews() {
+                imagePreviewContainer.innerHTML = '';
+                
+                selectedFilesData.forEach((item, index) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'border border-slate-200 bg-white p-1 text-center relative';
+                    
+                    wrapper.innerHTML = `
+                        <img src="${item.src}" style="transform: rotate(${item.rotation}deg); transition: transform 0.2s;" class="w-full h-20 object-contain mb-1 bg-slate-50">
+                        <div class="flex justify-between items-center px-1">
+                            <span class="text-[10px] truncate max-w-[70px]">${item.file.name}</span>
+                            <button type="button" onclick="rotateImage(${index})" class="bg-slate-200 hover:bg-slate-300 text-black px-1.5 py-0.5 text-[10px] font-bold">↻ Rotate</button>
+                        </div>
+                    `;
+                    imagePreviewContainer.appendChild(wrapper);
+                });
+            }
+
+            window.rotateImage = function(index) {
+                selectedFilesData[index].rotation = (selectedFilesData[index].rotation + 90) % 360;
+                renderImagePreviews();
+                updateFormFiles();
+            };
+
+            function updateFormFiles() {
+                const dataTransfer = new DataTransfer();
+                
+                // Process each image onto a canvas to permanently bake in the rotation before submission
+                let processedCount = 0;
+                selectedFilesData.forEach((item, index) => {
+                    const img = new Image();
+                    img.src = item.src;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        if (item.rotation === 90 || item.rotation === 270) {
+                            canvas.width = img.height;
+                            canvas.height = img.width;
+                        } else {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                        }
+                        
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.translate(canvas.width / 2, canvas.height / 2);
+                        ctx.rotate((item.rotation * Math.PI) / 180);
+                        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                        
+                        canvas.toBlob((blob) => {
+                            const rotatedFile = new File([blob], item.file.name, { type: item.file.type });
+                            dataTransfer.items.add(rotatedFile);
+                            processedCount++;
+                            
+                            if (processedCount === selectedFilesData.length) {
+                                commentImageInput.files = dataTransfer.files;
+                            }
+                        }, item.file.type);
+                    };
+                });
+            }
+        </script>
     </body>
 
 </html>
