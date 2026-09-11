@@ -211,6 +211,15 @@
                 margin-bottom: 8px;
             }
 
+            #filePreviewModal #previewBody {
+                flex: 1;
+                overflow: hidden;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
             .trade-tag {
                 background: #e9e5e0;
                 padding: 4px 12px;
@@ -529,12 +538,12 @@
                 </div>
 
                 <% if (house.schedule && house.schedule.status === 'published') { %>
-                    <div class="bg-white pro-card p-4 md:p-5 mb-6">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                            <span class="w-1 h-4 bg-slate-400 block"></span> 
-                            <a href="/house/schedule/<%= house.id %>">Schedule</a>
-                        </h3>
-                    </div>
+                <div class="bg-white pro-card p-4 md:p-5 mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-black flex items-center gap-2">
+                        <span class="w-1 h-4 bg-slate-400 block"></span>
+                        <a href="/house/schedule/<%= house.id %>">Schedule</a>
+                    </h3>
+                </div>
                 <% } %>
 
                 <!-- ===== TRADE CONTENT ===== -->
@@ -621,7 +630,8 @@
                             <!-- Modified File Input Section -->
                             <div class="w-full sm:w-auto">
                                 <label class="block text-xs font-medium text-black mb-1">Attach files or photos:</label>
-                                <input type="file" id="commentImageInput" name="attachments" multiple accept="image/*,.pdf,.doc,.docx,.txt"
+                                <input type="file" id="commentImageInput" name="attachments" multiple
+                                    accept="image/*,.pdf,.doc,.docx,.txt"
                                     class="block w-full text-xs text-black file:mr-3 file:py-1.5 file:px-3 file:border file:border-slate-300 file:bg-slate-100 file:text-xs file:font-medium file:text-black hover:file:bg-slate-200 file:cursor-pointer cursor-pointer">
                             </div>
 
@@ -715,20 +725,18 @@
         <div id="filePreviewModal"
             class="hidden fixed inset-0 z-[100] bg-slate-900/80 flex items-center justify-center p-4">
             <div class="relative preview-content bg-white shadow-2xl border border-slate-200 overflow-hidden">
-                <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+                <div
+                    class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200 gap-2 flex-wrap sm:flex-nowrap">
                     <span id="previewFileName"
-                        class="text-sm font-medium text-black truncate max-w-[200px] md:max-w-[400px]"></span>
-
-                    <!-- <div class="flex items-center gap-3">
+                        class="text-sm font-medium text-black truncate max-w-[180px] sm:max-w-[300px]"></span>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button id="rotateExistingBtn" onclick="rotateExistingImage()"
+                            class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 font-medium hidden">↻
+                            Rotate</button>
                         <a id="previewDownload" href="#" download
                             class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 font-medium hidden">Download</a>
                         <button onclick="closeFilePreview()"
                             class="text-black hover:text-black text-2xl leading-none w-8 h-8 flex items-center justify-center">&times;</button>
-                    </div> -->
-                    <div class="flex items-center gap-3">
-                        <button id="rotateExistingBtn" onclick="rotateExistingImage()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 font-medium hidden">↻ Rotate</button>
-                        <a id="previewDownload" href="#" download class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 font-medium hidden">Download</a>
-                        <button onclick="closeFilePreview()" class="text-black hover:text-black text-2xl leading-none w-8 h-8 flex items-center justify-center">&times;</button>
                     </div>
                 </div>
 
@@ -816,19 +824,17 @@
                 const imgElement = previewBody.querySelector('.preview-image');
                 if (!imgElement) return;
                 currentRotation = (currentRotation + 90) % 360;
-                
-                // Swap width/height constraints dynamically based on orientation
+
                 if (currentRotation === 90 || currentRotation === 270) {
-                    imgElement.style.maxHeight = '85vw';
-                    imgElement.style.maxWidth = '75vh';
+                    imgElement.style.maxHeight = '65vw';
+                    imgElement.style.maxWidth = '65vh';
                 } else {
                     imgElement.style.maxHeight = '75vh';
                     imgElement.style.maxWidth = '85vw';
                 }
-                
+
                 imgElement.style.transform = `rotate(${currentRotation}deg)`;
             }
-
             function closeFilePreview() {
                 previewModal.classList.add('hidden');
                 previewBody.innerHTML = '';
@@ -855,12 +861,12 @@
             let selectedFilesData = [];
 
             if (commentImageInput) {
-                commentImageInput.addEventListener('change', function(e) {
+                commentImageInput.addEventListener('change', function (e) {
                     const files = Array.from(e.target.files);
                     files.forEach((file) => {
                         if (file.type.startsWith('image/')) {
                             const reader = new FileReader();
-                            reader.onload = function(event) {
+                            reader.onload = function (event) {
                                 selectedFilesData.push({ file: file, src: event.target.result, rotation: 0 });
                                 renderImagePreviews();
                             };
@@ -887,7 +893,7 @@
                 });
             }
 
-            window.rotateImage = function(index) {
+            window.rotateImage = function (index) {
                 selectedFilesData[index].rotation = (selectedFilesData[index].rotation + 90) % 360;
                 renderImagePreviews();
                 updateFormFiles();
@@ -899,7 +905,7 @@
                 selectedFilesData.forEach((item) => {
                     const img = new Image();
                     img.src = item.src;
-                    img.onload = function() {
+                    img.onload = function () {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
                         if (item.rotation === 90 || item.rotation === 270) {
@@ -924,7 +930,7 @@
                 });
             }
 
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 const trigger = e.target.closest('.preview-trigger');
                 if (!trigger) return;
                 e.preventDefault();
