@@ -909,6 +909,14 @@
                 currentRotation = (currentRotation + 90) % 360;
                 imgElement.style.transform = `rotate(${currentRotation}deg)`;
                 imgElement.style.transition = 'transform 0.2s ease';
+
+                if (currentRotation === 90 || currentRotation === 270) {
+                    imgElement.style.maxHeight = '55vh';
+                    imgElement.style.maxWidth = '75vw';
+                } else {
+                    imgElement.style.maxHeight = '85vh';
+                    imgElement.style.maxWidth = '100%';
+                }
             }
 
             document.addEventListener('click', function(e) {
