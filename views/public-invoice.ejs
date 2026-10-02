@@ -49,11 +49,9 @@
 
     <body class="bg-slate-100 text-slate-800 antialiased py-10 px-4 min-h-screen flex flex-col justify-between">
 
-        <div
-            class="paper-card max-w-3xl mx-auto bg-white border border-slate-200 shadow-xl p-8 sm:p-12 space-y-8 w-full">
+        <div class="paper-card max-w-3xl mx-auto bg-white border border-slate-200 shadow-xl p-8 sm:p-12 space-y-8 w-full">
 
             <!-- Header & Branding -->
-            <!-- Header & Branding with Side-by-Side Aligned Details -->
             <div class="avoid-break border-b border-slate-200 pb-6 space-y-4">
 
                 <!-- Top Row: Logo & Invoice Metadata -->
@@ -89,8 +87,7 @@
 
                     <!-- Column 1: Company Info -->
                     <div class="space-y-1">
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Company
-                            Details</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Company Details</span>
                         <p class="h-4"><span class="font-semibold text-slate-700">License:</span>
                             <%= (company && company.license) ? company.license : 'N/A' %></p>
                         <p class="h-4"><span class="font-semibold text-slate-700">Phone:</span>
@@ -101,7 +98,7 @@
                             <%= (company && company.address) ? company.address : 'N/A' %></p>
                     </div>
 
-                    <!-- Column 2: Client Info (Strictly Aligned Line-by-Line) -->
+                    <!-- Column 2: Client Info -->
                     <div class="space-y-1 sm:text-right">
                         <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">
                             <%= estimate.status === 'invoiced' ? 'Billed To' : 'Prepared For' %>
@@ -121,47 +118,56 @@
 
             </div>
 
-            <!-- Scope of Work Summary -->
-            <div class="space-y-3">
+            <!-- Scope of Work Summary with Itemized Pricing -->
+            <div class="space-y-4">
                 <h3 class="text-xs font-bold text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-2">
-                    Approved Scope of Work</h3>
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200">
-                        <tr>
-                            <th class="p-2.5 w-1/3">Item / Service</th>
-                            <th class="p-2.5 w-2/3">Description</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        <% clientTrades.forEach(trade => { %>
-                        <tr>
-                            <td class="p-2.5 font-bold text-slate-900 align-top"><%= trade.name || 'General' %></td>
-                            <td class="p-2.5 text-slate-600 leading-relaxed align-top"><%= trade.description || 'N/A' %>
-                            </td>
-                        </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
+                    Approved Scope of Work & Itemized Pricing</h3>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3 w-1/4">Trade / Service</th>
+                                <th class="p-3 w-1/2">Description</th>
+                                <th class="p-3 text-right w-1/4">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 text-xs">
+                            <% if (!clientTrades || clientTrades.length === 0) { %>
+                            <tr>
+                                <td colspan="3" class="p-4 text-center text-slate-400 italic">No line items specified for this invoice.</td>
+                            </tr>
+                            <% } %>
+
+                            <% clientTrades.forEach(trade => { %>
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-bold text-slate-900 align-top"><%= trade.name || 'General' %></td>
+                                <td class="p-3 text-slate-600 leading-relaxed align-top"><%= trade.description || 'N/A' %></td>
+                                <td class="p-3 text-right font-semibold text-slate-900 align-top font-mono">
+                                    $<%= trade.clientPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Total Financial Summary -->
             <div class="avoid-break bg-slate-50 p-4 border border-slate-200 space-y-2">
                 <div class="flex justify-between items-center text-xs text-slate-600">
                     <span>Contract Subtotal:</span>
-                    <span
-                        class="font-mono font-medium text-slate-800">$<%= subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                    <span class="font-mono font-medium text-slate-800">$<%= subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
                 </div>
                 <% if (overheadTotal > 0) { %>
                 <div class="flex justify-between items-center text-xs text-slate-600">
-                    <span>Overhead & Admin Fee:</span>
-                    <span
-                        class="font-mono font-medium text-slate-800">$<%= overheadTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                    <span>Overhead & Admin Fee (<%= estimate.overhead && estimate.overhead.type === 'percent' ? estimate.overhead.value + '%' : 'Flat' %>):</span>
+                    <span class="font-mono font-medium text-slate-800">$<%= overheadTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
                 </div>
                 <% } %>
                 <div class="flex justify-between items-center text-sm font-bold border-t border-slate-300 pt-2">
                     <span class="uppercase tracking-tight text-slate-900">Total Contract Value:</span>
-                    <span
-                        class="font-mono text-base text-slate-900">$<%= grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                    <span class="font-mono text-base text-slate-900">$<%= grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
                 </div>
             </div>
 
@@ -172,8 +178,7 @@
 
                 <div class="border border-slate-200 overflow-hidden">
                     <table class="w-full text-left text-xs">
-                        <thead
-                            class="bg-slate-100 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
+                        <thead class="bg-slate-100 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
                             <tr>
                                 <th class="p-3">Milestone</th>
                                 <th class="p-3 text-center">% Share</th>
@@ -183,12 +188,12 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             <% 
-              let totalPaid = 0;
-              const milestones = estimate.paymentMilestones || [];
-              milestones.forEach(m => {
-                const milestoneAmount = (grandTotal * ((parseFloat(m.percentage) || 0) / 100));
-                if (m.status === 'paid') totalPaid += milestoneAmount;
-            %>
+                                let totalPaid = 0;
+                                const milestones = estimate.paymentMilestones || [];
+                                milestones.forEach(m => {
+                                    const milestoneAmount = (grandTotal * ((parseFloat(m.percentage) || 0) / 100));
+                                    if (m.status === 'paid') totalPaid += milestoneAmount;
+                            %>
                             <tr class="<%= m.status === 'paid' ? 'bg-emerald-50/40' : '' %>">
                                 <td class="p-3 font-bold text-slate-900"><%= m.title %></td>
                                 <td class="p-3 text-center font-mono text-slate-600"><%= m.percentage %>%</td>
@@ -197,11 +202,9 @@
                                 </td>
                                 <td class="p-3 text-center">
                                     <% if (m.status === 'paid') { %>
-                                    <span
-                                        class="bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded">Paid</span>
+                                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded">Paid</span>
                                     <% } else { %>
-                                    <span
-                                        class="bg-amber-100 text-amber-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded">Pending</span>
+                                    <span class="bg-amber-100 text-amber-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded">Pending</span>
                                     <% } %>
                                 </td>
                             </tr>
@@ -212,17 +215,14 @@
 
                 <!-- Payment Summary Balance Box -->
                 <% const remainingBalance = Math.max(0, grandTotal - totalPaid); %>
-                <div class="bg-white text-white p-4 space-y-2 font-mono">
-                    <div class="flex justify-between items-center text-xs text-slate-900">
+                <div class="bg-white text-slate-900 p-4 space-y-2 font-mono border border-slate-200">
+                    <div class="flex justify-between items-center text-xs">
                         <span>Total Paid to Date:</span>
-                        <span
-                            class="text-slate-900 font-bold">$<%= totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                        <span class="font-bold">$<%= totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
                     </div>
-                    <div
-                        class="flex justify-between items-center text-slate-900 font-bold border-t border-slate-900 pt-2">
+                    <div class="flex justify-between items-center font-bold border-t border-slate-300 pt-2 text-sm">
                         <span>Remaining Balance Due:</span>
-                        <span
-                            class="<%= remainingBalance > 0 ? 'text-slate-900' : 'text-slate-900' %>">$<%= remainingBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                        <span>$<%= remainingBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
                     </div>
                 </div>
             </div>
